@@ -1,0 +1,11 @@
+# 字段
+sourceMap sql
+targetMap sql
+defaultProb sql
+sourceSegments sql
+targetSegments sql
+targetProbs sql
+targetPositions sql
+tokens        js
+untoneTokens  js
+initialTokens js

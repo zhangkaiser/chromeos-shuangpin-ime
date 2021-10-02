@@ -1,0 +1,35 @@
+{
+  "name": "cros-shuangpin",
+  "version": "0.0.1",
+  "description": "shuangpin ime for chromeos",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "mocha",
+    "build": "webpack"
+  },
+  "keywords": [
+    "shuangpin",
+    "ime",
+    "chromeos"
+  ],
+  "author": "KaiserZh",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.0.157",
+    "@types/mocha": "^9.0.0",
+    "@types/webpack": "^5.28.0",
+    "@typescript-eslint/parser": "^4.31.2",
+    "chai": "^4.3.4",
+    "copy-webpack-plugin": "^9.0.1",
+    "eslint": "^7.32.0",
+    "html-webpack-plugin": "^5.3.2",
+    "mocha": "^9.1.1",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.3",
+    "webpack": "^5.53.0",
+    "webpack-cli": "^4.8.0"
+  },
+  "dependencies": {
+    "google-closure-library": "^20210808.0.0"
+  }
+}

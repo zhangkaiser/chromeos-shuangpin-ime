@@ -1,0 +1,36 @@
+{
+  "name": "Shuangpin",
+  "version": "0.0.1",
+  "description": "",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "input",
+    "unlimitedStorage",
+    "background",
+    "alarms",
+    "storage"
+  ],
+  "input_components": [
+    {
+    "name": "Pinyin",
+    "type": "ime",
+    "id": "zh-t-i0-pinyin",
+    "description": "Pinyin",
+    "language": "zh",
+    "layouts": ["us"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "双拼"
+  },
+  "options_page": "option.html",
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*",
+    "<all_urls>"
+  ]
+}
