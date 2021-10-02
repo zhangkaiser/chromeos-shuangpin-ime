@@ -69,7 +69,7 @@ export class Database extends EventTarget {
   }
 
   async get(colName: Collection, keyValue: IDBValidKey | IDBKeyRange, indexName?: string) {
-    let collection = await this.collection(colName)
+    let collection = await this.readCollection(colName)
     
     if (indexName) { // IDBIndex support.
       let index = collection?.index(indexName);
@@ -77,6 +77,18 @@ export class Database extends EventTarget {
     } else { // Keypath
       return await idbRequestResult(collection!.get(keyValue))
     }
+  }
+
+  async openCursor(colName: Collection, range:IDBValidKey | IDBKeyRange, indexName?: string) {
+    let collection = await this.readCollection(colName);
+
+    if (indexName) {
+      let index = collection?.index(indexName);
+      return await idbCursorRequest(index!.openCursor(range)); 
+    } else {
+      return await idbCursorRequest(collection!.openCursor(range))
+    }
+
   }
 
   async count(colName: Collection, query?: IDBValidKey | IDBKeyRange) {
@@ -106,5 +118,21 @@ export function idbRequestResult(idbRequest: IDBRequest) {
     }
 
     idbRequest.onerror = reject
+  })
+}
+
+export function idbCursorRequest(idbRequest: IDBRequest<IDBCursorWithValue | null>):Promise<any[]> {
+  let arr: any = [];
+  return new Promise((resolve) => {
+    idbRequest.onsuccess = (event) => {
+      let cursor = (event.target! as any).result
+      if (cursor) {
+        arr.push(cursor.value);
+        cursor.continue();
+      } else {
+        console.log('idbCursorRequest', arr);
+        resolve(arr);
+      }
+    }
   })
 }

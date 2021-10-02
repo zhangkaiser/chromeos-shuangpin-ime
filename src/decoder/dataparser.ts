@@ -161,19 +161,33 @@ export class DataParser {
   // @important !TODO 双拼应该从此处 opt_isAllInitials 入手
   async getTargetMappings(tokens: string[][], opt_isAllInitials?: boolean): Promise<Target[]> {
     let sources = await this.getTokenSequences(tokens, opt_isAllInitials);
-    let targetMappings = [];
+    let targetMappings: Target[] = [];
     // error!!
 
     for (let j = 0; j < sources.length; ++j) {
       let source = sources[j];
       let targetPos = await this.getTargetPos(source);
-      for (let i = targetPos.start; i < targetPos.end; i++) {
-        let targetSegment = await this.dataLoader.targetSegments(i + 1);
-        let segment = await this.decodeUnicodeString(targetSegment['segment']);
-        let prob = targetSegment['prob'];
-        let targetMapping = new Target(segment, this.normalizeProb(prob));
-        targetMappings.push(targetMapping)
+      if (targetPos.start < targetPos.end) {
+        let range = IDBKeyRange.bound(targetPos.start, targetPos.end, false, true);
+        let targetSegments = await this.dataLoader.targetSegementsCursor(range);
+        
+        let segmentsPromise = Promise.all(targetSegments.map((targetSegment) => 
+          this.decodeUnicodeString(targetSegment['segment'])));
+        let segments = await segmentsPromise;
+        segments.forEach((segment, index) => {
+          let targetMapping = new Target(segment, this.normalizeProb(targetSegments[index]['prob']))
+          targetMappings.push(targetMapping)
+        })
       }
+      
+
+      // for (let i = targetPos.start; i < targetPos.end; i++) {
+      //   let targetSegment = await this.dataLoader.targetSegments(i + 1);
+      //   let segment = await this.decodeUnicodeString(targetSegment['segment']);
+      //   let prob = targetSegment['prob'];
+      //   let targetMapping = new Target(segment, this.normalizeProb(prob));
+      //   targetMappings.push(targetMapping)
+      // }
 
       if (opt_isAllInitials && j == 0 && targetPos.start < targetPos.end) {
         break;
@@ -242,8 +256,11 @@ export class DataParser {
       let bit:number = num % 2;
       num = (num - bit) / 2;
       indexStr = `${indexStr}${bit}`
+      let targetMap
+      if(indexStr.length > 6) {
+        targetMap = await this.dataLoader.targetMap(indexStr)
+      }
 
-      let targetMap = await this.dataLoader.targetMap(indexStr)
       if (targetMap) {
         // Got the value
         str = str + targetMap;

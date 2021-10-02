@@ -149,6 +149,13 @@ export class DataLoader {
     return await this.db.get(Collection.TARGET_SEGMENTS, index) as TargetSegment;
   }
 
+  /**
+   * The targetSegements model data list.
+   */
+  async targetSegementsCursor(range: IDBKeyRange | IDBValidKey) {
+    return await this.db.openCursor(Collection.TARGET_SEGMENTS, range) as TargetSegment[];
+  }
+
   async targetSegmentsCount() {
     return await this.db.count(Collection.TARGET_SEGMENTS)
   }

@@ -1,5 +1,5 @@
 import { Candidate } from "./candidate";
-import { Decoder } from "../decoder/decoder";
+import { Decoder, IMEResponse } from "../decoder/decoder";
 import { configFactoryInstance } from "./configfactory";
 import { EventType, InputToolCode, Status } from "./enums";
 
@@ -100,7 +100,7 @@ export class Model extends EventTarget {
   /**
    * Moves the cursor to the left.
    */
-  async moveCursorLeft() {
+  moveCursorLeft() {
     if (this.status != Status.SELECT || this.cursorPos <= 0) {
       return ;
     }
@@ -118,14 +118,14 @@ export class Model extends EventTarget {
     this.dispatchEvent(new CustomEvent(EventType.MODELUPDATED))
     this._holdSelectStatus = true;
     if (this.source) {
-      await this.#fetchCandidates();
+      this.#fetchCandidates();
     }
   }
 
   /**
    * Moves the cursor to the right.
    */
-  async moveCursorRight() {
+  moveCursorRight() {
     if (this.status != Status.SELECT || this.cursorPos >= this.segments.length) {
       return;
     }
@@ -146,7 +146,7 @@ export class Model extends EventTarget {
     // Event
     this.dispatchEvent(new CustomEvent(EventType.MODELUPDATED));
     this._holdSelectStatus = true;
-    await this.#fetchCandidates();
+    this.#fetchCandidates();
   }
 
   /**
@@ -261,7 +261,7 @@ export class Model extends EventTarget {
    *
    * @param {string} text The text to append.
    */
-  async updateSource(text: string) {
+  updateSource(text: string) {
     // Check the max input length. If it's going to exceed the limit, do nothing.
     if (this.source.length + text.length > 
         this.configFactory.getCurrentConfig().maxInputLen) {
@@ -279,14 +279,14 @@ export class Model extends EventTarget {
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
     }
-    await this.#fetchCandidates();
+    this.#fetchCandidates();
   }
 
 
   /**
    * Processes revert, which is most likely caused by BACKSPACE.
    */
-   async revert() {
+  revert() {
     if (this.status != Status.FETCHING) {
       if (this.status == Status.SELECT) {
         this._holdSelectStatus = true
@@ -321,7 +321,7 @@ export class Model extends EventTarget {
         if (deletedChar == '\'') {
           this._decoder!.clear();
         }
-        await this.#fetchCandidates();
+        this.#fetchCandidates();
       }
     }
   }
@@ -336,7 +336,7 @@ export class Model extends EventTarget {
    * @param {string=} opt_commit The committed text if it causes a full commit.
    *  Or empty string if this is not a full commit.
    */
-   async selectCandidate(opt_index?: number, opt_commit?: string) {
+   selectCandidate(opt_index?: number, opt_commit?: string) {
     if (this.status == Status.FETCHING) {
       return;
     }
@@ -378,7 +378,39 @@ export class Model extends EventTarget {
     this.highlightIndex = -1;
     this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
     this._decoder!.clear();
-    await this.#fetchCandidates();
+    this.#fetchCandidates();
+  }
+
+
+  decodeSet:Promise<IMEResponse| null>[] = [];
+
+  decodePromise(index: number):Promise<IMEResponse| null> {
+    return new Promise((resolve, reject) => {
+
+      setTimeout(() => {
+        if (index == this.decodeSet.length) {
+          this.decodeSet[index - 1].then(resolve)
+        } else {
+          reject('The source was changed!');
+        }
+      }, 300)
+    })
+  }
+
+  getDecode(source: string) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (source == this.source) {
+          let currentDecodeIndex = this.decodeSet.push(
+            this._decoder!.decode(
+              source, this.configFactory.getCurrentConfig().requestNum)
+          );
+          this.decodePromise(currentDecodeIndex).then(resolve);
+        } else {
+          reject('source was changed!');
+        }
+      }, 100)
+    })  
   }
 
   /**
@@ -389,10 +421,11 @@ export class Model extends EventTarget {
     if (!this._decoder) {
       return ;
     }
-
     this.status = Status.FETCHING;
-    let ret = await this._decoder.decode(
-      this.source, this.configFactory.getCurrentConfig().requestNum);
+    
+    let ret = (await this.getDecode(this.source)) as IMEResponse
+    // let ret = await this._decoder.decode(
+    //   this.source, this.configFactory.getCurrentConfig().requestNum);
     console.log('input',ret);
     if (!ret) {
       this.status = Status.FETCHED;
