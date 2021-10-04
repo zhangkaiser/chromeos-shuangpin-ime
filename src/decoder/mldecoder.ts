@@ -56,9 +56,9 @@ export class MLDecoder {
    * with scores.
    */
   async transliterate(
-    /** The list of token list. */tokens: string[][],
-    /** The expected number of target word candidates */resultsNum: number,
-    /** The tokens are all initials. */isAllInitials?:boolean) {
+    /** The list of token list. */ tokens: string[][],
+    /** The expected number of target word candidates */ resultsNum: number,
+    /** The tokens are all initials. */ isAllInitials?:boolean) {
     if (tokens.length > MLDecoder.MAX_SOURCE_LENGTH) {
       return [];
     }

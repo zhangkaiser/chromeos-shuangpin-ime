@@ -1,6 +1,8 @@
 import {Database} from "./database";
 import { sourceMap, chosTokens, defaultProb, initialTokens } from "./staticdata";
 import { Collection, InputTool } from "./enums";
+import { targetMap } from "./targetMap";
+
 /**
  * DataLoader provides the functions to load token
  * dictionary, generation model and dictionary for the offline transliterator.
@@ -12,6 +14,7 @@ export class DataLoader {
   tokens: string;
   defaultProb: number;
   initialTokens: string;
+  targetMap: any;
   constructor(private inputTool: InputTool) {
     console.log(this.inputTool);
     this.db = new Database();
@@ -21,6 +24,7 @@ export class DataLoader {
     this.tokens = chosTokens;
     this.defaultProb =  defaultProb;
     this.initialTokens = initialTokens;
+    this.targetMap = targetMap;
   }
 
   /**
@@ -115,16 +119,16 @@ export class DataLoader {
   /**
    * The targetMap model data.
    */
-  async targetMap(bytes: string) {
-    return await this.db.get(Collection.TARGET_MAP, bytes)
-  }
+  // async targetMap(bytes: string) {
+  //   return await this.db.get(Collection.TARGET_MAP, bytes)
+  // }
 
   /**
    * The targetMap model data count.
    */
-  async targetMapCount() {
-    return await this.db.count(Collection.TARGET_MAP)
-  }
+  // async targetMapCount() {
+  //   return await this.db.count(Collection.TARGET_MAP)
+  // }
 
   /**
    * The targetPositions model data.

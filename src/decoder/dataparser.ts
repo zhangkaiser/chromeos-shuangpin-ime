@@ -158,7 +158,6 @@ export class DataParser {
   }
 
   /** Gets the target mapping from a source word. */
-  // @important !TODO 双拼应该从此处 opt_isAllInitials 入手
   async getTargetMappings(tokens: string[][], opt_isAllInitials?: boolean): Promise<Target[]> {
     let sources = await this.getTokenSequences(tokens, opt_isAllInitials);
     let targetMappings: Target[] = [];
@@ -171,24 +170,14 @@ export class DataParser {
         let range = IDBKeyRange.bound(targetPos.start, targetPos.end, false, true);
         let targetSegments = await this.dataLoader.targetSegementsCursor(range);
         
-        let segmentsPromise = Promise.all(targetSegments.map((targetSegment) => 
-          this.decodeUnicodeString(targetSegment['segment'])));
-        let segments = await segmentsPromise;
+        let segments = targetSegments.map((targetSegment) => 
+          this.decodeUnicodeString(targetSegment['segment']));
         segments.forEach((segment, index) => {
           let targetMapping = new Target(segment, this.normalizeProb(targetSegments[index]['prob']))
           targetMappings.push(targetMapping)
         })
       }
       
-
-      // for (let i = targetPos.start; i < targetPos.end; i++) {
-      //   let targetSegment = await this.dataLoader.targetSegments(i + 1);
-      //   let segment = await this.decodeUnicodeString(targetSegment['segment']);
-      //   let prob = targetSegment['prob'];
-      //   let targetMapping = new Target(segment, this.normalizeProb(prob));
-      //   targetMappings.push(targetMapping)
-      // }
-
       if (opt_isAllInitials && j == 0 && targetPos.start < targetPos.end) {
         break;
       }
@@ -239,32 +228,28 @@ export class DataParser {
   /**
    * Decode a number or a list of numbers to a string.
    */
-  async decodeUnicodeString(num: number | number[]) {
-    
+  decodeUnicodeString(num: number | number[]) {
+    let map = this.dataLoader.targetMap;
     if (Array.isArray(num)) {
       let str = '';
       for (let i = 0; i < num.length; i++) {
-        let substr = await this.decodeUnicodeString(i);
+        let substr = this.decodeUnicodeString(i);
         str = substr + str;
       }
       return str;
     }
 
     let str = '';
-    let indexStr = ''
+    // let indexStr = ''
+    let pos = map;
     while (num != 1) {
       let bit:number = num % 2;
       num = (num - bit) / 2;
-      indexStr = `${indexStr}${bit}`
-      let targetMap
-      if(indexStr.length > 6) {
-        targetMap = await this.dataLoader.targetMap(indexStr)
-      }
-
-      if (targetMap) {
+      pos = pos[bit];
+      if (!Array.isArray(pos)){
         // Got the value
-        str = str + targetMap;
-        indexStr = '';
+        str = str + pos;
+        pos = map;
       }
     }
     return str;

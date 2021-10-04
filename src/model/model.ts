@@ -1,5 +1,6 @@
 import { Candidate } from "./candidate";
 import { Decoder, IMEResponse } from "../decoder/decoder";
+import { Candidate as DecoderCandidate } from "../decoder/candidate";
 import { configFactoryInstance } from "./configfactory";
 import { EventType, InputToolCode, Status } from "./enums";
 
@@ -274,7 +275,8 @@ export class Model extends EventTarget {
       // Event
       this.dispatchEvent(new CustomEvent(EventType.OPENING));
     }
-    // Event
+
+    // Event,
     this.dispatchEvent(new CustomEvent(EventType.MODELUPDATED));
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
@@ -384,71 +386,106 @@ export class Model extends EventTarget {
 
   decodeSet:Promise<IMEResponse| null>[] = [];
 
-  decodePromise(index: number):Promise<IMEResponse| null> {
-    return new Promise((resolve, reject) => {
+  // decodePromise(index: number):Promise<IMEResponse| null> {
+  //   return new Promise((resolve, reject) => {
 
-      setTimeout(() => {
-        if (index == this.decodeSet.length) {
-          this.decodeSet[index - 1].then(resolve)
-        } else {
-          reject('The source was changed!');
-        }
-      }, 300)
-    })
-  }
+  //     setTimeout(() => {
+  //       if (index == this.decodeSet.length) {
+  //         this.decodeSet[index - 1].then(resolve)
+  //       } else {
+  //         reject('The source was changed!');
+  //       }
+  //     })
+  //   })
+  // }
 
-  getDecode(source: string) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (source == this.source) {
-          let currentDecodeIndex = this.decodeSet.push(
-            this._decoder!.decode(
-              source, this.configFactory.getCurrentConfig().requestNum)
-          );
-          this.decodePromise(currentDecodeIndex).then(resolve);
-        } else {
-          reject('source was changed!');
-        }
-      }, 100)
-    })  
+  // getDecode(source: string) {
+  //   return new Promise((resolve, reject) => {
+  //     setTimeout(() => {
+  //       if (source == this.source) {
+  //         let currentDecodeIndex = this.decodeSet.push(
+  //           this._decoder!.decode(
+  //             source, this.configFactory.getCurrentConfig().requestNum)
+  //         );
+  //         this.decodePromise(currentDecodeIndex).then(resolve);
+  //       } else {
+  //         reject('source was changed!');
+  //       }
+  //     })
+  //   })  
+  // }
+
+  /** decode promise */
+  decode?: Promise<DecoderCandidate[]>;
+
+
+  updateTokens(tokens: string[]) {
+    let committedSegments = this.segments.slice(0, this.commitPos);
+    let prefixSegments = committedSegments.concat(tokens)
+    let suffixSegments = this.segments.slice(this.cursorPos);
+    this.source = tokens.join('');
+    this.segments = prefixSegments.concat(suffixSegments);
+    this.cursorPos = prefixSegments.length;
   }
 
   /**
    * Fetches candidates and composing text from decoder.
    */
-   async #fetchCandidates() {
+  #fetchCandidates() {
     
     if (!this._decoder) {
       return ;
     }
     this.status = Status.FETCHING;
-    
-    let ret = (await this.getDecode(this.source)) as IMEResponse
+
+    let sourceTokens = this._decoder.getTokens(this.source);
+    if (!sourceTokens) {
+      return ;
+    }
+
+    this.updateTokens(sourceTokens.originalTokenList)
+    if (this._rejectDecode) {
+      this._rejectDecode();
+    }
+    this.decodePromise(sourceTokens);
+
+    this.notifyUpdates();
+  }
+
+
+  _rejectDecode?: Function;
+
+  decodePromise(sourceTokens: any) { 
+    return new Promise((resolve, reject) => {
+      this._rejectDecode = reject;
+      if (!this._decoder) {
+        reject('No found decoder');
+        return ;
+      }
+      this._decoder.decode(sourceTokens,
+        this.configFactory.getCurrentConfig().requestNum).then((ret) => {
+          this.handleDecode(ret);
+          resolve(true);
+        });
+    })
+  }
+
+  handleDecode(candidates: DecoderCandidate[]) {
+
     // let ret = await this._decoder.decode(
     //   this.source, this.configFactory.getCurrentConfig().requestNum);
-    console.log('input',ret);
-    if (!ret) {
+    // console.log('input',ret);
+    if (!candidates) {
       this.status = Status.FETCHED;
       if (this.configFactory.getCurrentConfig().autoHighlight ||
          this._holdSelectStatus) {
-        this.enterSelectInternal();
+        this.enterSelectInternal(); 
       }
 
       this.candidates = [];
       this.notifyUpdates();
       return ;
     }
-
-    let candidates = ret.candidates;
-    let tokens = ret.tokens;
-    let committedSegments = this.segments.slice(0, this.commitPos);
-    let prefixSegments = committedSegments.concat(tokens)
-    let suffixSegments = this.segments.slice(this.cursorPos);
-
-    this.source = tokens.join('');
-
-    this.segments = prefixSegments.concat(suffixSegments);
-    this.cursorPos = prefixSegments.length;
 
     this.candidates = [];
     for (let i = 0; i < candidates.length; i++) {
@@ -464,4 +501,6 @@ export class Model extends EventTarget {
     }
     this.notifyUpdates();
   }
+
+
 }

@@ -25,7 +25,7 @@ export default class ConfigFactory {
   /**
    * Sets the current input tool by the given input tool code.
    */
-  setInputTool(inputToolCode: string) {
+  setInputTool(inputToolCode: InputToolCode | string) {
     this._inputToolCode = inputToolCode;
   }
 
@@ -50,7 +50,7 @@ export default class ConfigFactory {
    * Gets the config for the current input tool.
    */
   getCurrentConfig() {
-    if (!this._map) {
+    if (!Reflect.has(this._map, InputToolCode.PINYIN_SIMPLIFIED)) {
       this.#buildConfigs();
     }
 

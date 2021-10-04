@@ -130,7 +130,7 @@ export function idbCursorRequest(idbRequest: IDBRequest<IDBCursorWithValue | nul
         arr.push(cursor.value);
         cursor.continue();
       } else {
-        console.log('idbCursorRequest', arr);
+        // console.log('idbCursorRequest', arr);
         resolve(arr);
       }
     }
