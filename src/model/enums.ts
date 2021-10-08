@@ -25,7 +25,8 @@ export enum Key {
   ESC = 'Esc',
   LEFT = 'Left',
   RIGHT = 'Right',
-  INVALID = '\ufffd'
+  INVALID = '\ufffd',
+  HOME = '\u0000'
 }
 
 /** The modifiers for chrome os extension. */

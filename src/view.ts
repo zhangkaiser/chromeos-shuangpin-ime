@@ -106,7 +106,6 @@ export class View {
     }
   }
 
-
   /**
    * To refresh the editor.
    * @todo

@@ -119,8 +119,9 @@ export class Decoder {
       }
     }
 
-    return candidates;
-    // return new IMEResponse(originalTokenList, candidates);
+    console.log('decoder candidates', candidates);
+    // return candidates;
+    return new IMEResponse(tokens.originalTokenList, candidates);
   }
 
   /**

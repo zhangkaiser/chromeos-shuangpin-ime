@@ -21,7 +21,7 @@ export class Model extends EventTarget {
   configFactory = configFactoryInstance;
 
   /** Native client module. */
-  private _decoder?: Decoder;
+  protected _decoder?: Decoder;
 
   /** The status of the model. */
   status:Status = Status.INIT;
@@ -33,7 +33,7 @@ export class Model extends EventTarget {
   cursorPos = 0;
 
   /** The context, a.k.a. history text. */
-  context = '';
+  // context = '';
 
   /** The current index of highlighted candidate. */
   highlightIndex = -1;
@@ -42,7 +42,7 @@ export class Model extends EventTarget {
   commitPos = 0;
 
   /** Whether the model should holds select status. */
-  private _holdSelectStatus = false;
+  protected _holdSelectStatus = false;
 
   /**
    * Updates this.highlightIndex.
@@ -82,7 +82,7 @@ export class Model extends EventTarget {
 
     let pageSize = this.configFactory.getCurrentConfig().pageSize;
     this.updateHighlight((this.getPageIndex() + step) * pageSize);
-  } 
+  }
 
   /**
    * Gets the current page index.
@@ -262,7 +262,7 @@ export class Model extends EventTarget {
    *
    * @param {string} text The text to append.
    */
-  updateSource(text: string) {
+  async updateSource(text: string, requestId: string) {
     // Check the max input length. If it's going to exceed the limit, do nothing.
     if (this.source.length + text.length > 
         this.configFactory.getCurrentConfig().maxInputLen) {
@@ -281,7 +281,8 @@ export class Model extends EventTarget {
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
     }
-    this.#fetchCandidates();
+    await this.#fetchCandidates();
+    chrome.input.ime.keyEventHandled(requestId, true);
   }
 
 
@@ -444,38 +445,46 @@ export class Model extends EventTarget {
     }
 
     this.updateTokens(sourceTokens.originalTokenList)
-    if (this._rejectDecode) {
-      this._rejectDecode();
-    }
-    this.decodePromise(sourceTokens);
-
+    this._deocdes.forEach((item) => {
+      item.reject()
+    })
+    this.decodePromise(sourceTokens).then(console.log).catch(console.error);
+    this.status = Status.FETCHED;
     this.notifyUpdates();
   }
 
-
   _rejectDecode?: Function;
+  _deocdes: {
+    reject: Function,
+    promise?: any
+  }[] = [];
 
   decodePromise(sourceTokens: any) { 
     return new Promise((resolve, reject) => {
-      this._rejectDecode = reject;
-      if (!this._decoder) {
-        reject('No found decoder');
-        return ;
+      this._deocdes?.push({
+        reject
+      });
+
+      if (this.source == sourceTokens.originalTokenList.join('')) {
+        if (!this._decoder) {
+          reject('No found decoder');
+          return ;
+        }
+        this._decoder.decode(sourceTokens,
+          this.configFactory.getCurrentConfig().requestNum).then((ret) => {
+            this.handleDecode(ret);
+            resolve(true);
+          });
       }
-      this._decoder.decode(sourceTokens,
-        this.configFactory.getCurrentConfig().requestNum).then((ret) => {
-          this.handleDecode(ret);
-          resolve(true);
-        });
     })
   }
 
-  handleDecode(candidates: DecoderCandidate[]) {
+  handleDecode(ret: IMEResponse) {
 
     // let ret = await this._decoder.decode(
     //   this.source, this.configFactory.getCurrentConfig().requestNum);
     // console.log('input',ret);
-    if (!candidates) {
+    if (!ret.candidates) {
       this.status = Status.FETCHED;
       if (this.configFactory.getCurrentConfig().autoHighlight ||
          this._holdSelectStatus) {
@@ -487,12 +496,17 @@ export class Model extends EventTarget {
       return ;
     }
 
+    if (this.source != ret.tokens.join('')) {
+      this.status = Status.FETCHED;
+      return ;
+    }
+
     this.candidates = [];
-    for (let i = 0; i < candidates.length; i++) {
+    for (let i = 0; i < ret.candidates.length; i++) {
       this.candidates.push(
         new Candidate(
-          candidates[i].target.toString(), 
-          Number(candidates[i].range)));
+          ret.candidates[i].target.toString(), 
+          Number(ret.candidates[i].range)));
     }
 
     this.status = Status.FETCHED;

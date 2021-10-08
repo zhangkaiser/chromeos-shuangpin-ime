@@ -70,7 +70,7 @@ export class Config {
    * Transform when the popup editor opened.
    */
   transform(context: string, c: string) {
-    console.log(context);
+    console.log('tranform', context, c);
     return c;
   }
 
@@ -85,6 +85,7 @@ export class Config {
    * Transform the character on the editor text.
    */
   transformView(text: string) {
+    console.log('transformView', text);
     return text;
   }
 

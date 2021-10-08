@@ -1,4 +1,4 @@
-
+/// <reference path="./mvvm.d.ts" />
 interface Window {
   dataloader: any
 }

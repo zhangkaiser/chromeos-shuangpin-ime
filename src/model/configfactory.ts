@@ -5,6 +5,7 @@
 import { Config } from "./config";
 import { InputToolCode } from "./enums";
 import { PinyinConfig } from "./pinyinconfig";
+import { ShuangpinConfig } from "./shuangpinconfig";
 
 
 /**
@@ -72,6 +73,9 @@ export default class ConfigFactory {
 
     let pinyinConfig = new PinyinConfig();
     this._map[code.PINYIN_SIMPLIFIED] = pinyinConfig;
+
+    let shuangpinConfig = new ShuangpinConfig();
+    this._map[code.SHUANGPIN_SIMPLIFIED] = shuangpinConfig;
   }
 }
 

@@ -159,15 +159,13 @@ export class DataParser {
 
   /** Gets the target mapping from a source word. */
   async getTargetMappings(tokens: string[][], opt_isAllInitials?: boolean): Promise<Target[]> {
-    let sources = await this.getTokenSequences(tokens, opt_isAllInitials);
+    let sources = this.getTokenSequences(tokens, opt_isAllInitials);
     let targetMappings: Target[] = [];
-    // error!!
-
-    for (let j = 0; j < sources.length; ++j) {
-      let source = sources[j];
+    for(let i = 0; i < sources.length; ++i) {
+      let source = sources[i];
       let targetPos = await this.getTargetPos(source);
       if (targetPos.start < targetPos.end) {
-        let range = IDBKeyRange.bound(targetPos.start, targetPos.end, false, true);
+        let range = IDBKeyRange.bound(targetPos.start - 1, targetPos.end, true, false);
         let targetSegments = await this.dataLoader.targetSegementsCursor(range);
         
         let segments = targetSegments.map((targetSegment) => 
@@ -178,7 +176,7 @@ export class DataParser {
         })
       }
       
-      if (opt_isAllInitials && j == 0 && targetPos.start < targetPos.end) {
+      if (opt_isAllInitials && i == 0 && targetPos.start < targetPos.end) {
         break;
       }
     }

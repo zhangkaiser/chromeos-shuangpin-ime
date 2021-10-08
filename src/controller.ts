@@ -186,7 +186,11 @@ export class Controller {
    * Handles key event.
    * @return {boolean} True if the event is handled successfully.
    */
-  handleEvent(e: any) {
+  requestId?: string;
+
+  handleEvent(event: any) {
+    let e = event.keyEvent;
+    this.requestId = event.requestId;
     let inputTool = this.configFactory.getInputTool();
     if (!this._context || !inputTool || !this._keyActionTable) {
       return false;
@@ -263,8 +267,8 @@ export class Controller {
     if (!text) {
       return this.model.status != Status.INIT;
     }
-    this.model.updateSource(text);
-    return true;
+    this.model.updateSource(text, this.requestId);
+    return undefined;
   }
 
 
