@@ -52,7 +52,7 @@ export class Heap {
   /** The nodes of the heap; */
   private _nodes:Node<any, any>[] = [];
   constructor(
-    /** Heap od Object to initialize heap with. */ heap?:Heap | Object) {   
+    /** Heap od Object to initialize heap with. */heap?:Heap | Object) {   
     if (heap) {
       this.insertAll(heap);
     }

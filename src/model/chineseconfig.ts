@@ -115,7 +115,6 @@ export default class ChineseConfig extends Config {
 	 * @param {*} ch 
 	 */
 	preTransform(ch: string) {
-    console.log('preTransform', ch);
 		if (!this.states[StateID.LANG] || 
 			!this.states[StateID.SBC] || 
 			!this.states[StateID.PUNC]) {
@@ -143,7 +142,6 @@ export default class ChineseConfig extends Config {
 	}
 
 	postTransform(c: string) {
-    console.log('postTransform', c);
 		let preTrans = this.preTransform(c);
 		return preTrans ? preTrans : c;
 	}

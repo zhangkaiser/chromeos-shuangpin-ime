@@ -16,9 +16,6 @@ import { Heap } from "./heap";
  */
 export class MLDecoder {
 
-  /** The data loader. */
-  #dataLoader: DataLoader;
-
   /**
    * The machine learning training data parser.
    * The data loader starts to load the model data at the creation of this
@@ -27,10 +24,10 @@ export class MLDecoder {
   #parser: DataParser
 
   /** The sub-translit cache. */
-  private _subTranslitCache = new Map<string, Heap>();
+  private _subTranslitCache:Record<string, Heap> = {};
 
   /** The pre-translit cache. */
-  private _preTranslitCache = new Map<string, Heap>();
+  private _preTranslitCache:Record<string, Heap> = {};
 
   /** The maximun size of each heap in cache. */
   private _pruneNum = 1;
@@ -44,21 +41,18 @@ export class MLDecoder {
   /** Factor to punish multi-segments matches. */
   static MULTI_SEGMENT_FACTOR = -0.7;  
 
-  constructor(private inputTool: InputTool, dataLoader?: DataLoader) {
-
-    this.#dataLoader = dataLoader || new DataLoader(this.inputTool);
-    this.#parser = new DataParser(this.inputTool, this.#dataLoader);
-
+  constructor(private inputTool: InputTool, private _dataLoader: DataLoader) {
+    this.#parser = new DataParser(this.inputTool, this._dataLoader);
   }
 
   /**
    * Transliterate the given source word, computing the target word candidates
    * with scores.
    */
-  async transliterate(
-    /** The list of token list. */ tokens: string[][],
-    /** The expected number of target word candidates */ resultsNum: number,
-    /** The tokens are all initials. */ isAllInitials?:boolean) {
+  transliterate(
+    /** The list of token list. */tokens: string[][],
+    /** The expected number of target word candidates */resultsNum: number,
+    /** The tokens are all initials. */isAllInitials?:boolean) {
     if (tokens.length > MLDecoder.MAX_SOURCE_LENGTH) {
       return [];
     }
@@ -71,12 +65,12 @@ export class MLDecoder {
      * Generates the original transliterations for the source text, it matches
      * the all text.
      */
-    let transliterations = await this.#generateTransliterations(
+    let transliterations = this.#generateTransliterations(
       tokens, isAllInitials);      
     /**
      * Generates the prefix matched target words.
      */
-    let prefixCandidates = await this.#generatePrefixTransliterations(
+    let prefixCandidates = this.#generatePrefixTransliterations(
       tokens, resultsNum, isAllInitials);
     /**
      * Return The original transliterations according to soundex rules, target
@@ -89,14 +83,14 @@ export class MLDecoder {
   /**
    * Generates transliterations for tokens with associated scores.
    */
-  async #generateTransliterations(tokens:string[][], isAllInitials?: boolean) {
-    let subTranslit = this._subTranslitCache.get(this.#getKey(tokens));
+  #generateTransliterations(tokens:string[][], isAllInitials?: boolean) {
+    let subTranslit = this._subTranslitCache[this.#getKey(tokens)];
     if (subTranslit) {
       return subTranslit;
     }
 
     let transliterations = new Heap();
-    let sentence = await this.#parser.getTargetMappings(tokens, isAllInitials);
+    let sentence = this.#parser.getTargetMappings(tokens, isAllInitials);
     this.#updateScoresForTargets(sentence, transliterations);
 
     // Try out transliterations for all possible ways of breaking the word into
@@ -111,7 +105,7 @@ export class MLDecoder {
       var targetPrefixScores = new Heap();
       var targetSuffixScores = new Heap();
 
-      var targetSuffixes = await this.#parser.getTargetMappings(
+      var targetSuffixes = this.#parser.getTargetMappings(
           sourceSuffix, isAllInitials);
       // Update the targetPrefixScores for all words in targetPrefixes. Also
       // multiply each score by the probability of this source prefix segment
@@ -124,10 +118,10 @@ export class MLDecoder {
 
       // If the transliterations for source_word have already been found, then
       // simply return them.
-      if (this._subTranslitCache.has(this.#getKey(sourcePrefix))) {
-        targetPrefixScores = this._subTranslitCache.get(this.#getKey(sourcePrefix))!;
+      if (this._subTranslitCache[this.#getKey(sourcePrefix)]) {
+        targetPrefixScores = this._subTranslitCache[this.#getKey(sourcePrefix)];
       } else {
-        targetPrefixScores = await this.#generateTransliterations(sourcePrefix);
+        targetPrefixScores = this.#generateTransliterations(sourcePrefix);
       }
 
       // Combines sourceSegment and suffixSegment.
@@ -151,30 +145,30 @@ export class MLDecoder {
       }
     }
     // Cache the results.
-    this._subTranslitCache.set(this.#getKey(tokens), transliterations)
+    this._subTranslitCache[this.#getKey(tokens)] = transliterations;
     return transliterations;
   }
 
   /**
    * Generates the prefix matched target words.
    */
-  async #generatePrefixTransliterations(
+  #generatePrefixTransliterations(
     tokens: string[][],
     resultsNum: number,
     isAllInitials?: boolean ) {
-    if (this._preTranslitCache.has(this.#getKey(tokens))) {
-      return this._preTranslitCache.get(this.#getKey(tokens))!
+    if (this._preTranslitCache[this.#getKey(tokens)]) {
+      return this._preTranslitCache[this.#getKey(tokens)]
     }
 
     var candidates = new Heap();
     var length = tokens.length;
     for (var i = 1; i <= length; i++) {
       var sourcePrefix = tokens.slice(0, i);
-      if (this._preTranslitCache.has(this.#getKey(sourcePrefix))) {
+      if (this._preTranslitCache[this.#getKey(sourcePrefix)]) {
         candidates.clear();
-        candidates.insertAll(this._preTranslitCache.get(this.#getKey(sourcePrefix))!);
+        candidates.insertAll(this._preTranslitCache[this.#getKey(sourcePrefix)]);
       } else {
-        var targetPrefixes = await this.#parser.getTargetMappings(
+        var targetPrefixes = this.#parser.getTargetMappings(
             sourcePrefix, isAllInitials);
         for (var j = 0; j < targetPrefixes.length; ++j) {
           var targetPrefix = targetPrefixes[j];
@@ -185,7 +179,7 @@ export class MLDecoder {
         if (candidates.size > resultsNum) {
           candidates.remove();
         }
-        this._preTranslitCache.set(this.#getKey(sourcePrefix), candidates);
+        this._preTranslitCache[this.#getKey(sourcePrefix)] = candidates;
       }
     }
     return candidates;      
@@ -254,27 +248,25 @@ export class MLDecoder {
    * Clear the cache.
    */
   clear() {
-    this._subTranslitCache.forEach((heap) => {
-      heap.clear();
-    })
-    this._subTranslitCache.clear();
+    for (var key in this._subTranslitCache) {
+      this._subTranslitCache[key].clear();
+    }
+    this._subTranslitCache = {};
   
-    this._preTranslitCache.forEach((heap) => {
-      heap.clear();
-    })
-    this._preTranslitCache.clear();
+    for (var key in this._preTranslitCache) {
+      this._preTranslitCache[key].clear();
+    }
+    this._preTranslitCache = {};
   }
 
   /**
    * Gets the key for a list of token lists in the cache.
    */
-  #getKey(tokens: string[][]) {
+  #getKey = function(tokens: string[][]) {
     var ret = '';
-
-    tokens.forEach((token) => {
-      ret += token[0];
-    })
-
+    for (var i = 0; i < tokens.length; ++i) {
+      ret += tokens[i][0];
+    }
     return ret;
   };
 }

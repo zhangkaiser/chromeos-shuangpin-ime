@@ -1,3 +1,4 @@
+import { binarySearch, compare3 } from "../utils/binarySearch";
 import type { DataLoader } from "./dataloader";
 import  type { InputTool } from "./enums";
 /**
@@ -117,16 +118,20 @@ export class DataParser {
    * default probability, normalizes it.
    * @return the normalized probability.
    */
-  normalizeProb(prob: number) {
+  normalizeProb(prob: number | null) {
     return prob ? (prob / this._defaultProb) : 1;
   }
 
   /**
    * Gets the position of the encoded source word in the source word array.
    */
-  protected async getSourcePos(/** The source tokens. */source: string[]) {
+  protected getSourcePos(/** The source tokens. */source: string[]) {
     let sourceIndex = this.encodeUnicodeString(source);
-    return await this.dataLoader.targetPositionsSource(sourceIndex);
+    return binarySearch(
+      this.dataLoader.sourceSegments,
+      this.compareFn,
+      sourceIndex
+    );
   }
 
 
@@ -135,9 +140,9 @@ export class DataParser {
    * the target word array.
    * !TODO
    */
-  async getTargetPos(source:string[]) {
+  getTargetPos(source:string[]) {
     let targetPos: {start: number, end: number};
-    let sourcePos = await this.getSourcePos(source);
+    let sourcePos = this.getSourcePos(source);
     if (!sourcePos) {
       // 这里需要修改,应该是存在在数据库中,就无法使用索引来获取数据
       targetPos = {
@@ -145,38 +150,35 @@ export class DataParser {
         end: -1
       }
     } else {
-      let currentOffset = sourcePos['position'];
-      let nextOffset = (sourcePos['index'] - 1) < ((await this.dataLoader.targetPositionsCount()) - 1)
-        ? (await this.dataLoader.targetPositions(sourcePos['index'] + 1))!['position']
-        : (await this.dataLoader.targetSegmentsCount());
+      let currentOffset = this.dataLoader.targetPositions[sourcePos];
+      let nextOffset = sourcePos < this.dataLoader.targetPositions.length - 1
+        ? this.dataLoader.targetPositions[sourcePos + 1] 
+        : this.dataLoader.targetSegments.length;
       
       targetPos = {start: currentOffset , end: nextOffset};
     }
 
     return targetPos;
-
   }
 
   /** Gets the target mapping from a source word. */
-  async getTargetMappings(tokens: string[][], opt_isAllInitials?: boolean): Promise<Target[]> {
+  getTargetMappings(tokens: string[][], opt_isAllInitials?: boolean): Target[] {
     let sources = this.getTokenSequences(tokens, opt_isAllInitials);
     let targetMappings: Target[] = [];
-    for(let i = 0; i < sources.length; ++i) {
-      let source = sources[i];
-      let targetPos = await this.getTargetPos(source);
-      if (targetPos.start < targetPos.end) {
-        let range = IDBKeyRange.bound(targetPos.start - 1, targetPos.end, true, false);
-        let targetSegments = await this.dataLoader.targetSegementsCursor(range);
-        
-        let segments = targetSegments.map((targetSegment) => 
-          this.decodeUnicodeString(targetSegment['segment']));
-        segments.forEach((segment, index) => {
-          let targetMapping = new Target(segment, this.normalizeProb(targetSegments[index]['prob']))
-          targetMappings.push(targetMapping)
-        })
+
+    for (let j = 0; j < sources.length; ++j) {
+      let source = sources[j];
+      let {targetSegments, targetProbs} = this.dataLoader;
+      let targetPos = this.getTargetPos(source);
+      let {start, end} = targetPos;
+      for (let i = start; i < end; i++) {
+        let segment = this.decodeUnicodeString(targetSegments[i]);
+        let prob = targetProbs[i];
+        let targetMapping = new Target(segment, this.normalizeProb(prob));
+        targetMappings.push(targetMapping);
       }
-      
-      if (opt_isAllInitials && i == 0 && targetPos.start < targetPos.end) {
+
+      if (opt_isAllInitials && j == 0 && targetPos.start < targetPos.end) {
         break;
       }
     }
@@ -238,13 +240,13 @@ export class DataParser {
     }
 
     let str = '';
-    // let indexStr = ''
-    let pos = map;
+    let pos: any = map;
     while (num != 1) {
       let bit:number = num % 2;
       num = (num - bit) / 2;
       pos = pos[bit];
-      if (!Array.isArray(pos)){
+
+      if (!Array.isArray(pos)) {
         // Got the value
         str = str + pos;
         pos = map;
@@ -280,5 +282,22 @@ export class DataParser {
       }
     }
     return opt_isAllInitials ? [path].concat(ret) : ret;
+  }
+
+  compareFn(a: any, b: any) {
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length == b.length) {
+        return compare3(a, b);
+      }
+      return a.length - b.length;
+    }
+    if (Array.isArray(a)) {
+      return 1;
+    }
+    if (Array.isArray(b)) {
+      return -1;
+    }
+
+    return a - b;
   }
 }

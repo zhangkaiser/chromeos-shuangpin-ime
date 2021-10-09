@@ -1,6 +1,5 @@
 import { Candidate } from "./candidate";
-import { Decoder, IMEResponse } from "../decoder/decoder";
-import { Candidate as DecoderCandidate } from "../decoder/candidate";
+import { Decoder } from "../decoder/decoder";
 import { configFactoryInstance } from "./configfactory";
 import { EventType, InputToolCode, Status } from "./enums";
 
@@ -33,7 +32,7 @@ export class Model extends EventTarget {
   cursorPos = 0;
 
   /** The context, a.k.a. history text. */
-  // context = '';
+  context = '';
 
   /** The current index of highlighted candidate. */
   highlightIndex = -1;
@@ -82,7 +81,7 @@ export class Model extends EventTarget {
 
     let pageSize = this.configFactory.getCurrentConfig().pageSize;
     this.updateHighlight((this.getPageIndex() + step) * pageSize);
-  }
+  } 
 
   /**
    * Gets the current page index.
@@ -262,7 +261,7 @@ export class Model extends EventTarget {
    *
    * @param {string} text The text to append.
    */
-  async updateSource(text: string, requestId: string) {
+  updateSource(text: string) {
     // Check the max input length. If it's going to exceed the limit, do nothing.
     if (this.source.length + text.length > 
         this.configFactory.getCurrentConfig().maxInputLen) {
@@ -275,14 +274,12 @@ export class Model extends EventTarget {
       // Event
       this.dispatchEvent(new CustomEvent(EventType.OPENING));
     }
-
-    // Event,
+    // Event
     this.dispatchEvent(new CustomEvent(EventType.MODELUPDATED));
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
     }
-    await this.#fetchCandidates();
-    chrome.input.ime.keyEventHandled(requestId, true);
+    this.#fetchCandidates();
   }
 
 
@@ -384,51 +381,6 @@ export class Model extends EventTarget {
     this.#fetchCandidates();
   }
 
-
-  decodeSet:Promise<IMEResponse| null>[] = [];
-
-  // decodePromise(index: number):Promise<IMEResponse| null> {
-  //   return new Promise((resolve, reject) => {
-
-  //     setTimeout(() => {
-  //       if (index == this.decodeSet.length) {
-  //         this.decodeSet[index - 1].then(resolve)
-  //       } else {
-  //         reject('The source was changed!');
-  //       }
-  //     })
-  //   })
-  // }
-
-  // getDecode(source: string) {
-  //   return new Promise((resolve, reject) => {
-  //     setTimeout(() => {
-  //       if (source == this.source) {
-  //         let currentDecodeIndex = this.decodeSet.push(
-  //           this._decoder!.decode(
-  //             source, this.configFactory.getCurrentConfig().requestNum)
-  //         );
-  //         this.decodePromise(currentDecodeIndex).then(resolve);
-  //       } else {
-  //         reject('source was changed!');
-  //       }
-  //     })
-  //   })  
-  // }
-
-  /** decode promise */
-  decode?: Promise<DecoderCandidate[]>;
-
-
-  updateTokens(tokens: string[]) {
-    let committedSegments = this.segments.slice(0, this.commitPos);
-    let prefixSegments = committedSegments.concat(tokens)
-    let suffixSegments = this.segments.slice(this.cursorPos);
-    this.source = tokens.join('');
-    this.segments = prefixSegments.concat(suffixSegments);
-    this.cursorPos = prefixSegments.length;
-  }
-
   /**
    * Fetches candidates and composing text from decoder.
    */
@@ -438,53 +390,11 @@ export class Model extends EventTarget {
       return ;
     }
     this.status = Status.FETCHING;
-
-    let sourceTokens = this._decoder.getTokens(this.source);
-    if (!sourceTokens) {
-      return ;
-    }
-
-    this.updateTokens(sourceTokens.originalTokenList)
-    this._deocdes.forEach((item) => {
-      item.reject()
-    })
-    this.decodePromise(sourceTokens).then(console.log).catch(console.error);
-    this.status = Status.FETCHED;
-    this.notifyUpdates();
-  }
-
-  _rejectDecode?: Function;
-  _deocdes: {
-    reject: Function,
-    promise?: any
-  }[] = [];
-
-  decodePromise(sourceTokens: any) { 
-    return new Promise((resolve, reject) => {
-      this._deocdes?.push({
-        reject
-      });
-
-      if (this.source == sourceTokens.originalTokenList.join('')) {
-        if (!this._decoder) {
-          reject('No found decoder');
-          return ;
-        }
-        this._decoder.decode(sourceTokens,
-          this.configFactory.getCurrentConfig().requestNum).then((ret) => {
-            this.handleDecode(ret);
-            resolve(true);
-          });
-      }
-    })
-  }
-
-  handleDecode(ret: IMEResponse) {
-
-    // let ret = await this._decoder.decode(
-    //   this.source, this.configFactory.getCurrentConfig().requestNum);
-    // console.log('input',ret);
-    if (!ret.candidates) {
+    
+    let ret = this._decoder.decode(
+      this.source, this.configFactory.getCurrentConfig().requestNum);
+    console.log('input',ret);
+    if (!ret) {
       this.status = Status.FETCHED;
       if (this.configFactory.getCurrentConfig().autoHighlight ||
          this._holdSelectStatus) {
@@ -496,17 +406,23 @@ export class Model extends EventTarget {
       return ;
     }
 
-    if (this.source != ret.tokens.join('')) {
-      this.status = Status.FETCHED;
-      return ;
-    }
+    let candidates = ret.candidates;
+    let tokens = ret.tokens;
+    let committedSegments = this.segments.slice(0, this.commitPos);
+    let prefixSegments = committedSegments.concat(tokens)
+    let suffixSegments = this.segments.slice(this.cursorPos);
+
+    this.source = tokens.join('');
+
+    this.segments = prefixSegments.concat(suffixSegments);
+    this.cursorPos = prefixSegments.length;
 
     this.candidates = [];
-    for (let i = 0; i < ret.candidates.length; i++) {
+    for (let i = 0; i < candidates.length; i++) {
       this.candidates.push(
         new Candidate(
-          ret.candidates[i].target.toString(), 
-          Number(ret.candidates[i].range)));
+          candidates[i].target.toString(), 
+          Number(candidates[i].range)));
     }
 
     this.status = Status.FETCHED;
@@ -515,6 +431,4 @@ export class Model extends EventTarget {
     }
     this.notifyUpdates();
   }
-
-
 }

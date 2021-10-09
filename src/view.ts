@@ -3,7 +3,6 @@
  */
 
 import { configFactoryInstance } from "./model/configfactory";
-// import { Status } from "./model/enums";
 import type { Model } from "./model/model";
 
 export class View {
@@ -25,8 +24,6 @@ export class View {
   /** Updates the menu items. */
   updateInputTool() {
     this._inputToolCode = this.configFactory.getInputTool();
-    console.log('updateInputTool', this._inputToolCode);
-
     this.updateItems();
   }
 
@@ -50,12 +47,12 @@ export class View {
         'visible': true
       });
   
-      chrome.input.ime.setMenuItems({
-        'engineID': this._inputToolCode,
-        'items': menuItems
-      }, function() {
-        console.log('setMenuItems')
-      });          
+      chrome.input.ime.setMenuItems(
+        {
+          'engineID': this._inputToolCode,
+          'items': menuItems
+        }
+      );
     }
   }
 
@@ -64,13 +61,10 @@ export class View {
    */
   show() {
     if (this._inputToolCode) {
-      let candidateWindowProperties = this.configFactory.getCurrentConfig().candidateProps;
       chrome.input.ime.setCandidateWindowProperties(
         {
           'engineID': this._inputToolCode,
-          'properties': candidateWindowProperties
-        },() => {
-          console.log('setCandidateWindowProperties', candidateWindowProperties)
+          'properties': {'visible': true}
         });
     }
   }
@@ -80,35 +74,25 @@ export class View {
    */
    hide() {
     if (this._inputToolCode) {
-      chrome.input.ime.setCandidateWindowProperties({
-        'engineID': this._inputToolCode,
-        'properties': {
-          'visible': false
-        }
-      }, () => {
-        console.log('setCandidateWindowProperties', {visible: false})
-      });
+      chrome.input.ime.setCandidateWindowProperties(
+          {'engineID': this._inputToolCode,
+            'properties': {'visible': false}});
     }
   
     if (this._context) {
       chrome.input.ime.clearComposition({
         'contextID': this._context.contextID
-      }, () => {
-        console.log('hide.clearComposition', this._context.contextID)
-      });
+      }, console.log);
   
       chrome.input.ime.setCandidates({
         'contextID': this._context.contextID,
-        'candidates': []
-      }, () => {
-        console.log('hide.setCandidates', [])
-      });
+        'candidates': []});
     }
   }
 
+
   /**
    * To refresh the editor.
-   * @todo
    */
   refresh() {
     if (!this._context) {
@@ -127,12 +111,11 @@ export class View {
     }
     composing_text = this.configFactory.getCurrentConfig().transformView(
         composing_text);
-    let props = {
-      'contextID': this._context.contextID,
-      'text': composing_text,
-      'cursor': pos
-    }
-    chrome.input.ime.setComposition(props);
+    chrome.input.ime.setComposition(
+        {
+          'contextID': this._context.contextID,
+          'text': composing_text,
+          'cursor': pos});
     this.showCandidates();
   }
 
@@ -153,49 +136,31 @@ export class View {
       let label = (i + 1 - from).toString();
       displayItems.push({
         'candidate': candidate.target,
-        'annotation': label + candidate.target,
         'label': label,
         'id': i - from});
     }
 
-    let candidatesProps = {
+    chrome.input.ime.setCandidates({
       'contextID': this._context.contextID,
-      'candidates': displayItems
-    }
-
-    chrome.input.ime.setCandidates(candidatesProps, () => {
-        console.log('showCandidates.setCandidates', candidatesProps)
-      });
+      'candidates': displayItems});
     if (to > from) {
       let hasHighlight = (this.model.highlightIndex >= 0);
-
-      let props = {...this.configFactory.getCurrentConfig().candidateProps, ...{
-        'cursorVisible': hasHighlight,
-        'pageSize': to - from
-      }}
       chrome.input.ime.setCandidateWindowProperties({
         'engineID': this._inputToolCode,
-        'properties': props
-      }, () => {
-        console.log('showCandidates.setCandidatesWindowProperties', props)
-      });
+        'properties': {
+          'visible': true,
+          'cursorVisible': hasHighlight,
+          'vertical': true,
+          'pageSize': to - from}});
       if (hasHighlight) {
-        let props = {
+        chrome.input.ime.setCursorPosition({
           'contextID': this._context.contextID,
-          'candidateID': this.model.highlightIndex % pageSize
-        }
-        chrome.input.ime.setCursorPosition(props, () => {
-          console.log('showCandiddates.setCursorPostiion', props)
-        });
+          'candidateID': this.model.highlightIndex % pageSize});
       }
     } else {
       chrome.input.ime.setCandidateWindowProperties({
         'engineID': this._inputToolCode,
-        'properties': {
-          'visible': false
-        }
-      }, () => 
-        console.log('showCandidates.setCandidatesWindowProperties', {visible: false}));
+        'properties': {'visible': false}});
     }
   }
 }

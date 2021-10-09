@@ -1,8 +1,6 @@
 import { Controller } from "./controller";
-// import type { InputToolCode, StateID } from "./model/enums";
+import type { InputToolCode, StateID } from "./model/enums";
 
-
-let serverWorker: any = this;
 /**
  * The background class implements the script for the background page of chrome
  * os extension for os input tools.
@@ -25,69 +23,40 @@ export class Background {
     this.#updateSettingsFromLocalStorage();
 
     chrome.input.ime.onActivate.addListener((engineID) => {
-      console.log('onActivate', engineID);
-      serverWorker['engineID'] = engineID;
-      // this._controller.activate(engineID as InputToolCode);
+      this._controller.activate(engineID as InputToolCode);
     })
 
     chrome.input.ime.onDeactivated.addListener(() => {
-      // this._controller.deactivate();
-      console.log('deactivate');
+      this._controller.deactivate();
     });
   
     chrome.input.ime.onFocus.addListener((context) => {
-      // this._controller.register(context);
-      console.log('onFocus', context);
-      serverWorker['context'] = context;
+      this._controller.register(context);
     });
   
-    chrome.input.ime.onBlur.addListener((contextID) => {
-      // this._controller.unregister();
-      console.log('onBlur', contextID);
-
+    chrome.input.ime.onBlur.addListener((/** contextID */) => {
+      this._controller.unregister();
     });
 
-    chrome.input.ime.onReset.addListener((engineID) => {
-      // this._controller.reset();
-      console.log('onReset', engineID)
-    });
+    chrome.input.ime.onReset.addListener((/** engineID */) => {
+      this._controller.reset();
+    })
 
 
-    (chrome.input.ime.onKeyEvent as any).addListener((engineID: string, keyEvent: KeyboardEvent, requestId: string) => {
-      // return this._controller.handleEvent({
-      //   keyEvent,
-      //   requestId
-      // });
-
-      console.log('onKeyEvent', engineID, keyEvent, requestId);
-      return false;
+    chrome.input.ime.onKeyEvent.addListener((_, keyEvent) => {
+      return this._controller.handleEvent(keyEvent);
     });
 
 
     chrome.input.ime.onCandidateClicked.addListener((
-    engineID, candidateID, button) => {
-      // this._controller.processNumberKey({'key': candidateID + 1});
-      console.log('onCandidateClicked', engineID, candidateID, button);
+    _, candidateID, __) => {
+      this._controller.processNumberKey({'key': candidateID + 1});
     });
 
     chrome.input.ime.onMenuItemActivated.addListener((
-      engineID, name) => {
-      // this._controller.switchInputToolState(stateID as StateID);
-      console.log('onMenuItemActivated', engineID, name);
+      _, stateID) => {
+        this._controller.switchInputToolState(stateID as StateID);
     });
-
-    chrome.input.ime.onAssistiveWindowButtonClicked.addListener((details) => {
-      console.log('onAsstistiveWindowButtonClicked', details);
-    })
-
-    chrome.input.ime.onInputContextUpdate.addListener((context) => {
-      console.log('onInputContextUpdate', context);
-    })
-
-    chrome.input.ime.onSurroundingTextChanged.addListener((engineID, surroundingInfo) => {
-      console.log('onSurroundingTextChanged', engineID, surroundingInfo);
-    })
-
 
     if ((chrome as any).inputMethodPrivate && (chrome as any).inputMethodPrivate.startIme) {
       (chrome as any).inputMethodPrivate.startIme();

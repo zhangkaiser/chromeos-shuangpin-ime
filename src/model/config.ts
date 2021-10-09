@@ -49,17 +49,6 @@ export class Config {
   /** The select keys. */
   selectKeys = '1234567890';
 
-  /** The candidate window properties */
-  candidateProps = {
-    /** True to show the Candidate window, false to hide it. */
-    visible: true,
-    /* True if the candidate window should be rendered vertical, false to make it horizontal. */
-    vertical: false,
-    /** The total number of candidates for the candidate window. */
-    totalCandidates: 8
-  };
-
-
   /** Transform before the popup editor opened. */
   preTransform(c: string) {
     console.log(c);
@@ -70,7 +59,7 @@ export class Config {
    * Transform when the popup editor opened.
    */
   transform(context: string, c: string) {
-    console.log('tranform', context, c);
+    console.log(context);
     return c;
   }
 
@@ -85,8 +74,6 @@ export class Config {
    * Transform the character on the editor text.
    */
   transformView(text: string) {
-    console.log('transformView', text);
     return text;
   }
-
 }

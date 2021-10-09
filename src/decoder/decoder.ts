@@ -41,11 +41,14 @@ export class Decoder {
       ? new UserDecoder(this.inputTool)
       : null;
 
+    /** Add clear event listener. */
     this.#tokenDecoder.addEventListener('clear', this.clear.bind(this));
   }
 
-  /** Gets the some sourceWord properties. */
-  getTokens(sourceWord: string) {
+  /**
+   * Gets the transliterations (without scores) for the source word.
+   */
+  decode(sourceWord: string, resultsNum: number) {
     if (!sourceWord) {
       return null;
     }
@@ -53,56 +56,11 @@ export class Decoder {
     if (!tokenPath) {
       return null;
     }
-    let normalizedTokens = this.#tokenDecoder.getNormalizedTokens(tokenPath.tokens);
+
+    let normalizedTokens = this.#tokenDecoder.getNormalizedTokens(
+      tokenPath.tokens);
     let isAllInitials = this.#tokenDecoder.isAllInitials(tokenPath.tokens);
-    let originalTokenList = this.#tokenDecoder.getOriginalTokens(tokenPath);
-    return {
-      normalizedTokens,
-      isAllInitials,
-      originalTokenList
-    }
-  }
-
-  /** Get user selected candidates for source word. */
-  getUserCommitted(sourceWord: string) {
-    if (this.#userDecoder) {
-      let userCommitCandidate = this.#userDecoder.getCandidate(sourceWord);
-      return userCommitCandidate
-    }
-    return null;
-  }
-
-  /** Adds the candidate from user dictinoary at the second position.  */
-  addUserCommittedCandidate(sourceWord: string, candidates: Candidate[]) {
-    let userCommitCandidate = this.getUserCommitted(sourceWord);
-
-    if (userCommitCandidate) {
-      let index = candidates.findIndex(candidate => 
-        candidate.target == userCommitCandidate)
-      
-      if (index > 0) {
-        delete candidates[index];
-      }
-
-      if (index != 0) {
-        let candidate = new Candidate(sourceWord.length, userCommitCandidate, 0);
-        candidates.splice(1, 0, candidate);
-      }
-    }
-  }
-
-  /**
-   * Gets the transliterations (without scores) for the source word.
-   */
-  async decode(
-    tokens: {
-      normalizedTokens: string[][];
-      isAllInitials: boolean;
-      originalTokenList: string[];
-    }, 
-    resultsNum: number ) {
-    let {normalizedTokens, isAllInitials} = tokens;
-    let translits = await this.#mlDecoder.transliterate(normalizedTokens, 
+    let translits = this.#mlDecoder.transliterate(normalizedTokens, 
       resultsNum, isAllInitials);
 
     /** Filtering the tanslits. */
@@ -119,9 +77,29 @@ export class Decoder {
       }
     }
 
-    console.log('decoder candidates', candidates);
-    // return candidates;
-    return new IMEResponse(tokens.originalTokenList, candidates);
+    // Adds the candidate from user dictinoary at the second position.
+    if (this.#userDecoder) {
+      let userCommitCandidate = this.#userDecoder.getCandidate(sourceWord);
+      if (userCommitCandidate) {
+
+        let index = candidates.findIndex(candidate => 
+          candidate.target == userCommitCandidate)
+        
+        if (index > 0) {
+          delete candidates[index];
+        }
+
+        if (index != 0) {
+          let candidate = new Candidate(sourceWord.length, userCommitCandidate, 0);
+          candidates.splice(1, 0, candidate);
+        }
+      }
+    }
+
+    // Also return the token list.
+    let originalTokenList = this.#tokenDecoder.getOriginalTokens(tokenPath);
+    return new IMEResponse(originalTokenList, candidates);
+
   }
 
   /**
