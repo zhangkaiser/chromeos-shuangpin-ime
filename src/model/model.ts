@@ -32,7 +32,7 @@ export class Model extends EventTarget {
   cursorPos = 0;
 
   /** The context, a.k.a. history text. */
-  context = '';
+  // context = '';
 
   /** The current index of highlighted candidate. */
   highlightIndex = -1;
@@ -42,6 +42,9 @@ export class Model extends EventTarget {
 
   /** Whether the model should holds select status. */
   protected _holdSelectStatus = false;
+
+  /** The raw string. */
+  rawStr = '';
 
   /**
    * Updates this.highlightIndex.
@@ -118,7 +121,7 @@ export class Model extends EventTarget {
     this.dispatchEvent(new CustomEvent(EventType.MODELUPDATED))
     this._holdSelectStatus = true;
     if (this.source) {
-      this.#fetchCandidates();
+      this.fetchCandidates();
     }
   }
 
@@ -146,7 +149,7 @@ export class Model extends EventTarget {
     // Event
     this.dispatchEvent(new CustomEvent(EventType.MODELUPDATED));
     this._holdSelectStatus = true;
-    this.#fetchCandidates();
+    this.fetchCandidates();
   }
 
   /**
@@ -177,11 +180,12 @@ export class Model extends EventTarget {
       this._decoder.clear();
     }
 
+    this.rawStr = '';
     this.source = '';
     this.cursorPos = 0;
     this.commitPos = 0;
     this.segments = [];
-    this.context = '';
+    // this.context = '';
     this.highlightIndex = -1;
     this.candidates = [];
     this.status = Status.INIT;
@@ -279,7 +283,7 @@ export class Model extends EventTarget {
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
     }
-    this.#fetchCandidates();
+    this.fetchCandidates();
   }
 
 
@@ -300,8 +304,28 @@ export class Model extends EventTarget {
         this.commitPos = 0;
       } else if (this.cursorPos > 0) {
         let segment = this.segments[this.cursorPos - 1];
-        deletedChar = segment.slice(-1);
-        segment = segment.slice(0, -1);
+        
+        let solution = this.configFactory.getCurrentConfig().solution;
+        if (solution) {
+          let rawWords = this.configFactory.getCurrentConfig().getTransform(this.rawStr.slice(-1));
+          console.log(rawWords);
+          if (Array.isArray(rawWords)) {
+            for (let i = 0; i < rawWords.length; i++) {
+              let raw = rawWords[i];
+              let searchIndex = segment.search(raw)
+              if (segment.slice(segment.search(raw)) === raw) {
+                deletedChar = raw;
+                segment = segment.slice(0, searchIndex);
+                this.rawStr = this.rawStr.slice(0, -1);
+                break;
+              }
+            }
+          }
+        } else {
+          deletedChar = segment.slice(-1);
+          segment = segment.slice(0, -1);  
+        }
+
         if (segment) {
           this.segments[this.cursorPos -1] = segment;
         } else {
@@ -321,7 +345,7 @@ export class Model extends EventTarget {
         if (deletedChar == '\'') {
           this._decoder!.clear();
         }
-        this.#fetchCandidates();
+        this.fetchCandidates();
       }
     }
   }
@@ -343,6 +367,7 @@ export class Model extends EventTarget {
     this.status = Status.FETCHING;
     if (opt_index == -1) {
       // commits the current source text.
+      this.segments = [this.rawStr];
       this.notifyUpdates(true);
       this.clear();
       return;
@@ -378,22 +403,23 @@ export class Model extends EventTarget {
     this.highlightIndex = -1;
     this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
     this._decoder!.clear();
-    this.#fetchCandidates();
+    this.fetchCandidates();
   }
 
   /**
    * Fetches candidates and composing text from decoder.
    */
-  #fetchCandidates() {
+  fetchCandidates() {
     
     if (!this._decoder) {
       return ;
     }
     this.status = Status.FETCHING;
-    
+    if (this.source === '\'') {
+      return ;
+    }
     let ret = this._decoder.decode(
       this.source, this.configFactory.getCurrentConfig().requestNum);
-    console.log('input',ret);
     if (!ret) {
       this.status = Status.FETCHED;
       if (this.configFactory.getCurrentConfig().autoHighlight ||
@@ -418,7 +444,14 @@ export class Model extends EventTarget {
     this.cursorPos = prefixSegments.length;
 
     this.candidates = [];
+    if (!candidates[0] || !Number.isInteger(candidates[0].score)) {
+      candidates.shift();
+    }
+
     for (let i = 0; i < candidates.length; i++) {
+      if (!candidates[i]) {
+        continue;
+      }
       this.candidates.push(
         new Candidate(
           candidates[i].target.toString(), 

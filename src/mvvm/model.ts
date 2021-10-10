@@ -2,19 +2,17 @@ import { Status } from "../model/enums";
 import { Model } from "../model/model";
 import type { ViewModel } from "./viewmodel";
 
-export class InputImeModel extends Model implements IInputImeModel {
+export class ShuangpinModel extends Model implements IShuangpinModel {
   config = this.configFactory;
 
   context?: chrome.input.ime.InputContext;
 
-  /** The page size */
-  pageSize: number;
+  rawChar = '';
+
   constructor(
     public engineID: string,
-    private setData:(data: IViewInputMethod) => void,
-    private data: ViewModel) {
+    private setData:(data: DataRenderInterface) => void) {
     super();
-    this.pageSize = this.config.getCurrentConfig().pageSize;
     this.config.setInputTool(engineID);
   }
 
@@ -39,54 +37,15 @@ export class InputImeModel extends Model implements IInputImeModel {
     });
   }
 
-  updateHighlight(newHighlight: number) {
-    if (this.status != Status.SELECT || !this.context) {
-      return ;
-    }
-    if (newHighlight < 0) {
-      newHighlight = 0;
-    }
-    if (newHighlight >= this.candidates.length) {
-      return ;
-    }
-
-    this.highlightIndex = newHighlight;
-    this.setData({
-      cursorPosition: {
-        contextID: this.context.contextID,
-        candidateID: this.highlightIndex % this.pageSize
-      }
-    })
+  updateSource(text: string) {
+    this.rawChar += text;  
+    super.updateSource(text);
   }
 
-  moveHighlight(step: number) {
-    this.updateHighlight(this.highlightIndex + step);
+  clear() {
+    this.rawChar = '';
+    super.clear();
   }
-
-  movePage(step: number) {
-    this.updateHighlight((this.getPageIndex() + step) * this.pageSize);
-  }
-
-  moveCursorLeft() {
-    if (this.status != Status.SELECT || this.cursorPos <= 0) {
-      return ;
-    }
-    if (this.cursorPos == this.commitPos) {
-      this.commitPos--;
-      this.segments[this.commitPos] = this.tokens[this.commitPos];
-    } else {
-      this.cursorPos--;
-    }
-
-    this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
-    this.highlightIndex = -1;
-    this._holdSelectStatus = true;
-
-    if (this.source) {
-      this.#fetchCandidates();
-    }
-  }
-
 
   /**
    * Aborts the model, the behavior may be overridden by sub-classes.
@@ -96,12 +55,7 @@ export class InputImeModel extends Model implements IInputImeModel {
     this.config.setInputTool('');
   }
 
-  #fetchCandidates() {
-    if (!this._decoder) {
-      return ;
-    }
-    this.status = Status.FETCHING;
-
-    let sourceTokens = this._
+  fetchCandidates() {
+    super.fetchCandidates()
   }
 }

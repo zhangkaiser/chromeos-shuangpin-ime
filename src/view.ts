@@ -99,6 +99,7 @@ export class View {
       return ;
     }
     let segments = this.model.segments;
+    console.log(segments);
     let segmentsBeforeCursor = segments.slice(0, this.model.cursorPos);
     let segmentsAfterCursor = segments.slice(this.model.cursorPos);
     let prefix = segments.slice(

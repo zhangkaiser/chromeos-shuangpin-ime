@@ -19,7 +19,7 @@ module.exports = {
     ]
   },
   devtool: false,
-  
+  watch: true,
   resolve: {
     "extensions": [".ts", "..."]
   },

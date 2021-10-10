@@ -1,5 +1,5 @@
 
-interface IViewInputMethod {
+interface DataRenderInterface {
 
   /**
    * Sets the current candidate list. 
@@ -73,7 +73,7 @@ interface IViewInputMethod {
 }
 
 
-interface IViewModel {
+interface ViewModelInterface {
 
   /** ID of the engine receiving the event. */
   engineID?: string;
@@ -159,7 +159,7 @@ interface IViewModel {
 }
 
 
-interface IInputImeModel {
+interface IShuangpinModel {
 
   /** Get the menuItems. */
   getMenus:() => chrome.input.ime.ImeParameters;

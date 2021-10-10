@@ -25,6 +25,9 @@ export class Controller {
   /** True if the last key down is shift (with not modifiers). */
   _lastKeyDownIsShift = false;
 
+  /** The raw charactor. */
+  rawChar = '';
+
   configFactory = configFactoryInstance;
 
   constructor() {
@@ -56,6 +59,7 @@ export class Controller {
     this.view.updateInputTool();
     this._keyActionTable = undefined;
     this._shortcutTable = undefined;
+    this.rawChar = '';
   }
 
   /**
@@ -71,6 +75,8 @@ export class Controller {
    * Unregister the context.
    */
   unregister() {
+
+    this.rawChar = '';
     this._context = null;
     this.view.setContext(null);
     this.model.clear();
@@ -80,6 +86,7 @@ export class Controller {
    * Resets the context.
    */
   reset() {
+    this.rawChar = '';
     this.model.abort();
   }
 
@@ -259,10 +266,11 @@ export class Controller {
    */
   processCharKey(e: any) {
     let text = this.configFactory.getCurrentConfig().transform(
-      this.model.source, e.key);
+      this.model.source, e.key, this.model.segments.slice(-1)[0]);
     if (!text) {
       return this.model.status != Status.INIT;
     }
+    this.model.rawStr += e.key;
     this.model.updateSource(text);
     return true;
   }

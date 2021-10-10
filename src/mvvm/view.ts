@@ -1,5 +1,5 @@
 
-export class InputImeMethod implements IViewInputMethod {
+export class ShuangpinView implements DataRenderInterface {
   
   _menus?: chrome.input.ime.ImeParameters;
 

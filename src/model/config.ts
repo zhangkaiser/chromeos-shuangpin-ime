@@ -48,18 +48,19 @@ export class Config {
 
   /** The select keys. */
   selectKeys = '1234567890';
+  
+  /** The shuangpin solution. */
+  solution = '';
 
   /** Transform before the popup editor opened. */
-  preTransform(c: string) {
-    console.log(c);
+  preTransform(_c: string) {
     return '';
   }
 
   /**
    * Transform when the popup editor opened.
    */
-  transform(context: string, c: string) {
-    console.log(context);
+  transform(_context: string, c: string, _raw?:string) {
     return c;
   }
 
@@ -75,5 +76,10 @@ export class Config {
    */
   transformView(text: string) {
     return text;
+  }
+
+  /** Return the translated word. */
+  getTransform(c: string): string | string[] {
+    return c;
   }
 }
