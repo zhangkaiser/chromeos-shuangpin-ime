@@ -318,7 +318,18 @@ export class Model extends EventTarget {
                 this.rawStr = this.rawStr.slice(0, -1);
                 break;
               }
+              if (segment === raw + '\'') {
+                deletedChar = segment
+                segment = ''
+                this.rawStr = this.rawStr.slice(0, -2);
+              }
             }
+          }
+
+          if (!deletedChar && segment.slice(-1) === '\'') {
+            deletedChar = '\'';
+            segment = segment.slice(0, -1);
+            this.rawStr = this.rawStr.slice(0, -1);
           }
         } else {
           deletedChar = segment.slice(-1);
