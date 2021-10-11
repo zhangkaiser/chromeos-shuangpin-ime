@@ -172,6 +172,11 @@ export class ShuangpinConfig extends PinyinConfig {
       return '\'';
     }
 
+    isToken = isToken && this.tokensRegexp.test(segmentsLastItem + c)
+    if (isToken) {
+      return '\'' + c;
+    }
+
     return c;
   }
 

@@ -312,7 +312,7 @@ export class Model extends EventTarget {
             for (let i = 0; i < rawWords.length; i++) {
               let raw = rawWords[i];
               let searchIndex = segment.search(raw)
-              if (segment.slice(segment.search(raw)) === raw) {
+              if (segment.slice(searchIndex) === raw) {
                 deletedChar = raw;
                 segment = segment.slice(0, searchIndex);
                 this.rawStr = this.rawStr.slice(0, -1);
@@ -322,6 +322,14 @@ export class Model extends EventTarget {
                 deletedChar = segment
                 segment = ''
                 this.rawStr = this.rawStr.slice(0, -2);
+                break;
+              }
+
+              if (segment.slice(searchIndex) === raw + '\'') {
+                deletedChar = raw + '\'';
+                segment = segment.slice(0, searchIndex);
+                this.rawStr = this.rawStr.slice(0, -1);
+                break;
               }
             }
           }

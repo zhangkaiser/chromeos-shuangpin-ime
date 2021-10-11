@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "mocha",
-    "build": "webpack"
+    "build": "webpack",
+    "watch": "webpack --mode development --watch"
   },
   "keywords": [
     "shuangpin",

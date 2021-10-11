@@ -9,9 +9,9 @@ module.exports = {
     "option": "./src/option.ts",
     // "test": "./src/tests/test_decoder.ts"
   },
-  // mode: "production",
-  mode: "development",
-  watch: true,
+  mode: "production",
+  // mode: "development",
+  // watch: true,
   output: {
     filename: "[name].js"
   },
