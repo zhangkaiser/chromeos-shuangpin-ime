@@ -108,7 +108,6 @@ export class DataParser {
   private _maxTokenSize = 300;
   
   constructor(private inputTool: InputTool, public dataLoader: DataLoader) {
-    console.log(this.inputTool);
   }
 
 
@@ -143,8 +142,9 @@ export class DataParser {
   getTargetPos(source:string[]) {
     let targetPos: {start: number, end: number};
     let sourcePos = this.getSourcePos(source);
-    if (!sourcePos) {
-      // 这里需要修改,应该是存在在数据库中,就无法使用索引来获取数据
+    if (sourcePos < 0) {
+      // !ERR
+      // 这里需要修改,应该是存放在数据库中,就无法使用索引来获取数据
       targetPos = {
         start: 0,
         end: -1

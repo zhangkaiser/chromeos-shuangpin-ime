@@ -52,6 +52,10 @@ export class Config {
   /** The shuangpin solution. */
   solution = '';
 
+  /** */
+  vertical = false;
+
+
   /** Transform before the popup editor opened. */
   preTransform(_c: string) {
     return '';
@@ -81,5 +85,9 @@ export class Config {
   /** Return the translated word. */
   getTransform(c: string): string | string[] {
     return c;
+  }
+
+  setSolution(text: string) {
+
   }
 }

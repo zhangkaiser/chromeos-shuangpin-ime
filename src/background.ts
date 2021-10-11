@@ -1,5 +1,6 @@
 import { Controller } from "./controller";
-import type { InputToolCode, StateID } from "./model/enums";
+import { configFactoryInstance } from "./model/configfactory";
+import { InputToolCode, StateID } from "./model/enums";
 
 /**
  * The background class implements the script for the background page of chrome
@@ -10,6 +11,7 @@ export class Background {
    * The controller for chrome os extension.
    */
   _controller = new Controller();
+  configFactory = configFactoryInstance;
 
   constructor() {
     // Sets up a listener which talks to the option page.
@@ -21,6 +23,23 @@ export class Background {
   /** Initializes the background scripts. */
   #init() {
     this.#updateSettingsFromLocalStorage();
+   
+    chrome.runtime.onInstalled.addListener((res) => {
+
+      if (res.reason === 'install') {
+        // The default input tool configure.
+        chrome.storage.sync.set({
+          config: {
+            'chos_init_punc_selection': true,
+            'chos_next_page_selection': true,
+            'chos_prev_page_selection': true,
+            'chos_init_sbc_selection': false,
+            'chos_init_vertical_selection': false,
+            'solution': "pinyinjiajia"
+          }
+        })
+      }
+    })
 
     chrome.input.ime.onActivate.addListener((engineID) => {
       this._controller.activate(engineID as InputToolCode);
@@ -31,6 +50,15 @@ export class Background {
     });
   
     chrome.input.ime.onFocus.addListener((context) => {
+      chrome.storage.sync.get('config', (res) => {
+        if (res && res['config']) {
+          let currentConfig = this.configFactory.getCurrentConfig();
+          currentConfig!.setSolution(res['config']['solution']);
+          currentConfig!.states[StateID.SBC].value = res['config']?.chos_init_sbc_selection;
+          currentConfig!.states[StateID.PUNC].value = res['config']?.chos_init_punc_selection;
+          currentConfig!.vertical = res['config']?.chos_init_vertical_selection ?? false;
+        }
+      })
       this._controller.register(context);
     });
   
@@ -68,12 +96,7 @@ export class Background {
    * @TODO
    */
   #updateSettingsFromLocalStorage(opt_inputToolCode?: string) {
-    if (opt_inputToolCode) {
-      chrome.storage.local.get(opt_inputToolCode, (res) => {
-        console.log(res)
-        // this._controller.
-      })
-    }
+    
   }
 
   /**

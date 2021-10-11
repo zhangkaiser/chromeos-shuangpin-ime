@@ -91,17 +91,17 @@ export default class ChineseConfig extends Config {
 		}
 		
 		let langState = new State();
-		langState.desc = 'Initial input language is Chinese';
+		langState.desc = '输入语言为中文';
 		langState.value = true;
-		langState.shortcut = [Modifier.SHIFT];
+		langState.shortcut = [' ', Modifier.ALT];
 
 		let sbcState = new State();
-		sbcState.desc = 'Initial character width is Full';
+		sbcState.desc = '字符宽度为全角';
 		sbcState.value = false;
 		sbcState.shortcut = [' ', Modifier.SHIFT];
 
 		let puncState = new State();
-		puncState.desc = 'Initial punctuation width is Full';
+		puncState.desc = '标点符号宽度为全角';
 		puncState.value = true;
 		puncState.shortcut = ['\\.', Modifier.CTRL];
 
@@ -118,16 +118,20 @@ export default class ChineseConfig extends Config {
 		if (!this.states[StateID.LANG] || 
 			!this.states[StateID.SBC] || 
 			!this.states[StateID.PUNC]) {
-			let punc = this.puncMap[ch];
-			if (punc) {
-				if (punc.length > 1) {
-					ch = punc[0].charAt(punc[1]);
-					punc[1] ^= 1;
-					punc = ch;
-				}
-				return punc;
-			}
-		}
+        return ;
+    }
+
+    if (this.states[StateID.PUNC].value) {
+      let punc = this.puncMap[ch];
+      if (punc) {
+        if (punc.length > 1) {
+          ch = punc[0].charAt(punc[1]);
+          punc[1] ^= 1;
+          punc = ch;
+        }
+        return punc;
+      }
+    }
 
 		if (this.states[StateID.SBC].value) {
 			if (!this.states[StateID.LANG].value || !/[a-z]/i.test(ch)) {

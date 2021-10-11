@@ -193,7 +193,7 @@ const xiaoe = {
     b: 'in',
     k: ['ing', 'uai'],
     s: ['iong', 'ong'],
-    q: ['iu', 'ng'],
+    q: ['iu'],
     z: 'ou',
     r: 'uan',
     t: 'ue',
@@ -211,4 +211,13 @@ export const solutions:Record<string, SolutionDataType> = {
   zhongwenzhixing,
   xiaoe,
   ziguang
+}
+
+export const solutionNames  = {
+  pinyinjiajia: '拼音加加',
+  ziranma: '自然码',
+  microsoft: '微软双拼',
+  zhongwenzhixing: '中文之星',
+  xiaoe: '小鹅双拼',
+  ziguang: '紫光双拼'
 }

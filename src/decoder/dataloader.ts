@@ -21,6 +21,5 @@ export class DataLoader {
   targetProbs = targetProbs;
   sourceSegments = sourceSegments;
   constructor(private inputTool: InputTool) {
-    console.log(this.inputTool);
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "双拼",
   "version": "0.0.1",
-  "description": "",
+  "description": "支持拼音加加,小鹅等解决方法.",
   "manifest_version": 3,
   "background": {
     "service_worker": "background.js"
@@ -10,7 +10,6 @@
     "input",
     "unlimitedStorage",
     "background",
-    "alarms",
     "storage"
   ],
   "input_components": [
@@ -23,10 +22,6 @@
     "layouts": ["us"]
     }
   ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "双拼"
-  },
   "options_page": "option.html",
   "host_permissions": [
     "https://*/*",

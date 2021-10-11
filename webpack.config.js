@@ -5,11 +5,13 @@ let HtmlWebpackPlugin = require("html-webpack-plugin");
 module.exports = {
   entry: {
     "background": "./src/background.ts",
-    "popup": "./src/popup.ts",
+    // "popup": "./src/popup.ts",
     "option": "./src/option.ts",
-    "test": "./src/tests/test_decoder.ts"
+    // "test": "./src/tests/test_decoder.ts"
   },
+  // mode: "production",
   mode: "development",
+  watch: true,
   output: {
     filename: "[name].js"
   },
@@ -19,7 +21,6 @@ module.exports = {
     ]
   },
   devtool: false,
-  watch: true,
   resolve: {
     "extensions": [".ts", "..."]
   },

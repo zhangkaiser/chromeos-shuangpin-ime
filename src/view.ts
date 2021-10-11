@@ -82,7 +82,7 @@ export class View {
     if (this._context) {
       chrome.input.ime.clearComposition({
         'contextID': this._context.contextID
-      }, console.log);
+      });
   
       chrome.input.ime.setCandidates({
         'contextID': this._context.contextID,
@@ -99,7 +99,6 @@ export class View {
       return ;
     }
     let segments = this.model.segments;
-    console.log(segments);
     let segmentsBeforeCursor = segments.slice(0, this.model.cursorPos);
     let segmentsAfterCursor = segments.slice(this.model.cursorPos);
     let prefix = segments.slice(
@@ -131,14 +130,28 @@ export class View {
     if (to > this.model.candidates.length) {
       to = this.model.candidates.length;
     }
+    let vertical = this.configFactory.getCurrentConfig().vertical;
     let displayItems = [];
-    for (let i = from; i < to; i++) {
-      let candidate = this.model.candidates[i];
-      let label = (i + 1 - from).toString();
-      displayItems.push({
-        'candidate': candidate.target,
-        'label': label,
-        'id': i - from});
+    if (vertical) {
+      for (let i = from; i < to; i++) {
+        let candidate = this.model.candidates[i];
+        let label = (i + 1 - from).toString();        
+        displayItems.push({
+          'candidate': candidate.target,
+          'label': label,
+          'id': i - from});
+      }
+    } else {
+      for (let i = from; i < to; i++) {
+        let candidate = this.model.candidates[i];
+        let label = (i + 1 - from).toString();        
+        displayItems.push({
+          annotation: `${label} ${candidate.target}`,
+          'candidate': candidate.target,
+          'label': label,
+          'id': i - from
+        });
+      }
     }
 
     chrome.input.ime.setCandidates({
@@ -146,13 +159,16 @@ export class View {
       'candidates': displayItems});
     if (to > from) {
       let hasHighlight = (this.model.highlightIndex >= 0);
+
+      let properties = {
+        vertical,
+        visible: true,
+        'cursorVisible': hasHighlight,
+        'pageSize': to - from
+      }
       chrome.input.ime.setCandidateWindowProperties({
         'engineID': this._inputToolCode,
-        'properties': {
-          'visible': true,
-          'cursorVisible': hasHighlight,
-          'vertical': true,
-          'pageSize': to - from}});
+        properties});
       if (hasHighlight) {
         chrome.input.ime.setCursorPosition({
           'contextID': this._context.contextID,

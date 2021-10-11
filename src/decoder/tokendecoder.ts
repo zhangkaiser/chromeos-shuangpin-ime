@@ -79,8 +79,6 @@ export class TokenDecoder extends EventTarget {
     fuzzyPairs?:string[]) {
       super()
       this.#init(fuzzyPairs)
-      console.log(inputTool);
-      console.log(this.#getPathsFrom(0, 0));
 
   }
   

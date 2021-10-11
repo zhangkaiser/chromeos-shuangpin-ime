@@ -308,7 +308,6 @@ export class Model extends EventTarget {
         let solution = this.configFactory.getCurrentConfig().solution;
         if (solution) {
           let rawWords = this.configFactory.getCurrentConfig().getTransform(this.rawStr.slice(-1));
-          console.log(rawWords);
           if (Array.isArray(rawWords)) {
             for (let i = 0; i < rawWords.length; i++) {
               let raw = rawWords[i];
@@ -444,8 +443,13 @@ export class Model extends EventTarget {
     this.cursorPos = prefixSegments.length;
 
     this.candidates = [];
-    if (!candidates[0] || !Number.isInteger(candidates[0].score)) {
-      candidates.shift();
+    if (ret.tokens.length == 2) {
+      let one = candidates[0];
+      if (one && !Number.isInteger(one.score)) {
+        let two = candidates[1];
+        candidates[0] = two;
+        candidates[1] = one;
+      }
     }
 
     for (let i = 0; i < candidates.length; i++) {

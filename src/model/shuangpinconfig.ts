@@ -121,7 +121,6 @@ export class ShuangpinConfig extends PinyinConfig {
       this.bootIsFirst = false;
 
       if (c === trans['bootKey']){
-        console.log(hasSplitChar, segmentIsInitial)
         
         if (hasSplitChar || isFirstBootMode) {
           return c;
@@ -179,7 +178,12 @@ export class ShuangpinConfig extends PinyinConfig {
   getTransform(c: string) {
     let trans = this.#solutions[this.solution]
     if (c === trans['bootKey']) {
-      return [c];
+      let vowel = trans['vowel'][c];
+      if (vowel && !Array.isArray(vowel)) {
+        return [vowel, c];
+      } else {
+        return [c];
+      }
     }
 
     if (this.initialCharList.indexOf(c) > -1) {

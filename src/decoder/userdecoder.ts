@@ -13,7 +13,6 @@ export default class UserDecoder {
 
     
   constructor(private inputTool:InputTool) {
-    console.log(this.inputTool);
     this.#init();
   }
 

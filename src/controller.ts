@@ -172,23 +172,6 @@ export class Controller {
     }
   }
 
-
-  /**
-   * Switch the input tool state.
-   */
-  switchInputToolState(stateId:StateID) {
-    let config = this.configFactory.getCurrentConfig();
-    config.states[stateId].value = !config.states[stateId].value;
-    let stateID = StateID;
-    if (stateId == stateID.LANG) {
-      config.states[stateID.PUNC].value = config.states[stateID.LANG].value;
-    }
-    this.model.clear();
-    this.view.updateItems();
-    this.view.hide();
-  }
-
-
   /**
    * Handles key event.
    * @return {boolean} True if the event is handled successfully.
@@ -539,12 +522,10 @@ export class Controller {
         // To handle SHIFT shortcut.
         shortcutTable.unshift(
             [EventType.KEYDOWN, null, null, null, null,
-            this.#updateLastKeyIsShift, this]);
+            this._updateLastKeyIsShift, this]);
         shortcutTable.push(
             [EventType.KEYUP, Modifier.SHIFT, Modifier.SHIFT, null,
-            () => {
-              return this._lastKeyDownIsShift;
-            }, this.switchInputToolState, this, stateID]);
+            () =>  this._lastKeyDownIsShift, this.switchInputToolState, this, stateID]);
       } else if (stateValue.shortcut.length >= 1) {
         shortcutTable.push(
             [EventType.KEYDOWN, stateValue.shortcut[1], stateValue.shortcut[0],
@@ -554,6 +535,20 @@ export class Controller {
     return shortcutTable;
   }
 
+  /**
+   * Switch the input tool state.
+   */
+  switchInputToolState(stateId:StateID) {
+    let config = this.configFactory.getCurrentConfig();
+    config.states[stateId].value = !config.states[stateId].value;
+    let stateID = StateID;
+    if (stateId == stateID.LANG) {
+      config.states[stateID.PUNC].value = config.states[stateID.LANG].value;
+    }
+    this.model.clear();
+    this.view.updateItems();
+    this.view.hide();
+  }
 
   /**
   * Updates whether the last keydown is SHIFT.
@@ -562,7 +557,7 @@ export class Controller {
   * @return {boolean} It should always return false.
   * @private
   */
-  #updateLastKeyIsShift(e: any) {
+  _updateLastKeyIsShift(e: any) {
     if (this.#getKey(e) == Modifier.SHIFT &&
         !e.altKey && !e.ctrlKey) {
       this._lastKeyDownIsShift = true;

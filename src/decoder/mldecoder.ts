@@ -66,7 +66,7 @@ export class MLDecoder {
      * the all text.
      */
     let transliterations = this.#generateTransliterations(
-      tokens, isAllInitials);      
+      tokens, isAllInitials);
     /**
      * Generates the prefix matched target words.
      */
@@ -212,7 +212,6 @@ export class MLDecoder {
     transliterations: Heap, 
     prefixTransliterations: Heap) {
     let candidates = [];
-    console.log(resultsNum);
     // Dont' remove transliterations, since they are in cache and will be used in
     // the future.
     let translits = transliterations.clone();
