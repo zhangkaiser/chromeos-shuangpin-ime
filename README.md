@@ -3,9 +3,9 @@
 适用于chromeos的双拼输入法，基于google-input-tools的ime开发，支持离线输入解析
 支持拼音加加，小鹅双拼，微软双拼等双拼解决方案。
 
-[下载链接](https://gitee.com/kaiserzh/chromeos-shuangpin-ime/releases/0.0.1)
+[下载链接](https://github.com/zhangkaiser/chromeos-shuangpin-ime/releases/0.0.1)
 
-`Archive.zip`下载包为测试版本，暂先不对外开放源代码，后续如能继续维护/迭代优化将会已
+`0.0.1.zip`下载包为测试版本，暂先不对外开放源代码，后续如能继续维护/迭代优化将会已
 开源的形式发布源代码。
 
 # 安装说明
