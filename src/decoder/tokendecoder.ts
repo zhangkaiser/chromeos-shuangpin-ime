@@ -326,21 +326,22 @@ export class TokenDecoder extends EventTarget {
       let suffixes = this.#getSuffixTokens(this._currentStr);
       let initNums:number[] = [];
 
-      let initNum = suffixes.reduce((acc, cur, index) => {
-        if (!this.#inSameRange(lastIndex - cur.length, lastIndex)) {
+      let initNum = suffixes.reduce((minInitNum, suffix, index) => {
+        
+        if (!this.#inSameRange(lastIndex - suffix.length, lastIndex)) {
           initNums[index] = Infinity;
-          return acc;
+          return minInitNum;
         }
-        let preInitNum = this._lattice[lastIndex - cur.length].initNum;
-        initNums[index] = 
-          this._initialMap[cur] 
+        let preInitNum = this._lattice[lastIndex - suffix.length].initNum;
+        
+        initNums[index] = this._initialMap[suffix] 
           ? preInitNum + 1 : preInitNum;
 
-        if (this._invalidChars.indexOf(cur) >= 0) {
+        if (this._invalidChars.indexOf(suffix) >= 0) {
           initNums[index] += TokenDecoder.#INVALID_PATH_INIT_NUM;
         }
 
-        return Math.min(acc, initNums[index]);
+        return Math.min(minInitNum, initNums[index]);
       }, Infinity)
 
       if (initNum == Infinity) {

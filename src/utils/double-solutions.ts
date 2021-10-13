@@ -218,6 +218,6 @@ export const solutionNames  = {
   ziranma: '自然码',
   microsoft: '微软双拼',
   zhongwenzhixing: '中文之星',
-  xiaoe: '小鹅双拼',
+  xiaoe: '小鹤双拼',
   ziguang: '紫光双拼'
 }

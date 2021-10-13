@@ -318,12 +318,6 @@ export class Model extends EventTarget {
                 this.rawStr = this.rawStr.slice(0, -1);
                 break;
               }
-              if (segment === raw + '\'') {
-                deletedChar = segment
-                segment = ''
-                this.rawStr = this.rawStr.slice(0, -2);
-                break;
-              }
 
               if (segment.slice(searchIndex) === raw + '\'') {
                 deletedChar = raw + '\'';
@@ -331,6 +325,14 @@ export class Model extends EventTarget {
                 this.rawStr = this.rawStr.slice(0, -1);
                 break;
               }
+
+              if (segment === raw + '\'') {
+                deletedChar = segment
+                segment = ''
+                this.rawStr = this.rawStr.slice(0, -1);
+                break;
+              }
+
             }
           }
 
