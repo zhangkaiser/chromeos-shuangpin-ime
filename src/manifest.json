@@ -2,9 +2,9 @@
   "name": "双拼",
   "version": "0.0.1",
   "description": "支持拼音加加,小鹅等解决方法.",
-  "manifest_version": 3,
+  "manifest_version": 2,
   "background": {
-    "service_worker": "background.js"
+    "scripts": ["background.js"]
   },
   "permissions": [
     "input",
@@ -22,10 +22,5 @@
     "layouts": ["us"]
     }
   ],
-  "options_page": "option.html",
-  "host_permissions": [
-    "https://*/*",
-    "http://*/*",
-    "<all_urls>"
-  ]
+  "options_page": "option.html"
 }
