@@ -124,8 +124,10 @@ export default class ChineseConfig extends Config {
     if (this.states[StateID.PUNC].value) {
       let punc = this.puncMap[ch];
       if (punc) {
-        if (punc.length > 1) {
+        if (Array.isArray(punc.length > 1)) {
           ch = punc[0].charAt(punc[1]);
+          console.log(punc)
+          console.log(ch)
           punc[1] ^= 1;
           punc = ch;
         }

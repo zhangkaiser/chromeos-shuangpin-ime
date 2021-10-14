@@ -332,7 +332,7 @@ export class TokenDecoder extends EventTarget {
           initNums[index] = Infinity;
           return minInitNum;
         }
-        let preInitNum = this._lattice[lastIndex - suffix.length].initNum;
+        let preInitNum = this._lattice[lastIndex - suffix.length]?.initNum;
         
         initNums[index] = this._initialMap[suffix] 
           ? preInitNum + 1 : preInitNum;
