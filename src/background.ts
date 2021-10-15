@@ -82,12 +82,8 @@ export class Background {
 
     chrome.input.ime.onMenuItemActivated.addListener((
       _, stateID) => {
-        this._controller.switchInputToolState(stateID as StateID);
+      this._controller.switchInputToolState(stateID as StateID);
     });
-
-    if ((chrome as any).inputMethodPrivate && (chrome as any).inputMethodPrivate.startIme) {
-      (chrome as any).inputMethodPrivate.startIme();
-    }
   }
 
   /**
