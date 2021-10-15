@@ -196,6 +196,12 @@ export class Controller extends EventTarget {
       return false;
     }
 
+
+    if (e.key === Modifier.SHIFT && e.altKey && e.extensionId) {
+      this.switchInputToolState(StateID.LANG);
+      return true;
+    }
+
     if (this._shortcutTable &&
         this.#handleKeyInActionTable(e, this._shortcutTable)) {
       return true;
@@ -223,6 +229,7 @@ export class Controller extends EventTarget {
         this.model.status != Status.INIT) {
       this.model.selectCandidate(-1, '');
     }
+
     return false;
   }
 
