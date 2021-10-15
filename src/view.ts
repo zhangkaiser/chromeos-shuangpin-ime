@@ -81,10 +81,9 @@ export class View {
   
     if (this._context) {
       chrome.input.ime.hideInputView();
-      
-      // chrome.input.ime.clearComposition({
-      //   'contextID': this._context.contextID
-      // });
+      chrome.input.ime.clearComposition({
+        'contextID': this._context.contextID
+      });
   
       // chrome.input.ime.setCandidates({
       //   'contextID': this._context.contextID,
