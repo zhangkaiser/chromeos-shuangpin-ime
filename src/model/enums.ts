@@ -9,7 +9,8 @@ export enum EventType {
   COMMIT = 'commit',
   MODELUPDATED = 'update',
   CLOSING = 'close',
-  OPENING = 'open'
+  OPENING = 'open',
+  UPDATESTATE = 'updatestate',
 }
 
 

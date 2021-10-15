@@ -22,31 +22,47 @@ export default class UserDecoder {
 
 
   #init() {
-    if (chrome.storage) {
-        chrome.storage.local.get(this.#getKey(),(res) => {
-          let permantMap = res[this.#getKey()];
-          if (permantMap) {
-            this._permantMap = permantMap;
-          }
-        });
-    }
+    // if(localStorage) {
+    //   let permantMapStr = localStorage.getItem(this.STORAGE_USER_DICT_KEY);
+    //   if (permantMapStr) {
+    //     this._permantMap = JSON.parse(permantMapStr);
+    //   }
+    //   console.log(permantMapStr);
+    // } else {
+    chrome.storage.sync.get(this.STORAGE_USER_DICT_KEY,(res) => {
+      let permantMap = res[this.STORAGE_USER_DICT_KEY];
+      if (permantMap) {
+        this._permantMap = permantMap;
+      }
+    })
+    //}
+  }
+
+  /**
+   * Gets the storage key for the user dictionary.
+   * 
+   * @return {string}
+   * 
+   */
+  get STORAGE_USER_DICT_KEY() {
+    return this.inputTool + '_user_dictionary';
   }
 
   add(source: string, target: string) {
     if (!this._latestMap[source]) {
-        this._latestMap[source] = {};
+      this._latestMap[source] = {};
+      this._latestMap[source][target] = 1;
+      this._latestMapSize++;
+    } else {
+      if (this._latestMap[source][target]) {
+        this._latestMap[source][target]++
+      } else {
         this._latestMap[source][target] = 1;
         this._latestMapSize++;
-    } else {
-        if (this._latestMap[source][target]) {
-            this._latestMap[source][target]++
-        } else {
-            this._latestMap[source][target] = 1;
-            this._latestMapSize++;
-        }
+      }
     }
     if (this._latestMapSize > UserDecoder.MAX_LATEST_SIZE) {
-        this.#updatePermantMap();
+      this.#updatePermantMap();
     }
   }
 
@@ -98,70 +114,63 @@ export default class UserDecoder {
    * Saves the user dictionary to the local storage or chrome.storage.
    */
   persist() {
-   if (chrome.storage) {
-      this.#updatePermantMap();
-      chrome.storage.local.set({
-        [this.#getKey()]: this._permantMap
-      })
-    }
+  
+    // if (localStorage) {
+    //   this.#updatePermantMap();
+    //   localStorage.setItem(this.STORAGE_USER_DICT_KEY, JSON.stringify(localStorage));
+    // } else if (chrome.storage) {
+    this.#updatePermantMap();
+    chrome.storage.sync.set({
+      [this.STORAGE_USER_DICT_KEY]: this._permantMap
+    })
+    // }
   }
-
-  /**
-   * Gets the local storage key for the user dictionary.
-   * 
-   * @return {string}
-   * 
-   */
-  #getKey() {
-    return this.inputTool + '_user_dictionary';
-  }
-
 
   #updatePermantMap() {
     for (let key in this._latestMap) {
-        let targetItems = this._latestMap[key];
-        if (this._permantMap[key]) {
-            let permantItems = this._permantMap[key];
-            for (let targetKey in targetItems) {
-                if (permantItems[targetKey]) {
-                    permantItems[targetKey] += targetItems[targetKey];
-                } else {
-                    permantItems[targetKey] = targetItems[targetKey];
-                }
-            }
-        } else {
-            this._permantMap[key] = {...targetItems};
+      let targetItems = this._latestMap[key];
+      if (this._permantMap[key]) {
+        let permantItems = this._permantMap[key];
+        for (let targetKey in targetItems) {
+          if (permantItems[targetKey]) {
+            permantItems[targetKey] += targetItems[targetKey];
+          } else {
+            permantItems[targetKey] = targetItems[targetKey];
+          }
         }
+      } else {
+        this._permantMap[key] = {...targetItems};
+      }
     }
-    
+
     let heap = new Heap();
     for (let key in this._permantMap) {
-        let targetItems = this._permantMap[key];
-        for (let targetKey in targetItems) {
-            heap.insert(targetItems[targetKey], 0);
-            if (heap.size > UserDecoder.MAX_PERMANT_SIZE) {
-                heap.remove();
-            }
+      let targetItems = this._permantMap[key];
+      for (let targetKey in targetItems) {
+        heap.insert(targetItems[targetKey], 0);
+        if (heap.size > UserDecoder.MAX_PERMANT_SIZE) {
+          heap.remove();
         }
+      }
     }
 
     if (heap.size < UserDecoder.MAX_PERMANT_SIZE) {
-        heap.clear();
-        return;
+      heap.clear();
+      return;
     }
 
     let threshold = Number(heap.peekKey());
     heap.clear();
     for (let key in this._permantMap) {
-        let targetItems = this._permantMap[key];
-        for (let targetKey in targetItems) {
-            if (targetItems[targetKey] < threshold) {
-                delete targetItems[targetKey];
-            }
-        }
-        if (!Object.keys(targetItems).length) {
-            delete this._permantMap[key];
-        }
+      let targetItems = this._permantMap[key];
+      for (let targetKey in targetItems) {
+          if (targetItems[targetKey] < threshold) {
+              delete targetItems[targetKey];
+          }
+      }
+      if (!Object.keys(targetItems).length) {
+          delete this._permantMap[key];
+      }
     }
 
     this._latestMap = {};

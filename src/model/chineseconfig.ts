@@ -121,10 +121,20 @@ export default class ChineseConfig extends Config {
         return ;
     }
 
-    if (this.states[StateID.PUNC].value) {
+
+		if (this.states[StateID.SBC].value) {
+			if (!this.states[StateID.LANG].value || !/[a-z]/i.test(ch)) {
+				let sbc = this.sbcMap[ch];
+				if (sbc) {
+					return sbc;
+				}	
+			}
+		}
+
+    if (this.states[StateID.PUNC].value && this.states[StateID.LANG].value) {
       let punc = this.puncMap[ch];
       if (punc) {
-        if (Array.isArray(punc.length > 1)) {
+        if (Array.isArray(punc)) {
           ch = punc[0].charAt(punc[1]);
           console.log(punc)
           console.log(ch)
@@ -135,14 +145,6 @@ export default class ChineseConfig extends Config {
       }
     }
 
-		if (this.states[StateID.SBC].value) {
-			if (!this.states[StateID.LANG].value || !/[a-z]/i.test(ch)) {
-				let sbc = this.sbcMap[ch];
-				if (sbc) {
-					return sbc;
-				}	
-			}
-		}
 		
 		return '';
 	}
