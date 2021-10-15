@@ -1,6 +1,6 @@
 import { Controller } from "./controller";
 import { configFactoryInstance } from "./model/configfactory";
-import { InputToolCode, StateID } from "./model/enums";
+import { EventType, InputToolCode, StateID } from "./model/enums";
 
 /**
  * The background class implements the script for the background page of chrome
@@ -18,26 +18,24 @@ export class Background {
     chrome.runtime.onMessage.addListener(this.processRequest.bind(this));
     
     this.#init();
+    this._controller.addEventListener(EventType.UPDATESTATE, this.#updateStateToStorage.bind(this))
+  }
+
+  #updateStateToStorage() {
+    // console.log('update the config to storage', this._controller.localConfig);
+    chrome.storage.sync.set({
+      config: this._controller.localConfig
+    })
   }
 
   /** Initializes the background scripts. */
   #init() {
-    this.#updateSettingsFromLocalStorage();
    
     chrome.runtime.onInstalled.addListener((res) => {
 
       if (res.reason === 'install') {
         // The default input tool configure.
-        chrome.storage.sync.set({
-          config: {
-            'chos_init_punc_selection': true,
-            'chos_next_page_selection': true,
-            'chos_prev_page_selection': true,
-            'chos_init_sbc_selection': false,
-            'chos_init_vertical_selection': false,
-            'solution': "pinyinjiajia"
-          }
-        })
+        this.#updateStateToStorage();
       }
     })
 
@@ -57,6 +55,7 @@ export class Background {
           currentConfig!.states[StateID.SBC].value = res['config']?.chos_init_sbc_selection;
           currentConfig!.states[StateID.PUNC].value = res['config']?.chos_init_punc_selection;
           currentConfig!.vertical = res['config']?.chos_init_vertical_selection ?? false;
+          this._controller.localConfig = res['config'];
         }
       })
       this._controller.register(context);

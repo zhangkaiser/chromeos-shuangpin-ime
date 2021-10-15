@@ -7,7 +7,7 @@ import { View } from "./view";
 /**
  * The controller for os chrome os extension.
  */
-export class Controller {
+export class Controller extends EventTarget {
   /** The model. */
   model = new Model();
 
@@ -25,13 +25,23 @@ export class Controller {
   /** True if the last key down is shift (with not modifiers). */
   _lastKeyDownIsShift = false;
 
+  /** The user local storage config. */
+  localConfig: UserStorageConfig = {
+    'chos_init_punc_selection': true,
+    'chos_next_page_selection': true,
+    'chos_prev_page_selection': true,
+    'chos_init_sbc_selection': false,
+    'chos_init_vertical_selection': false,
+    'solution': "pinyinjiajia"
+  }
+
   /** The raw charactor. */
   rawChar = '';
 
   configFactory = configFactoryInstance;
 
   constructor() {
-    
+    super();
     /** The event handler. */
     this.model.addEventListener(EventType.COMMIT, this.handleCommitEvent.bind(this));
     this.model.addEventListener(EventType.OPENING, this.handleOpeningEvent.bind(this));
@@ -144,12 +154,16 @@ export class Controller {
   setInputToolStates(
     inputToolCode:InputToolCode, initLang: boolean, initSBC: boolean, initPunc: boolean) {
     let config = this.configFactory.getConfig(inputToolCode);
-    let stateID = StateID;
     if (config) {
-      config.states[stateID.LANG].value = initLang;
-      config.states[stateID.SBC].value = initSBC;
-      config.states[stateID.PUNC].value = initPunc;
+      config.states[StateID.LANG].value = initLang;
+      config.states[StateID.SBC].value = initSBC;
+      config.states[StateID.PUNC].value = initPunc;
     }
+  }
+
+  changePuncConfig(value: boolean) {
+    this.localConfig['chos_init_punc_selection'] = value;
+    this.dispatchEvent(new CustomEvent(EventType.UPDATESTATE));
   }
 
   /**
@@ -432,7 +446,8 @@ export class Controller {
     if (this._context) {
       chrome.input.ime.commitText({
         'contextID': this._context.contextID,
-        'text': this.model.segments.join('')});
+        'text': this.model.segments.join('')
+      });
     }
   }
 
@@ -544,6 +559,9 @@ export class Controller {
     let stateID = StateID;
     if (stateId == stateID.LANG) {
       config.states[stateID.PUNC].value = config.states[stateID.LANG].value;
+    }
+    if (stateId === StateID.PUNC) {
+      this.changePuncConfig(config.states[stateID.PUNC].value);
     }
     this.model.clear();
     this.view.updateItems();
