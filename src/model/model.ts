@@ -196,6 +196,7 @@ export class Model extends EventTarget {
    * Aborts the model, the behavior may be overridden by sub-classes.
    */
   abort() {
+    // console.log('abort the model.')
     this.clear();
   }
 
@@ -205,6 +206,7 @@ export class Model extends EventTarget {
   reset() {
     this.clear();
     if (this._decoder) {
+      // console.log('reset the model.')
       this._decoder.persist();
       this._decoder = undefined;
     }
@@ -466,8 +468,8 @@ export class Model extends EventTarget {
     this.candidates = [];
     if (ret.tokens.length == 2) {
       let one = candidates[0];
-      if (one && !Number.isInteger(one.score)) {
-        let two = candidates[1];
+      let two = candidates[1];
+      if (one && !Number.isInteger(one.score) && two.range == 2) {
         candidates[0] = two;
         candidates[1] = one;
       }

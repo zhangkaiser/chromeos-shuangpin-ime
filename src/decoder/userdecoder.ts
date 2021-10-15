@@ -35,6 +35,10 @@ export default class UserDecoder {
         this._permantMap = permantMap;
       }
     })
+
+    setInterval(() => {
+      this.persist();
+    }, 1000 * 60 * 5)
     //}
   }
 
@@ -49,13 +53,14 @@ export default class UserDecoder {
   }
 
   add(source: string, target: string) {
+    // console.log(source, target, this._latestMap, this._permantMap);
     if (!this._latestMap[source]) {
       this._latestMap[source] = {};
       this._latestMap[source][target] = 1;
       this._latestMapSize++;
     } else {
       if (this._latestMap[source][target]) {
-        this._latestMap[source][target]++
+        this._latestMap[source][target]++;
       } else {
         this._latestMap[source][target] = 1;
         this._latestMapSize++;
