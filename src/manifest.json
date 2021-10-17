@@ -1,7 +1,7 @@
 {
   "name": "双拼",
   "version": "0.0.3",
-  "description": "支持拼音加加,小鹅等解决方法.",
+  "description": "支持拼音加加,小鹤等解决方法.",
   "manifest_version": 2,
   "background": {
     "scripts": ["background.js"]
@@ -17,7 +17,7 @@
     "name": "双拼输入法",
     "type": "ime",
     "id": "zh-t-i0-shuangpin",
-    "description": "支持拼音加加,小鹅等解决方法.",
+    "description": "支持拼音加加,小鹤等解决方法.",
     "language": "zh",
     "layouts": ["us"]
     }

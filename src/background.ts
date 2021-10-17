@@ -1,7 +1,9 @@
 import { Controller } from "./controller";
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, StateID } from "./model/enums";
+import { enableDebug } from "./utils/debug";
 
+enableDebug();
 /**
  * The background class implements the script for the background page of chrome
  * os extension for os input tools.

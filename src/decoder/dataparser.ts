@@ -1,4 +1,5 @@
 import { binarySearch, compare3 } from "../utils/binarySearch";
+import { debugLog } from "../utils/debug";
 import type { DataLoader } from "./dataloader";
 import  type { InputTool } from "./enums";
 /**
@@ -143,8 +144,7 @@ export class DataParser {
     let targetPos: {start: number, end: number};
     let sourcePos = this.getSourcePos(source);
     if (sourcePos < 0) {
-      // !ERR
-      // 这里需要修改,应该是存放在数据库中,就无法使用索引来获取数据
+      /** ERR */
       targetPos = {
         start: 0,
         end: -1
@@ -164,12 +164,15 @@ export class DataParser {
   /** Gets the target mapping from a source word. */
   getTargetMappings(tokens: string[][], opt_isAllInitials?: boolean): Target[] {
     let sources = this.getTokenSequences(tokens, opt_isAllInitials);
+    
+    // debugLog('getTargetMappings.sources', sources);
     let targetMappings: Target[] = [];
 
     for (let j = 0; j < sources.length; ++j) {
       let source = sources[j];
       let {targetSegments, targetProbs} = this.dataLoader;
       let targetPos = this.getTargetPos(source);
+      debugLog('getTargetMappins.targetPos', targetPos, source);
       let {start, end} = targetPos;
       for (let i = start; i < end; i++) {
         let segment = this.decodeUnicodeString(targetSegments[i]);
@@ -182,6 +185,7 @@ export class DataParser {
         break;
       }
     }
+
     return targetMappings;
   }
 

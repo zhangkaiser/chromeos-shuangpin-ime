@@ -5,14 +5,11 @@ let HtmlWebpackPlugin = require("html-webpack-plugin");
 module.exports = {
   entry: {
     "background": "./src/background.ts",
-    // "popup": "./src/popup.ts",
     "option": "./src/option.ts",
-    // "test": "./src/tests/test_decoder.ts"
   },
   mode: "production",
-  // mode: "development",
-  // watch: true,
   output: {
+    // path: "/mnt/chromeos/MyFiles/chrome-shuangpin",
     filename: "[name].js"
   },
   module: {
