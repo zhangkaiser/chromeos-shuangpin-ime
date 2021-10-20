@@ -466,14 +466,6 @@ export class Model extends EventTarget {
     this.cursorPos = prefixSegments.length;
 
     this.candidates = [];
-    if (ret.tokens.length == 2) {
-      let one = candidates[0];
-      let two = candidates[1];
-      if (one && !Number.isInteger(one.score) && two.range == 2) {
-        candidates[0] = two;
-        candidates[1] = one;
-      }
-    }
 
     for (let i = 0; i < candidates.length; i++) {
       if (!candidates[i]) {

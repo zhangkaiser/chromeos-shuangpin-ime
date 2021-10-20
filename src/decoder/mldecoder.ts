@@ -83,8 +83,11 @@ export class MLDecoder {
 
   /**
    * Generates transliterations for tokens with associated scores.
+   * @ERR 
+   * @todo 
    */
   #generateTransliterations(tokens:string[][], isAllInitials?: boolean) {
+    debugLog('generateTransliterations.start');
     let subTranslit = this._subTranslitCache[this.#getKey(tokens)];
     if (subTranslit) {
       return subTranslit;
@@ -92,9 +95,13 @@ export class MLDecoder {
 
     let transliterations = new Heap();
     let sentence = this.#parser.getTargetMappings(tokens, isAllInitials);
-    debugLog('generateTransliterations.sentence', sentence);
+    // debugLog('generateTransliterations.sentence', tokens, sentence);
     this.#updateScoresForTargets(sentence, transliterations);
-    debugLog('updateScoresForTargets after transliterations', transliterations.getKeys(), transliterations.getValues());
+    // debugLog('updateScoresForTargets after transliterations', transliterations.getKeys(), transliterations.getValues());
+
+    if (transliterations.size > 0) {
+      return transliterations;
+    }
 
     // Try out transliterations for all possible ways of breaking the word into
     // a prefix + suffix word. The prefix is looked up for in known Prefix or
@@ -102,6 +109,8 @@ export class MLDecoder {
     // do memoization to ensure O(n^2) time.
     let len = tokens.length;
     for (let i = len - 1; i > 0; i--) {
+    // for (let i = 1; i < len; i++) {
+      
       let sourcePrefix = tokens.slice(0, i);
       let sourceSuffix = tokens.slice(i);
 
@@ -110,11 +119,12 @@ export class MLDecoder {
 
       let targetSuffixes = this.#parser.getTargetMappings(
           sourceSuffix, isAllInitials);
-      debugLog('targetSuffiiixes', targetSuffixes);
+      debugLog('generateTransliterations.iterator', i, sourcePrefix, sourceSuffix, targetSuffixes)
       // Update the targetPrefixScores for all words in targetPrefixes. Also
       // multiply each score by the probability of this source prefix segment
       // actually being a prefix.
       this.#updateScoresForTargets(targetSuffixes, targetSuffixScores);
+      debugLog('generateTransliterations.iterator.targetSuffixScores', i, targetSuffixScores.getKeys(), targetSuffixScores.getValues())
 
       if (targetSuffixScores.size == 0) {
         continue;
@@ -131,10 +141,10 @@ export class MLDecoder {
       // Combines sourceSegment and suffixSegment.
       let prefixValues = targetPrefixScores.getValues();
       let prefixKeys = targetPrefixScores.getKeys();
-      debugLog('prefixScores', prefixValues, prefixKeys);
+      // debugLog('generateTransliterations.iterator.prefixScores', i, prefixValues, prefixKeys);
       let suffixValues = targetSuffixScores.getValues();
       let suffixKeys = targetSuffixScores.getKeys();
-      debugLog('suffixScores', suffixValues, suffixKeys);
+      // debugLog('generateTransliterations.iterator.suffixScores', i, suffixValues, suffixKeys);
       for (let j = 0; j < prefixKeys.length; ++j) {
         let prefixScore = Number(prefixKeys[j]);
         let prefixSegment = prefixValues[j];
