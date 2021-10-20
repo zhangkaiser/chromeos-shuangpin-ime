@@ -100,6 +100,9 @@ export class MLDecoder {
     // debugLog('updateScoresForTargets after transliterations', transliterations.getKeys(), transliterations.getValues());
 
     if (transliterations.size > 0) {
+      // Cache the results.
+      this._subTranslitCache[this.#getKey(tokens)] = transliterations;
+    
       return transliterations;
     }
 
