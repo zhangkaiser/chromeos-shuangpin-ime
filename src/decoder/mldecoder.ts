@@ -31,7 +31,7 @@ export class MLDecoder {
   private _preTranslitCache:Record<string, Heap> = {};
 
   /** The maximun size of each heap in cache. */
-  private _pruneNum = 1;
+  private _pruneNum = 2;
 
   /** Maximum length of source word that MLDecoder accepts. */
   static MAX_SOURCE_LENGTH = 20;
@@ -40,7 +40,8 @@ export class MLDecoder {
   static DEFAULT_RESULTS_NUM = 50;
 
   /** Factor to punish multi-segments matches. */
-  static MULTI_SEGMENT_FACTOR = -0.7;  
+  // static MULTI_SEGMENT_FACTOR = -0.7;  
+  static MULTI_SEGMENT_FACTOR = -0.3;
 
   constructor(private inputTool: InputTool, private _dataLoader: DataLoader) {
     this.#parser = new DataParser(this.inputTool, this._dataLoader);
@@ -122,12 +123,12 @@ export class MLDecoder {
 
       let targetSuffixes = this.#parser.getTargetMappings(
           sourceSuffix, isAllInitials);
-      debugLog('generateTransliterations.iterator', i, sourcePrefix, sourceSuffix, targetSuffixes)
+      // debugLog('generateTransliterations.iterator', i, sourcePrefix, sourceSuffix, targetSuffixes)
       // Update the targetPrefixScores for all words in targetPrefixes. Also
       // multiply each score by the probability of this source prefix segment
       // actually being a prefix.
       this.#updateScoresForTargets(targetSuffixes, targetSuffixScores);
-      debugLog('generateTransliterations.iterator.targetSuffixScores', i, targetSuffixScores.getKeys(), targetSuffixScores.getValues())
+      // debugLog('generateTransliterations.iterator.targetSuffixScores', i, targetSuffixScores.getKeys(), targetSuffixScores.getValues())
 
       if (targetSuffixScores.size == 0) {
         continue;
@@ -140,6 +141,8 @@ export class MLDecoder {
       } else {
         targetPrefixScores = this.#generateTransliterations(sourcePrefix);
       }
+      // debugLog('generateTransliterations.iterator.targetSuffixScores-1', i, targetSuffixScores.getKeys(), targetSuffixScores.getValues())
+
 
       // Combines sourceSegment and suffixSegment.
       let prefixValues = targetPrefixScores.getValues();
@@ -155,7 +158,10 @@ export class MLDecoder {
           let suffixScore = Number(suffixKeys[k]);
           let suffixSegment = suffixValues[k];
           let targetWord = prefixSegment + suffixSegment;
-          let score = prefixScore + suffixScore + MLDecoder.MULTI_SEGMENT_FACTOR;
+          let score = (prefixScore * MLDecoder.MULTI_SEGMENT_FACTOR) + suffixScore;
+          // let score = prefixScore + suffixScore + MLDecoder.MULTI_SEGMENT_FACTOR;
+
+          // debugLog('targetWord and score', i, j, k, targetWord, score);
           transliterations.increase(score, targetWord);
           if (transliterations.size > this._pruneNum) {
             transliterations.remove();
@@ -216,7 +222,7 @@ export class MLDecoder {
       let targetSegment = targetWords[i].segment;
       let targetScore = targetWords[i].prob;
       scores.increase(targetScore, targetSegment);
-      if (scores.size > this._pruneNum) {
+      if (scores.size > 1) {
         scores.remove();
       }
     }

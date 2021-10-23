@@ -172,7 +172,7 @@ export class DataParser {
       let source = sources[j];
       let {targetSegments, targetProbs} = this.dataLoader;
       let targetPos = this.getTargetPos(source);
-      debugLog('getTargetMappins.targetPos', targetPos, source);
+      // debugLog('getTargetMappins.targetPos', targetPos, source);
       let {start, end} = targetPos;
       for (let i = start; i < end; i++) {
         let segment = this.decodeUnicodeString(targetSegments[i]);
