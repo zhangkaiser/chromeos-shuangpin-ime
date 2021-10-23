@@ -1,3 +1,4 @@
+import { debugLog } from "../utils/debug";
 import { solutions } from "../utils/double-solutions";
 import {PinyinConfig} from "./pinyinconfig";
 
@@ -117,6 +118,7 @@ export class ShuangpinConfig extends PinyinConfig {
     if (this.bootIsFirst 
         || hasSplitChar
         || segmentIsInitial) {
+      debugLog('hasSplitChar, segmentIsInitial',hasSplitChar, segmentIsInitial, context, c, segmentsLastItem);
       let isFirstBootMode = this.bootIsFirst;
       this.bootIsFirst = false;
 
@@ -141,7 +143,8 @@ export class ShuangpinConfig extends PinyinConfig {
             return this.tokensRegexp.test(segment + item)
           }
         )[0];
-        
+
+        debugLog('vowel,hasSplitChar', vowel, hasSplitChar);
         if (vowel && hasSplitChar && !this.tokensRegexp.test(vowel)) {
           return vowel + '\'';
         } else if (vowel) {
@@ -172,8 +175,8 @@ export class ShuangpinConfig extends PinyinConfig {
       return '\'';
     }
 
-    isToken = isToken && this.tokensRegexp.test(segmentsLastItem + c)
-    if (isToken) {
+    let isSubToken = isToken && [segmentsLastItem, segmentsLastItem.slice(-2)].filter((item) => this.tokensRegexp.test(item + c))
+    if (isSubToken) {
       return '\'' + c;
     }
 
