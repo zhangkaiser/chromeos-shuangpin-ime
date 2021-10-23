@@ -1,6 +1,6 @@
 {
   "name": "双拼",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "支持拼音加加,小鹤等解决方法.",
   "manifest_version": 2,
   "background": {
