@@ -9,7 +9,7 @@ module.exports = {
   },
   mode: "production",
   output: {
-    // path: "/mnt/chromeos/MyFiles/chrome-shuangpin",
+    path: "/mnt/chromeos/MyFiles/chrome-shuangpin",
     filename: "[name].js"
   },
   module: {

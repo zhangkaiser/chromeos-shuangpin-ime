@@ -212,4 +212,17 @@ export class ShuangpinConfig extends PinyinConfig {
     return [vowel, c];
 
   }
+
+  transformView(composing_text: string, rawStr: string) {
+    if (composing_text === '\'') {
+      composing_text = rawStr;
+    }
+    if (composing_text.slice(-1) === '\'') {
+      composing_text = `${composing_text.slice(0, -1)}`
+    }
+
+    composing_text = composing_text.replace(/'/ig, ' ').replace(/(\s)(\s)?/ig, '\'');
+    
+    return composing_text;
+  }
 }

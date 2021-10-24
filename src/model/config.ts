@@ -78,7 +78,7 @@ export class Config {
   /**
    * Transform the character on the editor text.
    */
-  transformView(text: string) {
+  transformView(text: string, rawStr?: string) {
     return text;
   }
 

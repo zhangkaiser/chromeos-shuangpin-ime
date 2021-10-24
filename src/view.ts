@@ -111,7 +111,7 @@ export class View {
       composing_text += ' ' + segmentsAfterCursor.join(' ');
     }
     composing_text = this.configFactory.getCurrentConfig().transformView(
-        composing_text);
+        composing_text, this.model.rawStr);
     chrome.input.ime.setComposition(
         {
           'contextID': this._context.contextID,
