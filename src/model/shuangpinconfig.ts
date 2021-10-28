@@ -82,7 +82,6 @@ export class ShuangpinConfig extends PinyinConfig {
     this.tokensRegexp = new RegExp(`^(${this.tokens})$`);
   }
 
-  bootIsFirst = false;
   solution = 'pinyinjiajia';
 
   setSolution(value: string) {
@@ -91,22 +90,20 @@ export class ShuangpinConfig extends PinyinConfig {
     this.initialCharList = Object.keys(trans.initial);
   }
 
-  transform(context: string, c: string, segmentsLastItem: string) {
+  transform(/** The model rawStr */context: string, c: string, segmentsLastItem: string = "") {
+
     let trans = this.#solutions[this.solution];
-    
-    if (!segmentsLastItem) {
-      segmentsLastItem = "";
-    }
 
     if (!trans) {
       return c;
     }
+
+    /** No context  */
     if (!context) {
       if (this.initialCharList.indexOf(c) > -1) {
         return trans['initial'][c];
       }
       if (c === trans['bootKey']) {
-        this.bootIsFirst = true;
         return '\'';
       }
     }
@@ -114,25 +111,21 @@ export class ShuangpinConfig extends PinyinConfig {
     /** 
      * transform to vowel.
      */
+    let isFirstBootMode = context === trans.bootKey;
     let hasSplitChar = segmentsLastItem.slice(-1) === '\'';
-    let segmentIsInitial = this.initialTokens.indexOf(segmentsLastItem) > -1
-    if (this.bootIsFirst 
+    let segmentIsInitial = this.initialTokens.indexOf(segmentsLastItem) > -1;
+    if (isFirstBootMode 
         || hasSplitChar
         || segmentIsInitial) {
       debugLog('hasSplitChar, segmentIsInitial',hasSplitChar, segmentIsInitial, context, c, segmentsLastItem);
-      let isFirstBootMode = this.bootIsFirst;
-      this.bootIsFirst = false;
-
+      /** Output when 'c' is equal to boot key */
       if (c === trans['bootKey']){
-        
-        if (hasSplitChar || isFirstBootMode) {
-          return c;
-        }
-        if (segmentIsInitial && this.tokensRegexp.test(segmentsLastItem + c)) {
+        if (!segmentIsInitial) {
           return c;
         }
       }
 
+      /** Transfrom 'c' to vowel. */
       let vowel = trans['vowel'][c];
       if (vowel && Array.isArray(vowel)) {
         vowel = vowel.filter(

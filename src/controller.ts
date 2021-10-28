@@ -1,6 +1,7 @@
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, Key, KeyboardLayouts, Modifier, StateID, Status } from "./model/enums";
 import { Model } from "./model/model";
+import { debugLog } from "./utils/debug";
 import { hans2Hant } from "./utils/transform";
 import { View } from "./view";
 
@@ -193,8 +194,8 @@ export class Controller extends EventTarget {
    * @return {boolean} True if the event is handled successfully.
    */
   handleEvent(e: any) {
-    let inputTool = this.configFactory.getInputTool();
-    if (!this._context || !inputTool || !this._keyActionTable) {
+    debugLog('handleEvent', e, this._context, this._keyActionTable);
+    if (!this._context || !this._keyActionTable) {
       return false;
     }
 
@@ -272,7 +273,7 @@ export class Controller extends EventTarget {
    */
   processCharKey(e: any) {
     let text = this.configFactory.getCurrentConfig().transform(
-      this.model.source, e.key, this.model.segments.slice(-1)[0]);
+      this.model.rawStr, e.key, this.model.segments.slice(-1)[0]);
     if (!text) {
       return this.model.status != Status.INIT;
     }

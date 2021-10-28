@@ -73,8 +73,8 @@ export default class ConfigFactory {
 
     let shuangpinConfig = new ShuangpinConfig();
     this._map[code.SHUANGPIN_SIMPLIFIED] = shuangpinConfig;
-    let pinyinConfig = new PinyinConfig();
-    this._map[code.PINYIN_SIMPLIFIED] = pinyinConfig;
+    // let pinyinConfig = new PinyinConfig();
+    // this._map[code.PINYIN_SIMPLIFIED] = pinyinConfig;
   }
 }
 
