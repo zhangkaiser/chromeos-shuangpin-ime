@@ -88,7 +88,7 @@ export class MLDecoder {
    * @todo 
    */
   #generateTransliterations(tokens:string[][], isAllInitials?: boolean) {
-    debugLog('generateTransliterations.start');
+    // debugLog('generateTransliterations.start');
     let subTranslit = this._subTranslitCache[this.#getKey(tokens)];
     if (subTranslit) {
       return subTranslit;
@@ -171,7 +171,7 @@ export class MLDecoder {
     }
     // Cache the results.
     this._subTranslitCache[this.#getKey(tokens)] = transliterations;
-    debugLog('generaterTransliteration.end', transliterations, transliterations.getKeys(), transliterations.getValues())
+    // debugLog('generaterTransliteration.end', transliterations, transliterations.getKeys(), transliterations.getValues())
     return transliterations;
   }
 

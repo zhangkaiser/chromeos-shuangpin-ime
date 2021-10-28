@@ -194,7 +194,7 @@ export class Controller extends EventTarget {
    * @return {boolean} True if the event is handled successfully.
    */
   handleEvent(e: any) {
-    debugLog('handleEvent', e, this._context, this._keyActionTable);
+    // debugLog('handleEvent', e, this._context, this._keyActionTable);
     if (!this._context || !this._keyActionTable) {
       return false;
     }
