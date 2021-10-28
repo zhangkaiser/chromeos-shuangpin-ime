@@ -52,7 +52,10 @@ export class Config {
   /** The shuangpin solution. */
   solution = '';
 
-  /** */
+  /** Output Traditional Chinese. */
+  traditional = false;
+
+  /** Use vertical to show candidates. */
   vertical = false;
 
 
@@ -78,7 +81,7 @@ export class Config {
   /**
    * Transform the character on the editor text.
    */
-  transformView(text: string) {
+  transformView(text: string, rawStr?: string) {
     return text;
   }
 

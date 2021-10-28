@@ -2,6 +2,7 @@ import { Controller } from "./controller";
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, StateID } from "./model/enums";
 import { enableDebug } from "./utils/debug";
+import { loadDict } from "./utils/transform";
 
 enableDebug();
 /**
@@ -57,6 +58,10 @@ export class Background {
           currentConfig!.states[StateID.SBC].value = res['config']?.chos_init_sbc_selection;
           currentConfig!.states[StateID.PUNC].value = res['config']?.chos_init_punc_selection;
           currentConfig!.vertical = res['config']?.chos_init_vertical_selection ?? false;
+          currentConfig!.traditional = res['config']?.chos_init_enable_traditional ?? false;
+          if (currentConfig!.traditional) {
+            loadDict();
+          }
           this._controller.localConfig = res['config'];
         }
       })

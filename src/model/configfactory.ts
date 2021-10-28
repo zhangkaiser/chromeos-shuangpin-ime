@@ -51,7 +51,7 @@ export default class ConfigFactory {
    * Gets the config for the current input tool.
    */
   getCurrentConfig() {
-    if (!Reflect.has(this._map, InputToolCode.PINYIN_SIMPLIFIED)) {
+    if (!Reflect.has(this._map, InputToolCode.SHUANGPIN_SIMPLIFIED)) {
       this.#buildConfigs();
     }
 
@@ -73,8 +73,6 @@ export default class ConfigFactory {
 
     let shuangpinConfig = new ShuangpinConfig();
     this._map[code.SHUANGPIN_SIMPLIFIED] = shuangpinConfig;
-    let pinyinConfig = new PinyinConfig();
-    this._map[code.PINYIN_SIMPLIFIED] = pinyinConfig;
   }
 }
 

@@ -4,6 +4,7 @@
 
 import { configFactoryInstance } from "./model/configfactory";
 import type { Model } from "./model/model";
+import { hans2Hant } from "./utils/transform";
 
 export class View {
   configFactory = configFactoryInstance;
@@ -111,7 +112,7 @@ export class View {
       composing_text += ' ' + segmentsAfterCursor.join(' ');
     }
     composing_text = this.configFactory.getCurrentConfig().transformView(
-        composing_text);
+        composing_text, this.model.rawStr);
     chrome.input.ime.setComposition(
         {
           'contextID': this._context.contextID,
@@ -133,12 +134,19 @@ export class View {
     }
     let vertical = this.configFactory.getCurrentConfig().vertical;
     let displayItems = [];
+    let targetHandler = (target: string) => {
+      if (this.configFactory.getCurrentConfig().traditional) {
+        return hans2Hant(target);
+      } else {
+        return target;
+      }
+    }
     if (vertical) {
       for (let i = from; i < to; i++) {
         let candidate = this.model.candidates[i];
         let label = (i + 1 - from).toString();        
         displayItems.push({
-          'candidate': candidate.target,
+          'candidate': targetHandler(candidate.target),
           'label': label,
           'id': i - from});
       }
@@ -147,7 +155,7 @@ export class View {
         let candidate = this.model.candidates[i];
         let label = (i + 1 - from).toString();        
         displayItems.push({
-          annotation: `${label} ${candidate.target}`,
+          annotation: `${label} ${targetHandler(candidate.target)}`,
           'candidate': candidate.target,
           'label': label,
           'id': i - from
