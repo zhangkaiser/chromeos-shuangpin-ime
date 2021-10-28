@@ -1,4 +1,5 @@
 import { solutions } from "../utils/double-solutions";
+import { hans2Hant } from "../utils/transform";
 import {PinyinConfig} from "./pinyinconfig";
 
 export class ShuangpinConfig extends PinyinConfig {
@@ -80,7 +81,6 @@ export class ShuangpinConfig extends PinyinConfig {
     this.tokensRegexp = new RegExp(`^(${this.tokens})$`);
   }
 
-  bootIsFirst = false;
   solution = 'pinyinjiajia';
 
   setSolution(value: string) {
@@ -89,22 +89,20 @@ export class ShuangpinConfig extends PinyinConfig {
     this.initialCharList = Object.keys(trans.initial);
   }
 
-  transform(context: string, c: string, segmentsLastItem: string) {
+  transform(/** The model rawStr */context: string, c: string, segmentsLastItem: string = "") {
+
     let trans = this.#solutions[this.solution];
-    
-    if (!segmentsLastItem) {
-      segmentsLastItem = "";
-    }
 
     if (!trans) {
       return c;
     }
+
+    /** No context  */
     if (!context) {
       if (this.initialCharList.indexOf(c) > -1) {
         return trans['initial'][c];
       }
       if (c === trans['bootKey']) {
-        this.bootIsFirst = true;
         return '\'';
       }
     }
@@ -112,58 +110,61 @@ export class ShuangpinConfig extends PinyinConfig {
     /** 
      * transform to vowel.
      */
-    let hasSplitChar = segmentsLastItem.slice(-1) === '\'';
-    let segmentIsInitial = this.initialTokens.indexOf(segmentsLastItem) > -1
-    if (this.bootIsFirst 
-        || hasSplitChar
+    let isFirstBootMode = context === trans.bootKey;
+    let segmentHasSplitChar = segmentsLastItem.slice(-1) === '\'';
+    let segmentIsInitial = this.initialTokens.indexOf(segmentsLastItem) > -1;
+    let contextLastCharIsBootKey = context.slice(-1) === trans.bootKey;
+    let checkVowelIsToken = (v: string) => {
+      return this.tokensRegexp.test(v);
+    }
+
+    if (isFirstBootMode 
+        || segmentHasSplitChar
         || segmentIsInitial) {
-      let isFirstBootMode = this.bootIsFirst;
-      this.bootIsFirst = false;
-
-      if (c === trans['bootKey']){
-        
-        if (hasSplitChar || isFirstBootMode) {
-          return c;
-        }
-        if (segmentIsInitial && this.tokensRegexp.test(segmentsLastItem + c)) {
-          return c;
-        }
+      // debugLog('segmentHasSplitChar, segmentIsInitial',segmentHasSplitChar, segmentIsInitial, context, c, segmentsLastItem);
+      /** Output when 'c' is equal to boot key */
+      if (c === trans['bootKey'] && !segmentIsInitial){
+        return c;
       }
-
+      
+      /** Transfrom 'c' to vowel. */
       let vowel = trans['vowel'][c];
       if (vowel && Array.isArray(vowel)) {
         vowel = vowel.filter(
           (item) => {
             let segment = segmentsLastItem
-            if (hasSplitChar) {
+            if (segmentHasSplitChar) {
               segment = '';
             }
-            return this.tokensRegexp.test(segment + item)
+            return checkVowelIsToken(segment + item);
           }
         )[0];
-        
-        if (vowel && hasSplitChar && !this.tokensRegexp.test(vowel)) {
+
+        if (vowel && segmentHasSplitChar && !checkVowelIsToken(vowel) && !contextLastCharIsBootKey) {
           return vowel + '\'';
-        } else if (vowel) {
+          // Prevent the decoder from changing result. 
+        } else if (vowel && !contextLastCharIsBootKey) {
           return vowel;
         }
       }
 
-      if (vowel && this.tokensRegexp.test(vowel)) {
-        if (hasSplitChar  && !this.tokensRegexp.test(segmentsLastItem.slice(0, -1))) {
+      if (vowel && checkVowelIsToken(vowel) && contextLastCharIsBootKey) {
+        
+        if (segmentHasSplitChar && !checkVowelIsToken(segmentsLastItem.slice(0, -1))) {
           return vowel + '\'';
         }
 
         return vowel;
       }
 
-      if (vowel && segmentIsInitial && this.tokensRegexp.test(segmentsLastItem + vowel)) {
+      if (vowel && segmentIsInitial && checkVowelIsToken(segmentsLastItem + vowel)) {
         return vowel;
       }
     }
 
     /** transform to initial. */
-    let isToken = this.tokensRegexp.test(segmentsLastItem)
+    let isToken = checkVowelIsToken(segmentsLastItem)
+     || checkVowelIsToken(segmentsLastItem.slice(0,-1))
     if (isToken && this.initialCharList.indexOf(c) > -1) {
       return trans['initial'][c];
     }
@@ -172,8 +173,10 @@ export class ShuangpinConfig extends PinyinConfig {
       return '\'';
     }
 
-    let isSubToken = isToken && [segmentsLastItem, segmentsLastItem.slice(-2)].filter((item) => this.tokensRegexp.test(item + c))
-    if (isSubToken) {
+    let isSubToken = isToken && 
+      [segmentsLastItem, segmentsLastItem.slice(-2)]
+        .filter((item) => checkVowelIsToken(item + c));
+    if (isSubToken && !segmentHasSplitChar) {
       return '\'' + c;
     }
 
@@ -208,5 +211,23 @@ export class ShuangpinConfig extends PinyinConfig {
     }
     return [vowel, c];
 
+  }
+
+  transformView(composing_text: string, rawStr: string) {
+    if (composing_text === '\'') {
+      composing_text = '~';
+    }
+    if (composing_text.slice(-1) === '\'' 
+      && rawStr.slice(-1) === this.#solutions[this.solution].bootKey) {
+      composing_text = `${composing_text.slice(0, -1)} ~`
+    }
+
+    if (this.traditional) {
+      composing_text = hans2Hant(composing_text)
+    }
+
+    composing_text = composing_text.replace(/'/ig, ' ').replace(/(\s)(\s)?/ig, '\'');
+    
+    return composing_text;
   }
 }

@@ -306,29 +306,31 @@ export class Model extends EventTarget {
         this.commitPos = 0;
       } else if (this.cursorPos > 0) {
         let segment = this.segments[this.cursorPos - 1];
-        
+        /** Revert in shuangpin mode. */
         let solution = this.configFactory.getCurrentConfig().solution;
         if (solution) {
           let rawWords = this.configFactory.getCurrentConfig().getTransform(this.rawStr.slice(-1));
           if (Array.isArray(rawWords)) {
             for (let i = 0; i < rawWords.length; i++) {
-              let raw = rawWords[i];
-              let searchIndex = segment.search(raw)
-              if (segment.slice(searchIndex) === raw) {
-                deletedChar = raw;
+              let rawWord = rawWords[i];
+              let searchIndex = segment.search(rawWord)
+              let suffixSegment = segment.slice(searchIndex)
+              /** No split char. */
+              if (suffixSegment === rawWord) {
+                deletedChar = rawWord;
                 segment = segment.slice(0, searchIndex);
                 this.rawStr = this.rawStr.slice(0, -1);
                 break;
               }
-
-              if (segment.slice(searchIndex) === raw + '\'') {
-                deletedChar = raw + '\'';
+              
+              /** Have split char */
+              if (suffixSegment === rawWord + '\'') {
+                deletedChar = rawWord + '\'';
                 segment = segment.slice(0, searchIndex);
                 this.rawStr = this.rawStr.slice(0, -1);
                 break;
               }
-
-              if (segment === raw + '\'') {
+              if (segment === rawWord + '\'') {
                 deletedChar = segment
                 segment = ''
                 this.rawStr = this.rawStr.slice(0, -1);
@@ -342,6 +344,12 @@ export class Model extends EventTarget {
             deletedChar = '\'';
             segment = segment.slice(0, -1);
             this.rawStr = this.rawStr.slice(0, -1);
+          }
+
+          if (!deletedChar) {
+            deletedChar = segment
+            segment = ''
+            this.rawStr = ''
           }
         } else {
           deletedChar = segment.slice(-1);
@@ -438,6 +446,7 @@ export class Model extends EventTarget {
     }
     this.status = Status.FETCHING;
     if (this.source === '\'') {
+      this.status = Status.SELECT;
       return ;
     }
     let ret = this._decoder.decode(
