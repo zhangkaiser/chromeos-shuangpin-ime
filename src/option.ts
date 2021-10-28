@@ -19,13 +19,14 @@ class OptionPage extends LitElement {
             item['value'] = config[item['id']]
           }
         }
+        this.loaded = true;
       }
     })
   }
 
   config:any = {
     solution: 'pinyinjiajia',
-
+    
   };
   
   shortcuts = [
@@ -43,7 +44,8 @@ class OptionPage extends LitElement {
     }
   ]
   solutions:Record<string, string> = solutionNames
-  @property({type: String}) currentSolution = 'pinyinjiajia'
+  @property({type: String}) currentSolution = 'pinyinjiajia';
+  @property({type: Boolean}) loaded = false;
 
   @property({type: Array})
   baseInfo = [
@@ -76,7 +78,13 @@ class OptionPage extends LitElement {
       type: 'checkbox',
       value: false,
       label: '纵向显示候选词列表'
-    }
+    },
+    {
+      id: 'chos_init_enable_traditional',
+      type: 'checkbox',
+      value: false,
+      label: '启用繁体字'
+    },
   ]
 
   changeConfig() {

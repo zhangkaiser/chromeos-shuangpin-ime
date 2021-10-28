@@ -1,6 +1,7 @@
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, Key, KeyboardLayouts, Modifier, StateID, Status } from "./model/enums";
 import { Model } from "./model/model";
+import { hans2Hant } from "./utils/transform";
 import { View } from "./view";
 
 
@@ -32,6 +33,7 @@ export class Controller extends EventTarget {
     'chos_prev_page_selection': true,
     'chos_init_sbc_selection': false,
     'chos_init_vertical_selection': false,
+    'chos_init_enable_traditional': false,
     'solution': "pinyinjiajia"
   }
 
@@ -451,9 +453,13 @@ export class Controller extends EventTarget {
   */
   handleCommitEvent() {
     if (this._context) {
+      let segments = this.model.segments.join('');
+      if (this.configFactory.getCurrentConfig().traditional) {
+        segments = hans2Hant(segments);
+      }
       chrome.input.ime.commitText({
         'contextID': this._context.contextID,
-        'text': this.model.segments.join('')
+        'text': segments
       });
     }
   }

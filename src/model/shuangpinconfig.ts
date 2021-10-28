@@ -1,5 +1,6 @@
 import { debugLog } from "../utils/debug";
 import { solutions } from "../utils/double-solutions";
+import { hans2Hant } from "../utils/transform";
 import {PinyinConfig} from "./pinyinconfig";
 
 export class ShuangpinConfig extends PinyinConfig {
@@ -215,10 +216,15 @@ export class ShuangpinConfig extends PinyinConfig {
 
   transformView(composing_text: string, rawStr: string) {
     if (composing_text === '\'') {
-      composing_text = rawStr;
+      composing_text = '~';
     }
-    if (composing_text.slice(-1) === '\'') {
-      composing_text = `${composing_text.slice(0, -1)}`
+    if (composing_text.slice(-1) === '\'' 
+      && rawStr.slice(-1) === this.#solutions[this.solution].bootKey) {
+      composing_text = `${composing_text.slice(0, -1)} ~`
+    }
+
+    if (this.traditional) {
+      composing_text = hans2Hant(composing_text)
     }
 
     composing_text = composing_text.replace(/'/ig, ' ').replace(/(\s)(\s)?/ig, '\'');

@@ -306,7 +306,7 @@ export class Model extends EventTarget {
         this.commitPos = 0;
       } else if (this.cursorPos > 0) {
         let segment = this.segments[this.cursorPos - 1];
-        
+        /** Revert in shuangpin mode. */
         let solution = this.configFactory.getCurrentConfig().solution;
         if (solution) {
           let rawWords = this.configFactory.getCurrentConfig().getTransform(this.rawStr.slice(-1));

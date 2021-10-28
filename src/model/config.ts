@@ -52,7 +52,10 @@ export class Config {
   /** The shuangpin solution. */
   solution = '';
 
-  /** */
+  /** Output Traditional Chinese. */
+  traditional = false;
+
+  /** Use vertical to show candidates. */
   vertical = false;
 
 
