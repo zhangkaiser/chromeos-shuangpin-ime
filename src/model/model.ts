@@ -438,6 +438,7 @@ export class Model extends EventTarget {
     }
     this.status = Status.FETCHING;
     if (this.source === '\'') {
+      this.status = Status.SELECT;
       return ;
     }
     let ret = this._decoder.decode(
