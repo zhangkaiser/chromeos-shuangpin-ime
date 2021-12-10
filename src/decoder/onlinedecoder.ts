@@ -56,9 +56,10 @@ export class OnlineDecoder {
     }
     // TODO(error!)
     // Abort the last request.
-    // if (this._request && this._request.signal.aborted) {
-    //   this._request.abort();
-    // }
+    if (this._request && !this._request.signal.aborted) {
+      this.clear();
+    }
+
     this._request = this.#send(source);
 
     return this._request.promise.then(this.#engineHandler.bind(this))
@@ -69,7 +70,7 @@ export class OnlineDecoder {
   }
 
   clear() {
-    // this._request?.abort();
+    this._request?.abort();
     this._request = null;
   }
 }

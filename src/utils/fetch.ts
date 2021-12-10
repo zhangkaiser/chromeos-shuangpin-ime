@@ -24,7 +24,9 @@ export function fetchApi(url: string, params: object) {
   return {
     promise,
     signal,
-    abort: controller.abort,
+    abort: () => {
+      controller.abort()
+    },
   }
 }
 
