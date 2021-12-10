@@ -2,6 +2,7 @@ import { Candidate } from "./candidate";
 import { Decoder } from "../decoder/decoder";
 import { configFactoryInstance } from "./configfactory";
 import { EventType, InputToolCode, Status } from "./enums";
+import { OnlineDecoder } from "../decoder/onlinedecoder";
 
 /**
  * The model, which mananges the state transfers and commits.
@@ -45,6 +46,12 @@ export class Model extends EventTarget {
 
   /** The raw string. */
   rawStr = '';
+
+  /** The number for setTimeout asynchronous processing of online decoder handle. */
+  private _timeout?: number;
+
+  /** The online decoder. */
+  private _onlineDecoder?: OnlineDecoder;
 
   /**
    * Updates this.highlightIndex.
@@ -179,6 +186,9 @@ export class Model extends EventTarget {
     if (this._decoder) {
       this._decoder.clear();
     }
+    if (this._onlineDecoder) {
+      this._onlineDecoder.clear();
+    }
 
     this.rawStr = '';
     this.source = '';
@@ -190,6 +200,7 @@ export class Model extends EventTarget {
     this.candidates = [];
     this.status = Status.INIT;
     this._holdSelectStatus = false;
+    this._timeout = 0;
   }
 
   /**
@@ -209,6 +220,9 @@ export class Model extends EventTarget {
       // console.log('reset the model.')
       this._decoder.persist();
       this._decoder = undefined;
+    }
+    if (this._onlineDecoder) {
+      this._onlineDecoder = undefined;
     }
   }
 
@@ -238,6 +252,8 @@ export class Model extends EventTarget {
       inputToolCode,
       config.fuzzyExpansions,
       config.enableUserDict);
+      
+    this._onlineDecoder = new OnlineDecoder();
   }
 
   /** Sets the fuzzy expansions for a given input tool. */
@@ -449,6 +465,13 @@ export class Model extends EventTarget {
       this.status = Status.SELECT;
       return ;
     }
+
+    if (this._timeout) {
+      clearTimeout(this._timeout);
+    }
+
+    this._timeout = setTimeout(this.cloudDecoder.bind(this), 300);
+
     let ret = this._decoder.decode(
       this.source, this.configFactory.getCurrentConfig().requestNum);
     if (!ret) {
@@ -491,5 +514,32 @@ export class Model extends EventTarget {
       this.enterSelectInternal();
     }
     this.notifyUpdates();
+  }
+
+  cloudDecoder() {
+    if (this.source.search('\'') <= 0) return ;
+    if (!this._onlineDecoder) return ;
+
+    this._onlineDecoder.decode(this.source).then((res) => {
+      if (!res) return ;
+      if (this.candidates.length == 0) return ;
+
+      if (this.candidates[0].target == res.target) return ;
+      /** @todo error! */
+      // Filter duplicate candidates.
+      // let pageSize = this.configFactory.getCurrentConfig().pageSize;
+      // for (let i =0; i <= pageSize; i++) {
+      //   let candidate = this.candidates[i]
+      //   if (candidate.target  == res.target) {
+      //     delete this.candidates[i]
+      //   } 
+      // }
+
+      this.candidates.unshift(
+        new Candidate( res.target.toString(), Number(res.range) )
+      );
+
+      this.notifyUpdates();
+    });
   }
 }

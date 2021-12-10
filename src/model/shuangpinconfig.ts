@@ -1,3 +1,4 @@
+import { debugLog } from "../utils/debug";
 import { solutions } from "../utils/double-solutions";
 import { hans2Hant } from "../utils/transform";
 import {PinyinConfig} from "./pinyinconfig";
