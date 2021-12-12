@@ -1,6 +1,7 @@
 import { OnlineEngine } from "./enums";
 import { FetchReturnType, Fetch } from "../utils/fetch";
 import { Candidate } from "./candidate";
+import { IMEType } from "../utils/double-solutions";
 
 /** 
  * The IME response online decoder.
@@ -8,19 +9,58 @@ import { Candidate } from "./candidate";
 export class OnlineDecoder {
 
   /** The decoder request object. */
-  private _request?: FetchReturnType | null;
+  private _lastRequest?: FetchReturnType | null;
+  
+  /** The current process cache. */
   private _cache: Record<string, string> = {};
 
-  constructor(
-    /** The decoder engine. */ private engine: OnlineEngine = OnlineEngine.BAIDU
-  ) {}
+  /** The input type for google online decoder. */
+  private _ime: string = 'pinyin';
 
-  #send(source: string) {
-    if (this.engine == OnlineEngine.BAIDU) {
-      return Fetch.get(`https://olime.baidu.com/py?py=${source}&rn=0&pn=1&ol=1`);
-    } else {
-      return Fetch.get(`https://olime.baidu.com/py?py=${source}&rn=0&pn=1&ol=1`);
+  /** The setTimeout id. */
+  private _timeout: number = 0;
+
+  constructor(
+    /** The decoder engine. */ private engine: OnlineEngine = OnlineEngine.BAIDU,
+    /** The shuangpin solution. */ solution: string = 'pinyinjiajia'
+  ) {
+    this.setSolution(solution);
+  }
+
+  #getRequestUrl(engine: OnlineEngine, source: string, raw: string) {
+    switch(engine) {
+      case OnlineEngine.BAIDU: 
+        return `https://olime.baidu.com/py?py=${source}&rn=0&pn=1&ol=1`;
+      case OnlineEngine.GOOGLE:
+      case OnlineEngine.GOOGLE_CN:
+        let text = this._ime == 'pinyin' ? source : raw;
+        let domain = 'google.com';
+        if (engine == OnlineEngine.GOOGLE_CN) {
+          domain = 'google.cn';
+        }
+        return `https://www.google.${engine == OnlineEngine.GOOGLE_CN ? 'cn' : 'com'}/inputtools/request?ime=${this._ime}&text=${text}`;    
     }
+  }
+
+  #send(url: string) {
+    // return Fetch.get(url);
+    return new Promise((resolve, reject) => {
+      this._timeout = setTimeout(() => {
+        this._timeout = 0;
+        this._lastRequest = Fetch.get(url);
+        this._lastRequest.promise.then(resolve, reject);
+      }, 300);
+    })
+  }
+
+  /** Set the decoder engine. */
+  setEngine(engine: OnlineEngine) {
+    this.engine = engine;
+  }
+
+  /** Set the shuangpin solution.  */
+  setSolution(solution: string) {
+    this._ime =  Reflect.has(IMEType, solution) ? IMEType[solution] : 'pinyin'
   }
 
   getCandidate(target: string) {
@@ -33,44 +73,57 @@ export class OnlineDecoder {
 
   /** Online engine handler. */
   async #engineHandler(data: any) {
+    data = await data.json();
+    
     if (this.engine == OnlineEngine.BAIDU) {
-
-      data = await data.json();
       if (data[0] && data[0][0] && data[0][0][0]) {
         let target = data[0][0][0][0];
         let candidate = this.getCandidate(target);
         return candidate;
-      } else {
-        return null;
       }
-
-    } else {
-      return null;
+    } else if (this.engine == OnlineEngine.GOOGLE_CN || this.engine == OnlineEngine.GOOGLE) {
+      if (data[0] == 'SUCCESS') {
+        if (data[1] && data[1][0] && data[1][0][1]) {
+          let target = data[1][0][1][0];
+          let candidate = this.getCandidate(target);
+          return candidate;
+        }
+      }
     }
+    return null;
   }
 
-  async decode(source: string) {
-    console.log(this._cache);
+  /** @todo */
+  async decode(source: string, raw: string) {
     if (Reflect.has(this._cache, source)) {
       return await this.getCandidate(this._cache[source]);
     }
     // TODO(error!)
     // Abort the last request.
-    if (this._request && !this._request.signal.aborted) {
+    if (this._timeout || (this._lastRequest && !this._lastRequest.signal.aborted)) {
       this.clear();
     }
 
-    this._request = this.#send(source);
-
-    return this._request.promise.then(this.#engineHandler.bind(this))
+    let requestUrl = this.#getRequestUrl(this.engine, source, raw);
+    return this.#send(requestUrl)
+      .then(this.#engineHandler.bind(this))
       .then(candidate => {
+        if (this._lastRequest?.signal.aborted) return ;
         this._cache[source] = candidate!.target;
         return candidate;
-      });
+      }).catch(console.error);
+
+    // return this._lastRequest.promise.then(this.#engineHandler.bind(this))
+    //   .then(candidate => {
+    //     this._cache[source] = candidate!.target;
+    //     return candidate;
+    //   });
   }
 
   clear() {
-    this._request?.abort();
-    this._request = null;
+    clearTimeout(this._timeout);
+    this._timeout = 0;
+    this._lastRequest?.abort();
+    this._lastRequest = null;
   }
 }

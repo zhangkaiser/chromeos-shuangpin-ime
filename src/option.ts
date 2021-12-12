@@ -1,7 +1,10 @@
 import { html, css, LitElement } from  "lit";
 import { customElement, property } from "lit/decorators.js";
+import { OnlineEngine } from "./decoder/enums";
 import { solutionNames } from "./utils/double-solutions";
-
+/**
+ * @todo so messy!
+ */
 @customElement('option-page')
 class OptionPage extends LitElement {
 
@@ -12,6 +15,10 @@ class OptionPage extends LitElement {
         let config = this.config = res['config'];
         if (Reflect.has(config, 'solution')) {
           this.currentSolution = config['solution']
+        }
+        if (Reflect.has(config, 'onlineStatus')) {
+          this.onlineStatus = config['onlineStatus'];
+          this.currentOnlineEngine = config['onlineEngine'];
         }
 
         for (let item of this.baseInfo) {
@@ -26,7 +33,8 @@ class OptionPage extends LitElement {
 
   config:any = {
     solution: 'pinyinjiajia',
-    
+    onlineStatus: true,
+    onlineEngine: 0
   };
   
   shortcuts = [
@@ -43,8 +51,16 @@ class OptionPage extends LitElement {
       value: 'Ctrl + .'
     }
   ]
-  solutions:Record<string, string> = solutionNames
+  solutions:Record<string, string> = solutionNames;
+  onlineEngines:Record<OnlineEngine, string> = {
+    [OnlineEngine.BAIDU]: '百度(不支持中英文混合输入)',
+    [OnlineEngine.GOOGLE]: '谷歌全球(不支持中国大陆区域)',
+    [OnlineEngine.GOOGLE_CN]: '谷歌中国(支持中国大陆区域中英文混输)'
+  }
+
   @property({type: String}) currentSolution = 'pinyinjiajia';
+  @property({type: Number}) currentOnlineEngine = 0;
+  @property({type: Boolean}) onlineStatus = true;
   @property({type: Boolean}) loaded = false;
 
   @property({type: Array})
@@ -84,25 +100,33 @@ class OptionPage extends LitElement {
       type: 'checkbox',
       value: false,
       label: '启用繁体字'
-    },
-  ]
+    }
+  ];
+
+  clickOnline() {
+    this.onlineStatus = !this.onlineStatus;
+    this.config['onlineStatus'] = this.onlineStatus;
+    this.changeConfig();
+  }
 
   changeConfig() {
-    chrome.storage.sync.set({
+    chrome.runtime.sendMessage({
+      update: true,
       config: this.config
-    })
+    });
   }
 
   handleEvent(e: Event) {
     let id = (e.target as Element).id;
     if (id && id === 'shuangpin-solutions') {
-      this.config['solution'] = (e.target as HTMLSelectElement).value;
-      
-      this.changeConfig()
+      this.config['solution'] = (e.target as HTMLSelectElement).value;  
+    } else if(id === 'online-solutions') {
+      this.config['onlineEngine'] = Number((e.target as HTMLSelectElement).value);
     } else if (id) {
-      this.config[id] = !this.config[id]
-      this.changeConfig()
+      this.config[id] = !this.config[id];
     }
+
+    this.changeConfig();
   }
 
   static styles = css`
@@ -452,6 +476,34 @@ class OptionPage extends LitElement {
               </div>
             `;
           })}
+        </section>
+      </div>
+
+      <div>
+        <section>
+          <h3>在线解析</h3>
+          <div>
+            <span class="controlled-setting-with-label">
+              <input @click=${this.clickOnline} type="checkbox" ?checked=${this.config.onlineStatus}>
+              <span>
+                <label>启用</label>
+              </span>
+            </span>
+          </div>
+          <div ?hidden=${!this.onlineStatus}>
+            <span class="controlled-setting-with-label">
+              <span class="selection-label">
+                <label for="shuangpin-solutions">在线解析器引擎</label>
+              </span>
+              <select @change=${this.handleEvent} id="online-solutions" class="chos-option-item">
+                ${Object.entries(this.onlineEngines).map((item) => {
+                  return html`
+                    <option value=${item[0]} ?selected=${Number(item[0]) === this.currentOnlineEngine}>${item[1]}</option>
+                  `
+                })}
+              </select>
+            </span>
+          </div>
         </section>
       </div>
       <div>

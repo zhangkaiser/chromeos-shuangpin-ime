@@ -3,6 +3,8 @@ import { Decoder } from "../decoder/decoder";
 import { configFactoryInstance } from "./configfactory";
 import { EventType, InputToolCode, Status } from "./enums";
 import { OnlineDecoder } from "../decoder/onlinedecoder";
+import { OnlineEngine } from "../decoder/enums";
+import { OnlineState } from "./state";
 
 /**
  * The model, which mananges the state transfers and commits.
@@ -187,6 +189,7 @@ export class Model extends EventTarget {
       this._decoder.clear();
     }
     if (this._onlineDecoder) {
+      this._onlineDecoder.setEngine(OnlineState.onlineEngine);
       this._onlineDecoder.clear();
     }
 
@@ -252,8 +255,8 @@ export class Model extends EventTarget {
       inputToolCode,
       config.fuzzyExpansions,
       config.enableUserDict);
-      
     this._onlineDecoder = new OnlineDecoder();
+    
   }
 
   /** Sets the fuzzy expansions for a given input tool. */
@@ -466,11 +469,11 @@ export class Model extends EventTarget {
       return ;
     }
 
-    if (this._timeout) {
-      clearTimeout(this._timeout);
-    }
+    // if (this._timeout) {
+    //   clearTimeout(this._timeout);
+    // }
 
-    this._timeout = setTimeout(this.cloudDecoder.bind(this), 300);
+    // this._timeout = setTimeout(this.cloudDecoder.bind(this), 300);
 
     let ret = this._decoder.decode(
       this.source, this.configFactory.getCurrentConfig().requestNum);
@@ -513,20 +516,25 @@ export class Model extends EventTarget {
     if (this.configFactory.getCurrentConfig().autoHighlight || this._holdSelectStatus) {
       this.enterSelectInternal();
     }
+    this.cloudDecoder();
     this.notifyUpdates();
   }
 
   cloudDecoder() {
-    if (this.source.search('\'') <= 0) return ;
-    if (!this._onlineDecoder) return ;
+    if (
+      !this._onlineDecoder
+      || !OnlineState.onlineStatus
+      || this.source.search('\'') <= 0 ) return ;
+    if (!this.candidates.length) return ;
 
-    this._onlineDecoder.decode(this.source).then((res) => {
+    this._onlineDecoder.decode(this.source, this.rawStr).then((res) => {
       if (!res) return ;
-      if (this.candidates.length == 0) return ;
 
-      if (this.candidates[0].target == res.target) return ;
+      if (!this.candidates.length
+        || this.candidates[0].target == res.target) return ;
+        
       /** @todo error! */
-      // Filter duplicate candidates.
+      // Filter duplicate candidate.
       // let pageSize = this.configFactory.getCurrentConfig().pageSize;
       // for (let i =0; i <= pageSize; i++) {
       //   let candidate = this.candidates[i]

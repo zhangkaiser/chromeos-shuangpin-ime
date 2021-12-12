@@ -1,6 +1,8 @@
 import { Controller } from "./controller";
+import { OnlineDecoder } from "./decoder/onlinedecoder";
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, StateID } from "./model/enums";
+import { OnlineState } from "./model/state";
 import { enableDebug } from "./utils/debug";
 import { loadDict } from "./utils/transform";
 
@@ -53,16 +55,7 @@ export class Background {
     chrome.input.ime.onFocus.addListener((context) => {
       chrome.storage.sync.get('config', (res) => {
         if (res && res['config']) {
-          let currentConfig = this.configFactory.getCurrentConfig();
-          currentConfig!.setSolution(res['config']['solution']);
-          currentConfig!.states[StateID.SBC].value = res['config']?.chos_init_sbc_selection;
-          currentConfig!.states[StateID.PUNC].value = res['config']?.chos_init_punc_selection;
-          currentConfig!.vertical = res['config']?.chos_init_vertical_selection ?? false;
-          currentConfig!.traditional = res['config']?.chos_init_enable_traditional ?? false;
-          if (currentConfig!.traditional) {
-            loadDict();
-          }
-          this._controller.localConfig = res['config'];
+          this.#updateSettingsFromLocalStorage(res['config']);
         }
       })
       this._controller.register(context);
@@ -97,16 +90,42 @@ export class Background {
    * Updates settings from local storage.
    * @TODO
    */
-  #updateSettingsFromLocalStorage(opt_inputToolCode?: string) {
+  #updateSettingsFromLocalStorage(data: any) {
+    let currentConfig = this.configFactory.getCurrentConfig();
     
+    // Set the current shuangpin solution.
+    currentConfig.setSolution(data['solution']);
+
+    // Set SBC/PUBC states.
+    currentConfig.states[StateID.SBC].value = data?.chos_init_sbc_selection;
+    currentConfig.states[StateID.PUNC].value = data?.chos_init_punc_selection;
+    
+    // Set custom states.
+    currentConfig.vertical = data?.chos_init_vertical_selection ?? false;
+
+    // Simplified chinese to traditional chinese enable status.(hans2hanz)
+    currentConfig.traditional = data?.chos_init_enable_traditional ?? false;
+    if (currentConfig.traditional) {
+      loadDict();
+    }
+
+    // Online decoder enable status.
+    if (Reflect.has(data, 'onlineStatus')) {
+      OnlineState.onlineStatus = data.onlineStatus;
+      OnlineState.onlineEngine = data?.onlineEngine ?? 0;
+    }
+
+
+    // Cache the current status.
+    this._controller.localConfig = data;
   }
 
   /**
    * Processes incoming requests from option page.
    */
-  processRequest(request: any) {
-    if (request['update']) {
-      this.#updateSettingsFromLocalStorage(request['update']);
+  processRequest(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+    if (message['update']) {
+      chrome.storage.sync.set({ config: message['config']});
     }
   }
 }

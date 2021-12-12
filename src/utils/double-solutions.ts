@@ -221,3 +221,12 @@ export const solutionNames  = {
   xiaoe: '小鹤双拼',
   ziguang: '紫光双拼'
 }
+
+/**  Adapt to Google's online decoder.  */
+export const IMEType: Record<string, string> = {
+  pinyinjiajia: 'shuangpin-jiajia',
+  ziranma: 'shuangpin-ziranma',
+  microsoft: 'shuangpin-ms',
+  xiaoe: 'shuangpin-flypy',
+  ziguang: 'shuangpin-ziguang'
+}
