@@ -516,18 +516,18 @@ export class Model extends EventTarget {
     if (this.configFactory.getCurrentConfig().autoHighlight || this._holdSelectStatus) {
       this.enterSelectInternal();
     }
-    this.cloudDecoder();
-    this.notifyUpdates();
+
+    this.cloudDecoder().then(() => this.notifyUpdates());
   }
 
-  cloudDecoder() {
+  async cloudDecoder() {
     if (
       !this._onlineDecoder
       || !OnlineState.onlineStatus
       || this.source.search('\'') <= 0 ) return ;
     if (!this.candidates.length) return ;
 
-    this._onlineDecoder.decode(this.source, this.rawStr).then((res) => {
+    return this._onlineDecoder.decode(this.source, this.rawStr).then((res) => {
       if (!res) return ;
 
       if (!this.candidates.length
@@ -535,19 +535,22 @@ export class Model extends EventTarget {
         
       /** @todo error! */
       // Filter duplicate candidate.
-      // let pageSize = this.configFactory.getCurrentConfig().pageSize;
-      // for (let i =0; i <= pageSize; i++) {
-      //   let candidate = this.candidates[i]
-      //   if (candidate.target  == res.target) {
-      //     delete this.candidates[i]
-      //   } 
-      // }
+      let pageSize = this.configFactory.getCurrentConfig().pageSize;
+      for (let i = 1; i <= pageSize; i++) {
+        let candidate = this.candidates[i];
+        if (res.target  == candidate.target) { // Swap the position.
+          let left = this.candidates[0];
+          this.candidates[0] = candidate;
+          this.candidates[i] = left;
+          return ;
+        } 
+      }
 
       this.candidates.unshift(
         new Candidate( res.target.toString(), Number(res.range) )
       );
 
-      this.notifyUpdates();
+      return ;
     });
   }
 }

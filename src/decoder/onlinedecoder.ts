@@ -95,20 +95,23 @@ export class OnlineDecoder {
 
   /** @todo */
   async decode(source: string, raw: string) {
-    if (Reflect.has(this._cache, source)) {
-      return await this.getCandidate(this._cache[source]);
-    }
     // TODO(error!)
     // Abort the last request.
     if (this._timeout || (this._lastRequest && !this._lastRequest.signal.aborted)) {
       this.clear();
     }
 
+    if (Reflect.has(this._cache, source)) {
+      return await this.getCandidate(this._cache[source]);
+    }
+
     let requestUrl = this.#getRequestUrl(this.engine, source, raw);
     return this.#send(requestUrl)
       .then(this.#engineHandler.bind(this))
       .then(candidate => {
-        if (this._lastRequest?.signal.aborted) return ;
+        if (this._lastRequest && this._lastRequest.signal.aborted) {
+          return Promise.reject('The request was aborted.');
+        };
         this._cache[source] = candidate!.target;
         return candidate;
       }).catch(console.error);

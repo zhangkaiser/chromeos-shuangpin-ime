@@ -103,7 +103,7 @@ class OptionPage extends LitElement {
     }
   ];
 
-  clickOnline() {
+  changeOnlineStatusEvent() {
     this.onlineStatus = !this.onlineStatus;
     this.config['onlineStatus'] = this.onlineStatus;
     this.changeConfig();
@@ -484,7 +484,7 @@ class OptionPage extends LitElement {
           <h3>在线解析</h3>
           <div>
             <span class="controlled-setting-with-label">
-              <input @click=${this.clickOnline} type="checkbox" ?checked=${this.config.onlineStatus}>
+              <input @click=${this.changeOnlineStatusEvent} type="checkbox" ?checked=${this.onlineStatus}>
               <span>
                 <label>启用</label>
               </span>

@@ -111,7 +111,7 @@ export class Background {
 
     // Online decoder enable status.
     if (Reflect.has(data, 'onlineStatus')) {
-      OnlineState.onlineStatus = data.onlineStatus;
+      OnlineState.onlineStatus = data.onlineStatus ?? true;
       OnlineState.onlineEngine = data?.onlineEngine ?? 0;
     }
 
@@ -123,7 +123,10 @@ export class Background {
   /**
    * Processes incoming requests from option page.
    */
-  processRequest(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  processRequest(
+    message: any, 
+    sender: chrome.runtime.MessageSender, 
+    sendResponse: (response?: any) => void ) {
     if (message['update']) {
       chrome.storage.sync.set({ config: message['config']});
     }

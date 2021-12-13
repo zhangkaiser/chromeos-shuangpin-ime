@@ -11,8 +11,9 @@
     "unlimitedStorage",
     "background",
     "storage",
-    "http://*/*",
-    "https://*//*"
+    "https://olime.baidu.com/py?*",
+    "https://www.google.com/inputtools/request?*",
+    "https://www.google.cn/inputtools/request?*"
   ],
   "input_components": [
     {
