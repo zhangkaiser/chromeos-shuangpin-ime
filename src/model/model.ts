@@ -517,7 +517,8 @@ export class Model extends EventTarget {
       this.enterSelectInternal();
     }
 
-    this.cloudDecoder().then(() => this.notifyUpdates());
+    this.cloudDecoder().then((status) => status && this.notifyUpdates());
+    this.notifyUpdates();
   }
 
   async cloudDecoder() {
@@ -527,7 +528,15 @@ export class Model extends EventTarget {
       || this.source.search('\'') <= 0 ) return ;
     if (!this.candidates.length) return ;
 
-    return this._onlineDecoder.decode(this.source, this.rawStr).then((res) => {
+    const charRegExp = /[a-zA-Z]/;
+    let rawStr = this.rawStr;
+    
+    if (this.commitPos) {
+      let segment = (this.segments.slice(0, this.commitPos)).join();
+      rawStr = rawStr.slice(segment.length * 2);
+    }
+
+    return this._onlineDecoder.decode(this.source, rawStr).then((res) => {
       if (!res) return ;
 
       if (!this.candidates.length
@@ -542,7 +551,7 @@ export class Model extends EventTarget {
           let left = this.candidates[0];
           this.candidates[0] = candidate;
           this.candidates[i] = left;
-          return ;
+          return true;
         } 
       }
 
@@ -550,7 +559,7 @@ export class Model extends EventTarget {
         new Candidate( res.target.toString(), Number(res.range) )
       );
 
-      return ;
+      return true;
     });
   }
 }
