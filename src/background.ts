@@ -1,8 +1,13 @@
 import { Controller } from "./controller";
+<<<<<<< HEAD
 import { OnlineDecoder } from "./decoder/onlinedecoder";
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, StateID } from "./model/enums";
 import { OnlineState } from "./model/state";
+=======
+import { configFactoryInstance } from "./model/configfactory";
+import { EventType, InputToolCode, StateID } from "./model/enums";
+>>>>>>> sync-wasm-decoder
 import { enableDebug } from "./utils/debug";
 import { loadDict } from "./utils/transform";
 
@@ -55,7 +60,20 @@ export class Background {
     chrome.input.ime.onFocus.addListener((context) => {
       chrome.storage.sync.get('config', (res) => {
         if (res && res['config']) {
+<<<<<<< HEAD
           this.#updateSettingsFromLocalStorage(res['config']);
+=======
+          let currentConfig = this.configFactory.getCurrentConfig();
+          currentConfig!.setSolution(res['config']['solution']);
+          currentConfig!.states[StateID.SBC].value = res['config']?.chos_init_sbc_selection;
+          currentConfig!.states[StateID.PUNC].value = res['config']?.chos_init_punc_selection;
+          currentConfig!.vertical = res['config']?.chos_init_vertical_selection ?? false;
+          currentConfig!.traditional = res['config']?.chos_init_enable_traditional ?? false;
+          if (currentConfig!.traditional) {
+            loadDict();
+          }
+          this._controller.localConfig = res['config'];
+>>>>>>> sync-wasm-decoder
         }
       })
       this._controller.register(context);
@@ -90,6 +108,7 @@ export class Background {
    * Updates settings from local storage.
    * @TODO
    */
+<<<<<<< HEAD
   #updateSettingsFromLocalStorage(data: any) {
     let currentConfig = this.configFactory.getCurrentConfig();
     
@@ -118,17 +137,27 @@ export class Background {
 
     // Cache the current status.
     this._controller.localConfig = data;
+=======
+  #updateSettingsFromLocalStorage(opt_inputToolCode?: string) {
+    
+>>>>>>> sync-wasm-decoder
   }
 
   /**
    * Processes incoming requests from option page.
    */
+<<<<<<< HEAD
   processRequest(
     message: any, 
     sender: chrome.runtime.MessageSender, 
     sendResponse: (response?: any) => void ) {
     if (message['update']) {
       chrome.storage.sync.set({ config: message['config']});
+=======
+  processRequest(request: any) {
+    if (request['update']) {
+      this.#updateSettingsFromLocalStorage(request['update']);
+>>>>>>> sync-wasm-decoder
     }
   }
 }
