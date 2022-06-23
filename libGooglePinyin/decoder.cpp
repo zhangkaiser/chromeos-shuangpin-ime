@@ -32,24 +32,29 @@ class Decoder {
     bool isopened = false;
 
     /**
-     * Gets the candidates for the spelling string or segment.
+     * Gets the candidates for the spelling string or chosen candidate.
      * 
-     * @param sps_buf 
-     * @param spl_start_pos Segment start position
+     * @param sps_buf Spelling string.
+     * @param cand_id The chosen candidate id.
      * @return 
      */
-     string decode(string sps_buf, size_t spl_start_pos = 0) {
-      if (spl_start_pos > 0) {
+     string decode(string sps_buf, size_t cand_id) {
+      
+      size_t cand_num;
+
+      if (cand_id == -1) {
+        size_t sps_len = sps_buf.size();
+        // cout << "sps_buf" << sps_buf << endl;
+        cand_num = im_search(sps_buf.c_str(), sps_len);
+      } else {
         // Get the segmentation infomation.
-
+        cand_num = im_choose(cand_id);
       }
-      size_t sps_len = sps_buf.size();
-      cout << "sps_buf" << sps_buf << endl;
-      size_t cand_num = im_search(sps_buf.c_str(), sps_len);
-      string candidates[CANDS_MAX_NUM];
 
+      // string candidates[CANDS_MAX_NUM];
+      string candidates[cand_num];
       short int len = getCandidates(cand_num, candidates);
-      cout << "len:" << len << endl;
+      // cout << "len:" << len << endl;
       for(short int i = 1; i < len; i++ ) {
         cout << "i:" << i << "-" << candidates[i] << endl;
         candidates[0].append("|" + candidates[i]);
@@ -62,6 +67,11 @@ class Decoder {
     string predicts(string history) {
       // im_get_predict();
       return history;
+    }
+
+    /** Clear the decoder. */
+    bool clear() {
+      return im_cancel_input();
     }
 
     size_t search(string sps_buf) {
@@ -130,9 +140,9 @@ class Decoder {
       size_t getCandidates(size_t cand_num, string *cands_list)
       {
         char16 cand_str[CAND_BUFFER_MAX_LEN];
-        if (cand_num > CANDS_MAX_NUM) {
-          cand_num = CANDS_MAX_NUM;
-        }
+        // if (cand_num > CANDS_MAX_NUM) {
+        //   cand_num = CANDS_MAX_NUM;
+        // }
 
         for(size_t i = 0; i < cand_num; i++)
         {
@@ -163,21 +173,22 @@ EMSCRIPTEN_BINDINGS(pinyin_decoder) {
     .constructor()
     .function("decode", &Decoder::decode)
     .function("predicts", &Decoder::predicts)
+    .function("clear", &Decoder::clear)
     // Demo
-    .function("search", &Decoder::search)
-    .function("delSearch", &Decoder::del_search)
-    .function("resetSearch", &Decoder::reset_search)
-    .function("addLetter", &Decoder::add_letter)
-    .function("getSpsStr", &Decoder::get_sps_str)
-    .function("getCandidate", &Decoder::get_candidate)
-    .function("getSplStartPos", &Decoder::get_spl_start_pos)
-    .function("choose", &Decoder::choose)
-    .function("cancelLastChoice", &Decoder::cancel_last_choice)
-    .function("getFixedLen", &Decoder::get_fixed_len)
-    .function("cancelInput", &Decoder::cancel_input)
-    .function("getPredicts", &Decoder::get_predicts)
-    .property("isopened", &Decoder::isopened)
-    .property("decodedLen", &Decoder::decoded_len)
-    .property("splStart", &Decoder::spl_start)
+    // .function("search", &Decoder::search)
+    // .function("delSearch", &Decoder::del_search)
+    // .function("resetSearch", &Decoder::reset_search)
+    // .function("addLetter", &Decoder::add_letter)
+    // .function("getSpsStr", &Decoder::get_sps_str)
+    // .function("getCandidate", &Decoder::get_candidate)
+    // .function("getSplStartPos", &Decoder::get_spl_start_pos)
+    // .function("choose", &Decoder::choose)
+    // .function("cancelLastChoice", &Decoder::cancel_last_choice)
+    // .function("getFixedLen", &Decoder::get_fixed_len)
+    // .function("cancelInput", &Decoder::cancel_input)
+    // .function("getPredicts", &Decoder::get_predicts)
+    // .property("isopened", &Decoder::isopened)
+    // .property("decodedLen", &Decoder::decoded_len)
+    // .property("splStart", &Decoder::spl_start)
     ;
 }
