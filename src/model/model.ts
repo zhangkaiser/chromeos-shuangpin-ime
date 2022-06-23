@@ -1,5 +1,5 @@
 import { Candidate } from "./candidate";
-import { Decoder } from "../decoder/decoder";
+// import { Decoder } from "../decoder/decoder";
 import { configFactoryInstance } from "./configfactory";
 import { EventType, InputToolCode, Status } from "./enums";
 

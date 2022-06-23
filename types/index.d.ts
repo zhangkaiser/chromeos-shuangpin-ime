@@ -1,4 +1,12 @@
 /// <reference path="./mvvm.d.ts" />
+
+interface Decoder {
+  /** Gets the transliterations(without scores) for the source word. */
+  decode(sourceToken:string, chooseId: number):string,
+  
+  clear(): void,
+}
+
 interface Window {
   dataloader: any
 }
