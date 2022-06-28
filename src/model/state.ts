@@ -1,14 +1,12 @@
 import { OnlineEngine } from "../decoder/enums";
+import { Modifier } from "./enums";
 
 export class State {
-  /** The shortcut of the state. */
-  shortcut: string[] = [];
-
-  /** The description of the state. */
-  desc = '';
-
-  /** The value of the state. */
-  value:boolean = false;
+  constructor(
+    /** The description of the state. */ public desc: string = '',
+    /** The value of the state. */ public value: boolean = false,
+    /** The shortcut of the state. */ public shortcut: [string, Modifier] | [Modifier] | any[] = []
+  ) { }
 }
 
 

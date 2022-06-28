@@ -220,7 +220,6 @@ export const solutionNames  = {
   zhongwenzhixing: '中文之星',
   xiaoe: '小鹤双拼',
   ziguang: '紫光双拼'
-<<<<<<< HEAD
 }
 
 /**  Adapt to Google's online decoder.  */
@@ -230,6 +229,4 @@ export const IMEType: Record<string, string> = {
   microsoft: 'shuangpin-ms',
   xiaoe: 'shuangpin-flypy',
   ziguang: 'shuangpin-ziguang'
-=======
->>>>>>> sync-wasm-decoder
 }

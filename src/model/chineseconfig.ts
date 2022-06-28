@@ -5,6 +5,8 @@ import { State } from "./state";
 
 export default class ChineseConfig extends Config {
 
+  states: Record<StateID, State>;
+
 	/** The puncatuation sbc map. */
   puncMap: Record<string, any> = {
     '~': '～',
@@ -90,25 +92,25 @@ export default class ChineseConfig extends Config {
 			}
 		}
 		
-		let langState = new State();
-		langState.desc = '输入语言为中文';
-		langState.value = true;
-		langState.shortcut = [' ', Modifier.ALT];
+		let langState = new State( '输入语言为中文', true, [' ', Modifier.ALT] );
+		let sbcState = new State('字符宽度为全角', false, [' ', Modifier.SHIFT]);
+		let puncState = new State('标点符号宽度为全角', true, ['\\.', Modifier.CTRL]);
+    let traditionalState = new State('Chinese traditional output.', false, ['t', Modifier.SHIFT]);
+    let onlineDecoderState = new State('Enable Online decoder', true, ['d', Modifier.SHIFT]);
 
-		let sbcState = new State();
-		sbcState.desc = '字符宽度为全角';
-		sbcState.value = false;
-		sbcState.shortcut = [' ', Modifier.SHIFT];
-
-		let puncState = new State();
-		puncState.desc = '标点符号宽度为全角';
-		puncState.value = true;
-		puncState.shortcut = ['\\.', Modifier.CTRL];
-
-		this.states[StateID.LANG] = langState;
-		this.states[StateID.SBC] = sbcState;
-		this.states[StateID.PUNC] = puncState;	
+    this.states = {
+      [StateID.LANG]: langState,
+      [StateID.SBC]: sbcState,
+      [StateID.PUNC]: puncState,
+      [StateID.TRADITIONAL]: traditionalState,
+      [StateID.ONLINE_DECODER]: onlineDecoderState
+    }
 	}
+
+  createState() {
+    let state = new State();
+
+  }
 	
 	/**
 	 * @Override

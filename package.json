@@ -9,8 +9,8 @@
     "watch": "webpack --mode development --watch",
     "node:wasm": "node --experimental-wasm-threads --experimental-wasm-bulk-memory",
     "debug:googlepinyin": "cd googlepinyin/googlepinyin && npm run node:wasm",
-    "prebuild": "cd googlepinyin/googlepinyin && emcc dictbuilder.cpp",
-    "prebuild:googlepinyin": "cd googlepinyin/googlepinyin && emcc -pthread -lembind --embed-file dict libGooglePinyin.a"
+    "prebuild:decoder": "cd googlepinyin/googlepinyin && emcc dictbuilder.cpp",
+    "prebuild:googlepinyin": "cd libGooglePinyin && emcc -pthread -sDYNAMIC_EXECUTION=0 -lembind --embed-file dict libGooglePinyin.a decoder.cpp -o decoder.js"
   },
   "keywords": [
     "shuangpin",

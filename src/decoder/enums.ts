@@ -9,13 +9,10 @@ export enum InputTool {
   SHUANGPIN, 
   PINYIN,
   WUBI,
-<<<<<<< HEAD
 }
 
 export enum OnlineEngine {
   BAIDU,
   GOOGLE,
   GOOGLE_CN
-=======
->>>>>>> sync-wasm-decoder
 }

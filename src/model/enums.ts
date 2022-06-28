@@ -55,11 +55,13 @@ export enum Status {
 }
 
 
-/** The states ids. */
+/** The states ids(or key name for global state). */
 export enum StateID {
   LANG = 'lang',
   SBC =  'sbc',
-  PUNC = 'punc'
+  PUNC = 'punc',
+  TRADITIONAL = 'traditional',
+  ONLINE_DECODER = 'online'
 }
 
 

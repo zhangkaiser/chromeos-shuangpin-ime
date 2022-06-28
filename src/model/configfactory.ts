@@ -3,6 +3,7 @@
  */
 
 import { Config } from "./config";
+import ChineseConfig from "./chineseconfig";
 import { InputToolCode } from "./enums";
 import { PinyinConfig } from "./pinyinconfig";
 import { ShuangpinConfig } from "./shuangpinconfig";
@@ -48,23 +49,29 @@ export default class ConfigFactory {
   }
 
   /**
+   * @todo
    * Gets the config for the current input tool.
    */
   getCurrentConfig() {
+    
     if (!Reflect.has(this._map, InputToolCode.SHUANGPIN_SIMPLIFIED)) {
       this.#buildConfigs();
     }
 
-    let code = this._inputToolCode;
-    if (code && this._map[code]) {
-      return this._map[code];
-    }
+    let config = this._map[InputToolCode.SHUANGPIN_SIMPLIFIED]!;
+    return config;
 
-    if (!this._defaultConfig) {
-      this._defaultConfig = new Config()
-    }
 
-    return this._defaultConfig;
+    // let code = this._inputToolCode;
+    // if (code && this._map[code]) {
+    //   return this._map[code];
+    // }
+
+    // if (!this._defaultConfig) {
+    //   this._defaultConfig = new Config()
+    // }
+
+    // return this._defaultConfig;
   }
 
   /** Builds input method configs. */

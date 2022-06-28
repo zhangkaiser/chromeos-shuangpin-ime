@@ -3,6 +3,7 @@
  */
 
 import { configFactoryInstance } from "./model/configfactory";
+import { StateID } from "./model/enums";
 import type { Model } from "./model/model";
 import { hans2Hant } from "./utils/transform";
 
@@ -17,6 +18,11 @@ export class View {
 
   constructor(protected model:Model) { }
 
+  /** Get the current config from config factory. */
+  get currentConfig() {
+    return this.configFactory.getCurrentConfig();
+  }
+
   /** Sets the context. */
   setContext(context: any) {
     this._context = context;
@@ -28,81 +34,76 @@ export class View {
     this.updateItems();
   }
 
-
   /**
    * Updates the menu items.
    */
   updateItems() {
-    if (!this._inputToolCode) {
-      return ;
-    }
+    if (!this._inputToolCode) return ;
   
     let states = this.configFactory.getCurrentConfig().states;
     let menuItems = [];
-    for (let key in states) {
+    for (let key in states)
+    {
       menuItems.push({
-        'id': key,
-        'label': states[key].desc,
-        'checked': states[key].value,
-        'enabled': true,
-        'visible': true
+        id: key,
+        label: states[key as StateID].desc,
+        checked: states[key as StateID].value,
+        enabled: true,
+        visible: true
       });
   
-      chrome.input.ime.setMenuItems(
-        {
-          'engineID': this._inputToolCode,
-          'items': menuItems
-        }
-      );
+      chrome.input.ime.setMenuItems({
+        engineID: this._inputToolCode,
+        items: menuItems
+      });
     }
+  }
+
+  setCandidateWindowProperties(properties: any) {
+    if (!this._inputToolCode) return;
+    chrome.input.ime.setCandidateWindowProperties({
+      engineID: this._inputToolCode,
+      properties
+    });
+
   }
 
   /**
    * To show the editor.
    */
   show() {
-    if (this._inputToolCode) {
-      chrome.input.ime.setCandidateWindowProperties(
-        {
-          'engineID': this._inputToolCode,
-          'properties': {'visible': true}
-        });
-    }
+    this.setCandidateWindowProperties({
+      visible: true
+    });
   }
 
   /**
    * To hide the editor.
    */
    hide() {
-    if (this._inputToolCode) {
-      chrome.input.ime.setCandidateWindowProperties(
-          {'engineID': this._inputToolCode,
-            'properties': {'visible': false}});
-    }
+
+    this.setCandidateWindowProperties({
+      visible: false
+    });
   
     if (this._context) {
-      chrome.input.ime.hideInputView();
       chrome.input.ime.clearComposition({
         'contextID': this._context.contextID
       });
-  
-      // chrome.input.ime.setCandidates({
-      //   'contextID': this._context.contextID,
-      //   'candidates': []});
+      chrome.input.ime.hideInputView();
     }
   }
-
 
   /**
    * To refresh the editor.
    */
   refresh() {
-    if (!this._context) {
-      return ;
-    }
+    if (!this._context) return;
+
     let segments = this.model.segments;
     let segmentsBeforeCursor = segments.slice(0, this.model.cursorPos);
     let segmentsAfterCursor = segments.slice(this.model.cursorPos);
+    
     let prefix = segments.slice(
         this.model.commitPos, this.model.cursorPos).join('');
     let composing_text = segmentsBeforeCursor.join(' ') +
@@ -112,12 +113,13 @@ export class View {
       composing_text += ' ' + segmentsAfterCursor.join(' ');
     }
     composing_text = this.configFactory.getCurrentConfig().transformView(
-        composing_text, this.model.rawStr);
-    chrome.input.ime.setComposition(
-        {
-          'contextID': this._context.contextID,
-          'text': composing_text,
-          'cursor': pos});
+        composing_text, this.model.rawSource);
+    
+    chrome.input.ime.setComposition({
+        contextID: this._context.contextID,
+        text: composing_text,
+        cursor: pos
+    });
     this.showCandidates();
   }
 
@@ -125,8 +127,10 @@ export class View {
    * To refresh candidates.
    */
   showCandidates() {
-    let pageIndex = this.model.getPageIndex();
-    let pageSize = this.configFactory.getCurrentConfig().pageSize;
+
+    let pageIndex = this.model.pageIndex;
+
+    let { pageSize } = this.currentConfig;
     let from = pageIndex * pageSize;
     let to = from + pageSize;
     if (to > this.model.candidates.length) {

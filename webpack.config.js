@@ -4,6 +4,7 @@ let HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: {
+    // "decoder": "./libGooglePinyin/decoder.js",
     "background": "./src/background.ts",
     "option": "./src/option.ts",
   },
@@ -25,7 +26,9 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         {from: "./src/manifest.json", to: "."},
-        {from: "./src/asset", to: "."}
+        {from: "./src/asset", to: "."},
+        {from: "./libGooglePinyin/decoder.wasm", to: "."},
+        {from: "./libGooglePinyin/decoder.js", to: "."}
       ]
     })
   ]

@@ -87,11 +87,7 @@ export class TokenDecoder extends EventTarget {
    * @TODO
    */
   #init(fuzzyPairs?: string[]) {
-<<<<<<< HEAD
-    let {tokens, initialTokens} = this._dataLoader;
-=======
     let { tokens, initialTokens } = this._dataLoader;
->>>>>>> sync-wasm-decoder
     // console.log(tokens, initialTokens);
     // 这里可以设置分割用户输入字符的识别算法
     this._tokenReg = new RegExp(`^(${tokens}|${initialTokens})$`);

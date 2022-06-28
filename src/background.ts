@@ -1,26 +1,22 @@
 import { Controller } from "./controller";
-<<<<<<< HEAD
-import { OnlineDecoder } from "./decoder/onlinedecoder";
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, StateID } from "./model/enums";
 import { OnlineState } from "./model/state";
-=======
-import { configFactoryInstance } from "./model/configfactory";
-import { EventType, InputToolCode, StateID } from "./model/enums";
->>>>>>> sync-wasm-decoder
 import { enableDebug } from "./utils/debug";
 import { loadDict } from "./utils/transform";
 
-enableDebug();
+// enableDebug();
+
 /**
  * The background class implements the script for the background page of chrome
  * os extension for os input tools.
  */
 export class Background {
+
   /**
    * The controller for chrome os extension.
    */
-  _controller = new Controller();
+  private _controller = new Controller();
   configFactory = configFactoryInstance;
 
   constructor() {
@@ -28,11 +24,14 @@ export class Background {
     chrome.runtime.onMessage.addListener(this.processRequest.bind(this));
     
     this.#init();
-    this._controller.addEventListener(EventType.UPDATESTATE, this.#updateStateToStorage.bind(this))
+
+    this._controller.addEventListener(
+      EventType.UPDATESTATE, 
+      this.#updateStateToStorage.bind(this)
+    );
   }
 
   #updateStateToStorage() {
-    // console.log('update the config to storage', this._controller.localConfig);
     chrome.storage.sync.set({
       config: this._controller.localConfig
     })
@@ -40,9 +39,7 @@ export class Background {
 
   /** Initializes the background scripts. */
   #init() {
-   
     chrome.runtime.onInstalled.addListener((res) => {
-
       if (res.reason === 'install') {
         // The default input tool configure.
         this.#updateStateToStorage();
@@ -50,114 +47,109 @@ export class Background {
     })
 
     chrome.input.ime.onActivate.addListener((engineID) => {
+      this.#updateSettingsFromLocalStorage();
       this._controller.activate(engineID as InputToolCode);
     })
 
-    chrome.input.ime.onDeactivated.addListener(() => {
-      this._controller.deactivate();
+    chrome.input.ime.onDeactivated.addListener((engineID) => {
+      this._controller.deactivate(engineID);
     });
   
     chrome.input.ime.onFocus.addListener((context) => {
-      chrome.storage.sync.get('config', (res) => {
-        if (res && res['config']) {
-<<<<<<< HEAD
-          this.#updateSettingsFromLocalStorage(res['config']);
-=======
-          let currentConfig = this.configFactory.getCurrentConfig();
-          currentConfig!.setSolution(res['config']['solution']);
-          currentConfig!.states[StateID.SBC].value = res['config']?.chos_init_sbc_selection;
-          currentConfig!.states[StateID.PUNC].value = res['config']?.chos_init_punc_selection;
-          currentConfig!.vertical = res['config']?.chos_init_vertical_selection ?? false;
-          currentConfig!.traditional = res['config']?.chos_init_enable_traditional ?? false;
-          if (currentConfig!.traditional) {
-            loadDict();
-          }
-          this._controller.localConfig = res['config'];
->>>>>>> sync-wasm-decoder
-        }
-      })
       this._controller.register(context);
     });
   
-    chrome.input.ime.onBlur.addListener((/** contextID */) => {
-      this._controller.unregister();
+    chrome.input.ime.onBlur.addListener((contextID) => {
+      this._controller.unregister(contextID);
     });
 
-    chrome.input.ime.onReset.addListener((/** engineID */) => {
-      this._controller.reset();
-    })
-
-
-    chrome.input.ime.onKeyEvent.addListener((_, keyEvent) => {
-      return this._controller.handleEvent(keyEvent);
+    chrome.input.ime.onReset.addListener((engineID) => {
+      this._controller.reset(engineID);
     });
 
+    (chrome.input.ime.onKeyEvent.addListener as any)(
+      (engineID: string, keyEvent: KeyboardEvent, requestId: number) => 
+      {
+        return this._controller.handleEvent(engineID as InputToolCode, keyEvent, requestId);
+      }
+    );
 
+    // TODO
     chrome.input.ime.onCandidateClicked.addListener((
-    _, candidateID, __) => {
+    engineID: string, candidateID: number, button: /** MouseButton Type */string) => {
       this._controller.processNumberKey({'key': candidateID + 1});
     });
 
+    // TODO
     chrome.input.ime.onMenuItemActivated.addListener((
-      _, stateID) => {
-      this._controller.switchInputToolState(stateID as StateID);
+      engineID, name) => {
+      this._controller.switchInputToolState(engineID, name as StateID);
     });
+    
+    chrome.input.ime.onInputContextUpdate.addListener(() => {
+
+    });
+  
+    // TODO
+    chrome.input.ime.onInputContextUpdate.addListener((context) => {
+
+    });
+
+    // TODO (important!)It can reactivate the IME form inactivate state.
+    chrome.input.ime.onSurroundingTextChanged.addListener((engineID, surroundingInfo) => {
+      this._controller.processSurroundingText(engineID, surroundingInfo);
+    })
+
   }
 
   /**
+   * @todo
    * Updates settings from local storage.
-   * @TODO
    */
-<<<<<<< HEAD
-  #updateSettingsFromLocalStorage(data: any) {
-    let currentConfig = this.configFactory.getCurrentConfig();
-    
-    // Set the current shuangpin solution.
-    currentConfig.setSolution(data['solution']);
+  #updateSettingsFromLocalStorage() {
+    chrome.storage.sync.get('config', (res) => {
+      if (!res || !res['config']) return ;
+      let config = res['config'];
+      
+      let currentConfig = this.configFactory.getCurrentConfig();
 
-    // Set SBC/PUBC states.
-    currentConfig.states[StateID.SBC].value = data?.chos_init_sbc_selection;
-    currentConfig.states[StateID.PUNC].value = data?.chos_init_punc_selection;
-    
-    // Set custom states.
-    currentConfig.vertical = data?.chos_init_vertical_selection ?? false;
+      // Set the current shuangpin solution.
+      currentConfig.setSolution(config['solution']);
 
-    // Simplified chinese to traditional chinese enable status.(hans2hanz)
-    currentConfig.traditional = data?.chos_init_enable_traditional ?? false;
-    if (currentConfig.traditional) {
-      loadDict();
-    }
+      // Set SBC/PUBC states.
+      currentConfig.states[StateID.SBC].value = config?.chos_init_sbc_selection;
+      currentConfig.states[StateID.PUNC].value = config?.chos_init_punc_selection;
 
-    // Online decoder enable status.
-    if (Reflect.has(data, 'onlineStatus')) {
-      OnlineState.onlineStatus = data.onlineStatus ?? true;
-      OnlineState.onlineEngine = data?.onlineEngine ?? 0;
-    }
+      // Set custom states.
+      currentConfig.vertical = config?.chos_init_vertical_selection ?? false;
+
+      // Simplified chinese to traditional chinese enable status.(hans2hanz)
+      currentConfig.traditional = config?.chos_init_enable_traditional ?? false;
+      if (currentConfig.traditional) {
+        loadDict();
+      }
+
+      // Online decoder enable status.
+      if (Reflect.has(config, 'onlineStatus')) {
+        OnlineState.onlineStatus = config.onlineStatus;
+        OnlineState.onlineEngine = config?.onlineEngine;
+      }
 
 
-    // Cache the current status.
-    this._controller.localConfig = data;
-=======
-  #updateSettingsFromLocalStorage(opt_inputToolCode?: string) {
-    
->>>>>>> sync-wasm-decoder
+      // Cache the current status.
+      this._controller.localConfig = config;
+    });
   }
 
   /**
    * Processes incoming requests from option page.
    */
-<<<<<<< HEAD
   processRequest(
     message: any, 
     sender: chrome.runtime.MessageSender, 
     sendResponse: (response?: any) => void ) {
     if (message['update']) {
       chrome.storage.sync.set({ config: message['config']});
-=======
-  processRequest(request: any) {
-    if (request['update']) {
-      this.#updateSettingsFromLocalStorage(request['update']);
->>>>>>> sync-wasm-decoder
     }
   }
 }

@@ -3,15 +3,19 @@
  */
 
 import { KeyboardLayouts } from "./enums";
-import { State } from "./state";
+import type { State } from "./state";
+import type { StateID} from "./enums";
+
+export interface IConfig {
+  states: Record<StateID, State>;
+}
 
 /**
  * The input method config.
  */
-
-export class Config {
+export abstract class Config {
   /** The input tool states. */
-  states: Record<string, State> = {};
+  abstract states: Record<StateID, State>;
 
   /** The  fuzzy expansion paris. */
   fuzzyExpansions: string[] = [];
@@ -26,7 +30,7 @@ export class Config {
   pageupCharReg = /xyz/g;
 
   /** The pagedown chars. */
-  pagedownCharReg = /xyz/g;
+  pagedownCharReg = /xyz/g; 
 
   /** The page size. */
   pageSize = 5;
@@ -45,9 +49,11 @@ export class Config {
 
   /** The keyboard layout. */
   layout = KeyboardLayouts.STANDARD;
-
   /** The select keys. */
   selectKeys = '1234567890';
+  get selectKeyReg() {
+    return new RegExp(`[${this.selectKeys}]`);
+  }
   
   /** The shuangpin solution. */
   solution = '';
@@ -57,7 +63,6 @@ export class Config {
 
   /** Use vertical to show candidates. */
   vertical = false;
-
 
   /** Transform before the popup editor opened. */
   preTransform(_c: string) {

@@ -231,4 +231,8 @@ export class ShuangpinConfig extends PinyinConfig {
     
     return composing_text;
   }
+
+  [Symbol.toStringTag]() {
+    return 'ShuangpinConfig';
+  }
 }

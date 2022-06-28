@@ -5,6 +5,16 @@ import { debugLog } from "./utils/debug";
 import { hans2Hant } from "./utils/transform";
 import { View } from "./view";
 
+type ActionType = [
+  EventType, 
+  Modifier | 0, 
+  string | RegExp, 
+  Status | null, 
+  Function | null,
+  Function, 
+  Object, 
+  any
+];
 
 /**
  * The controller for os chrome os extension.
@@ -19,10 +29,10 @@ export class Controller extends EventTarget {
   _context?: any;
   
   /** The key action table. */
-  _keyActionTable?: any[][];
+  _keyActionTable?: Set<ActionType>;
 
   /** The shortcut table. */
-  _shortcutTable?: any[][];
+  _shortcutTable?: Set<ActionType>;
 
   /** True if the last key down is shift (with not modifiers). */
   _lastKeyDownIsShift = false;
@@ -38,10 +48,11 @@ export class Controller extends EventTarget {
     'solution': "pinyinjiajia"
   }
 
-  /** The raw charactor. */
-  rawChar = '';
-
-  configFactory = configFactoryInstance;
+  protected _configFactory = configFactoryInstance;
+  
+  get currentConfig() {
+    return this._configFactory.getCurrentConfig();
+  }
 
   constructor() {
     super();
@@ -56,23 +67,22 @@ export class Controller extends EventTarget {
    * Activates an input tool.
    */
   activate(inputToolCode: InputToolCode) {
-    this.configFactory.setInputTool(inputToolCode);
-    this.model.setInputTool(inputToolCode);
+    this._configFactory.setInputTool(inputToolCode);
     this.view.updateInputTool();
     this._keyActionTable = this.getKeyActionTable();
     this._shortcutTable = this.getShortcutTable();
   }
 
   /**
+   * @todo
    * Deactivates the input tool.
    */
-  deactivate() {
-    this.configFactory.setInputTool('');
+  deactivate(engineID: string) {
+    this._configFactory.setInputTool('');
     this.model.reset();
     this.view.updateInputTool();
     this._keyActionTable = undefined;
     this._shortcutTable = undefined;
-    this.rawChar = '';
   }
 
   /**
@@ -85,11 +95,11 @@ export class Controller extends EventTarget {
   }
 
   /**
+   * @todo
    * Unregister the context.
    */
-  unregister() {
+  unregister(contextID: number) {
 
-    this.rawChar = '';
     this._context = null;
     this.view.setContext(null);
     this.model.clear();
@@ -98,12 +108,12 @@ export class Controller extends EventTarget {
   /**
    * Resets the context.
    */
-  reset() {
-    this.rawChar = '';
+  reset(engineID: string) {
     this.model.abort();
   }
 
   /**
+   * @deprecated
    * Sets the fuzzy expansions for a given input tool.
    */
   setFuzzyExpansions(
@@ -118,23 +128,24 @@ export class Controller extends EventTarget {
         }
       }
     }
-    this.model.setFuzzyExpansions(inputToolCode, enabledFuzzyExpansions);
+    // this.model.setFuzzyExpansions(inputToolCode, enabledFuzzyExpansions);
   }
 
   /**
+   * @todo
    * Enables/Disables user dictionary for a given input tool.
    */
    setUserDictEnabled(
     inputToolCode:InputToolCode, enableUserDict: boolean) {
-    this.model.enableUserDict(inputToolCode, enableUserDict);
+    // this.model.enableUserDict(inputToolCode, enableUserDict);
   }
 
   /**
    * Sets the pageup/pagedown characters.
    */
    setPageMoveChars(
-    inputToolCode:InputToolCode, pageupChars: string, pagedownChars: string) {
-    let config = this.configFactory.getConfig(inputToolCode);
+    inputToolCode: InputToolCode, pageupChars: string, pagedownChars: string) {
+    let config = this._configFactory.getConfig(inputToolCode);
     if (config) {
       if (pageupChars) {
         config.pageupCharReg = new RegExp('[' + pageupChars + ']');
@@ -152,11 +163,12 @@ export class Controller extends EventTarget {
   }
 
   /**
+   * @todo
    * Sets the inital language, sbc and puncutation modes.
    */
   setInputToolStates(
     inputToolCode:InputToolCode, initLang: boolean, initSBC: boolean, initPunc: boolean) {
-    let config = this.configFactory.getConfig(inputToolCode);
+    let config = this._configFactory.getConfig(inputToolCode);
     if (config) {
       config.states[StateID.LANG].value = initLang;
       config.states[StateID.SBC].value = initSBC;
@@ -180,7 +192,7 @@ export class Controller extends EventTarget {
   setPageSettings(
     inputToolCode: string, layout: KeyboardLayouts, 
     selectKeys: string, pageSize: number) {
-    let config = this.configFactory.getConfig(inputToolCode);
+    let config = this._configFactory.getConfig(inputToolCode);
     if (config) {
       config.layout = layout;
       config.selectKeys = selectKeys;
@@ -190,45 +202,52 @@ export class Controller extends EventTarget {
   }
 
   /**
+   * @todo
    * Handles key event.
    * @return {boolean} True if the event is handled successfully.
    */
-  handleEvent(e: any) {
-    // debugLog('handleEvent', e, this._context, this._keyActionTable);
+  handleEvent(inputToolCode: InputToolCode, keyEvent: chrome.input.ime.KeyboardEvent, requestId: number) {
     if (!this._context || !this._keyActionTable) {
       return false;
     }
 
-
-    if (e.key === Modifier.SHIFT && e.altKey && e.extensionId) {
-      this.switchInputToolState(StateID.LANG);
+    // ctrl + shift and from extensionId.
+    if (
+      keyEvent.extensionId
+      && keyEvent.ctrlKey
+      && keyEvent.key === Modifier.SHIFT 
+    ) {
+      this.switchInputToolState(inputToolCode, StateID.LANG);
       return true;
     }
 
+    // Register shortcut.
     if (this._shortcutTable &&
-        this.#handleKeyInActionTable(e, this._shortcutTable)) {
+        this.#handleKeyInActionTable(keyEvent, this._shortcutTable)) {
       return true;
     }
 
-    if (this.preProcess(e)) {
+    // Pre process keyEvent.
+    if (this.preProcess(keyEvent)) {
       return true;
     }
 
-    let config = this.configFactory.getCurrentConfig();
-    let langStateID = StateID.LANG;
-    if (config.states[langStateID] && !config.states[langStateID].value) {
+    // English input state.
+    let { states } = this.currentConfig;
+    if (states[StateID.LANG] && !states[StateID.LANG].value) {
       return false;
     }
 
-    if (this.#handleKeyInActionTable(e, this._keyActionTable)) {
+    // 
+    if (this.#handleKeyInActionTable(keyEvent, this._keyActionTable)) {
       return true;
     }
 
-    if (e.type == EventType.KEYDOWN &&
-        e.key != Key.INVALID &&
-        e.key != Modifier.SHIFT &&
-        e.key != Modifier.CTRL &&
-        e.key != Modifier.ALT &&
+    if (keyEvent.type == EventType.KEYDOWN &&
+        keyEvent.key != Key.INVALID &&
+        keyEvent.key != Modifier.SHIFT &&
+        keyEvent.key != Modifier.CTRL &&
+        keyEvent.key != Modifier.ALT &&
         this.model.status != Status.INIT) {
       this.model.selectCandidate(-1, '');
     }
@@ -251,7 +270,7 @@ export class Controller extends EventTarget {
       return false;
     }
 
-    let config = this.configFactory.getCurrentConfig();
+    let config = this.currentConfig;
     let trans = config.preTransform(e.key);
     if (trans) {
       if (this._context) {
@@ -264,6 +283,10 @@ export class Controller extends EventTarget {
     return false;
   }
 
+  processSurroundingText(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
+    
+  }
+
 
   /**
    * Processes the char key.
@@ -272,12 +295,19 @@ export class Controller extends EventTarget {
    * @return {boolean} Whether the key event is processed.
    */
   processCharKey(e: any) {
-    let text = this.configFactory.getCurrentConfig().transform(
-      this.model.rawStr, e.key, this.model.segments.slice(-1)[0]);
+
+    let text = this.currentConfig.transform(
+      this.model.rawSource,
+      e.key,
+      this.model.segments.slice(-1)[0]
+    );
+    
     if (!text) {
       return this.model.status != Status.INIT;
     }
-    this.model.rawStr += e.key;
+
+    this.model.rawSource += e.key;
+    // console.log('processCharKey->', text, this.model.rawSource);
     this.model.updateSource(text);
     return true;
   }
@@ -291,60 +321,66 @@ export class Controller extends EventTarget {
   * @return {boolean} True if the key is handled.
   * @private
   */
-  #handleKeyInActionTable(e: any, table: any[][]) {
+  #handleKeyInActionTable(e: chrome.input.ime.KeyboardEvent, table: Set<ActionType>) {
     let key = this.#getKey(e);
-
-    for (let i = 0, item; item = table[i]; i++) {
+    for (let item of table) {
       // Each item of the key action table is an array with this format:
-      // [EventType, Modifier, KeyCode/KeyChar, ModelStatus, MoreConditionFunc,
-      //    ActionFunc, ActionFuncScopeObj, args].
-      if (e.type != item[0]) {
-        continue;
-      }
+      if (e.type != item[0]) continue;
+
       let modifier = item[1];
-      if (modifier == Modifier.SHIFT && !e.shiftKey ||
-          modifier == Modifier.CTRL && !e.ctrlKey ||
-          modifier == Modifier.ALT && !e.altKey) {
+      if (
+        modifier == Modifier.SHIFT && !e.shiftKey 
+        || modifier == Modifier.CTRL && !e.ctrlKey 
+        || modifier == Modifier.ALT && !e.altKey
+      ) {
         continue;
       }
-      if (modifier == 0) {
-        if (e.ctrlKey || e.altKey || e.shiftKey) {
+
+      if (modifier == 0 && (e.ctrlKey || e.altKey || e.shiftKey)) {
+        continue;
+      }
+
+      if (item[2] 
+          && key != item[2]
+          && (key.length != 1 || !key.match(item[2]))) {
           continue;
         }
-      }
-      if (item[2] && key != item[2] &&
-          (key.length != 1 || !key.match(item[2]))) {
-        continue;
-      }
+      
       if (item[3] && this.model.status != item[3]) {
         continue;
       }
+      // TODO
       if (!item[4] || item[4]()) {
         if (item[5].apply(
             item[6], item[7] != undefined ? item.slice(7) : [e]) != false) {
           return true;
         }
       }
+
     }
     return false;
   }
 
 
   /**
+   * @todo
   * Processes the number key.
   *
   * @param {Object} e The key event.
   * @return {boolean} Whether the key event is processed.
   */
   processNumberKey(e: any) {
-    let selectKeys = this.configFactory.getCurrentConfig().selectKeys;
-    let pageOffset = selectKeys.indexOf(e.key);
-    if (pageOffset < 0) {
+    let selectKeys = this.currentConfig.selectKeyReg;
+    let isPageNumber = selectKeys.test(e.key);
+    if (!isPageNumber) {
       return true;
     }
-    let pageSize = this.configFactory.getCurrentConfig().pageSize;
+
+    // Select candidate.
+    let { pageSize } = this.currentConfig;
+    let pageOffset = e.key - 1;
     if (pageOffset >= 0 && pageOffset < pageSize) {
-      let index = this.model.getPageIndex() * pageSize + pageOffset;
+      let index = this.model.pageIndex * pageSize + pageOffset;
       this.model.selectCandidate(index);
     }
     return true;
@@ -358,7 +394,7 @@ export class Controller extends EventTarget {
   * @return {boolean} Whether the key event is processed.
   */
   processPuncKey(e: any) {
-    let config = this.configFactory.getCurrentConfig();
+    let config = this.currentConfig;
     let punc = config.postTransform(e.key);
     this.model.selectCandidate(undefined, punc);
     return true;
@@ -455,7 +491,7 @@ export class Controller extends EventTarget {
   handleCommitEvent() {
     if (this._context) {
       let segments = this.model.segments.join('');
-      if (this.configFactory.getCurrentConfig().traditional) {
+      if (this.currentConfig.traditional) {
         segments = hans2Hant(segments);
       }
       chrome.input.ime.commitText({
@@ -472,17 +508,19 @@ export class Controller extends EventTarget {
   * @return {!Array.<!Array>} The key action table.
   * @protected
   */
-  getKeyActionTable() {
-    let Type = EventType;
-    let config = this.configFactory.getCurrentConfig();
+  getKeyActionTable()
+  {
+    let config = this.currentConfig;
 
+    // Initialized.
     let onStageCondition = () => {
       return this.model.status != Status.INIT;
     }
 
+    // Not selectable.
     let onStageNotSelectableCondition = () => {
-      return this.model.status != Status.INIT &&
-          this.model.status != Status.SELECT;
+      return (this.model.status != Status.INIT) &&
+          (this.model.status != Status.SELECT);
     }
 
     let hasCandidatesCondition = () => {
@@ -490,85 +528,110 @@ export class Controller extends EventTarget {
           this.model.status == Status.SELECT;
     }
 
-    let selectReg = new RegExp('[' + config.selectKeys + ']');
-
     // [EventType, Modifier, KeyCode/KeyChar, ModelStatus, MoreConditionFunc,
     //  ActionFunc, ActionFuncScopeObj, args]
-    return [
-      [Type.KEYDOWN, 0, Key.PAGE_UP, null, onStageCondition,
-      this.model.movePage, this.model, 1],
-      [Type.KEYDOWN, 0, config.pageupCharReg, Status.SELECT, null,
-      this.model.movePage, this.model, 1],
-      [Type.KEYDOWN, 0, Key.PAGE_DOWN, null, onStageCondition,
-      this.model.movePage, this.model, -1],
-      [Type.KEYDOWN, 0, config.pagedownCharReg, Status.SELECT, null,
-      this.model.movePage, this.model, -1],
-      [Type.KEYDOWN, 0, selectReg, Status.SELECT, null,
-      this.processNumberKey, this],
-      [Type.KEYDOWN, 0, Key.SPACE, null, onStageNotSelectableCondition,
-      this.processSelectKey, this],
-      [Type.KEYDOWN, 0, Key.SPACE, null, onStageCondition,
-      this.processCommitKey, this],
-      [Type.KEYDOWN, 0, Key.DOWN, null, onStageNotSelectableCondition,
-      this.processSelectKey, this],
-      [Type.KEYDOWN, 0, Key.ENTER, null, onStageCondition,
-      this.processCommitKey, this],
-      [Type.KEYDOWN, 0, Key.BACKSPACE, null, hasCandidatesCondition,
-      this.processRevertKey, this],
-      [Type.KEYDOWN, 0, Key.UP, null, onStageCondition,
+    let actionList = new Set<ActionType>
+    ([
+      // Pageup action.
+      [EventType.KEYDOWN, 0, Key.PAGE_UP, null, onStageCondition, 
+        this.model.movePage, this.model, 1],
+      // Pageup regexp action.
+      [EventType.KEYDOWN, 0, config.pageupCharReg, Status.SELECT, null, 
+        this.model.movePage, this.model, 1],
+
+      // Pagedown action.
+      [EventType.KEYDOWN, 0, Key.PAGE_DOWN, null, onStageCondition, 
+        this.model.movePage, this.model, -1],
+      // Pagedown regexp action.
+      [EventType.KEYDOWN, 0, config.pagedownCharReg, Status.SELECT, null, 
+        this.model.movePage, this.model, -1],
+      
+      // Select keys regexp action.
+      [EventType.KEYDOWN, 0, config.selectKeyReg, Status.SELECT, null,
+        this.processNumberKey, this, null],
+      // Default select action for Space key .
+      [EventType.KEYDOWN, 0, Key.SPACE, null, onStageNotSelectableCondition,
+        this.processSelectKey, this, null],
+      // Commit action for Space key.
+      [EventType.KEYDOWN, 0, Key.SPACE, null, onStageCondition,
+        this.processCommitKey, this, null],
+      // Commit action for Down key.
+      [EventType.KEYDOWN, 0, Key.DOWN, null, onStageNotSelectableCondition,
+        this.processSelectKey, this, null],
+      // Commit action for Enter key.
+      [EventType.KEYDOWN, 0, Key.ENTER, null, onStageCondition,
+        this.processCommitKey, this, null],
+      // Revert action. 
+      [EventType.KEYDOWN, 0, Key.BACKSPACE, null, hasCandidatesCondition,
+      this.processRevertKey, this, null],
+      // Move highlight.
+      [EventType.KEYDOWN, 0, Key.UP, null, onStageCondition,
       this.model.moveHighlight, this.model, -1],
-      [Type.KEYDOWN, 0, Key.DOWN, null, onStageCondition,
+      [EventType.KEYDOWN, 0, Key.DOWN, null, onStageCondition,
       this.model.moveHighlight, this.model, 1],
-      [Type.KEYDOWN, 0, Key.LEFT, null, onStageCondition,
-      this.model.moveCursorLeft, this.model],
-      [Type.KEYDOWN, 0, Key.RIGHT, null, onStageCondition,
-      this.model.moveCursorRight, this.model],
-      [Type.KEYDOWN, 0, Key.ESC, null, onStageCondition,
-      this.processAbortKey, this],
-      [Type.KEYDOWN, 0, config.editorCharReg, null, null,
-      this.processCharKey, this],
-      [Type.KEYDOWN, Modifier.SHIFT, config.editorCharReg, null, null,
-      this.processCharKey, this],
-      [Type.KEYDOWN, 0, config.punctuationReg, null, onStageCondition,
-      this.processPuncKey, this]
-    ];
+      // Move cursor.
+      [EventType.KEYDOWN, 0, Key.LEFT, null, onStageCondition,
+      this.model.moveCursorLeft, this.model, null],
+      [EventType.KEYDOWN, 0, Key.RIGHT, null, onStageCondition,
+      this.model.moveCursorRight, this.model, null],
+      // Abort.
+      [EventType.KEYDOWN, 0, Key.ESC, null, onStageCondition,
+      this.processAbortKey, this, null],
+      // Char.
+      [EventType.KEYDOWN, 0, config.editorCharReg, null, null,
+      this.processCharKey, this, null],
+      // Shift + char?
+      [EventType.KEYDOWN, Modifier.SHIFT, config.editorCharReg, null, null,
+      this.processCharKey, this, null],
+      // Punc.
+      [EventType.KEYDOWN, 0, config.punctuationReg, null, onStageCondition,
+      this.processPuncKey, this, null]
+    ]);
+
+    return actionList;
   }
 
 
   /**
+   * @todo
   * Gets the shortcut table
   *
   * @return {!Array.<!Array>} The shortcut table.
   * @protected
   */
   getShortcutTable() {
-    let shortcutTable = [];
-    let config = this.configFactory.getCurrentConfig();
-    for (let stateID in config.states) {
-      let stateValue = config.states[stateID];
-      if (stateValue.shortcut.length == 1 &&
-          stateValue.shortcut[0] == Modifier.SHIFT) {
+    let shortcutTable: ActionType[] = [];
+    let config = this.currentConfig;
+    
+    for (let name in StateID) {
+      let state = config.states[name as StateID];
+      if (state.shortcut.length == 1 &&
+          state.shortcut[0] == Modifier.SHIFT) {
+        // switch language.
         // To handle SHIFT shortcut.
         shortcutTable.unshift(
-            [EventType.KEYDOWN, null, null, null, null,
-            this._updateLastKeyIsShift, this]);
+            [EventType.KEYDOWN, 0, Modifier.SHIFT, null, null,
+            this._updateLastKeyIsShift, this, null]);
         shortcutTable.push(
             [EventType.KEYUP, Modifier.SHIFT, Modifier.SHIFT, null,
-            () =>  this._lastKeyDownIsShift, this.switchInputToolState, this, stateID]);
-      } else if (stateValue.shortcut.length >= 1) {
+            () =>  this._lastKeyDownIsShift, this.switchInputToolState, this, name]);
+      } else if (state.shortcut.length >= 1) {
         shortcutTable.push(
-            [EventType.KEYDOWN, stateValue.shortcut[1], stateValue.shortcut[0],
-            null, null, this.switchInputToolState, this, stateID]);
+            [EventType.KEYDOWN, state.shortcut[1], state.shortcut[0],
+            null, null, this.switchInputToolState, this, name]);
       }
     }
-    return shortcutTable;
+    
+    return new Set(shortcutTable);
   }
 
   /**
    * Switch the input tool state.
    */
-  switchInputToolState(stateId:StateID) {
-    let config = this.configFactory.getCurrentConfig();
+  switchInputToolState(engineID: string, stateId: StateID) {
+
+    let config = this.currentConfig;
+    
     config.states[stateId].value = !config.states[stateId].value;
     let stateID = StateID;
     if (stateId == stateID.LANG) {
@@ -607,7 +670,7 @@ export class Controller extends EventTarget {
 * @return {string} The key string.
 * @private
 */
-  #getKey(e: any) {
+  #getKey(e: chrome.input.ime.KeyboardEvent) {
     let key = e.key;
     if (key == Key.INVALID) {
       for (let modifier in Modifier) {
