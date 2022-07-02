@@ -77,7 +77,7 @@ export class Background {
     // TODO
     chrome.input.ime.onCandidateClicked.addListener((
     engineID: string, candidateID: number, button: /** MouseButton Type */string) => {
-      this._controller.processNumberKey({'key': candidateID + 1});
+      this._controller.processNumberKey({ key: candidateID + 1});
     });
 
     // TODO
@@ -97,7 +97,7 @@ export class Background {
 
     // TODO (important!)It can reactivate the IME form inactivate state.
     chrome.input.ime.onSurroundingTextChanged.addListener((engineID, surroundingInfo) => {
-      this._controller.processSurroundingText(engineID, surroundingInfo);
+      this._controller.handleSurroundingText(engineID, surroundingInfo);
     })
 
   }
@@ -121,11 +121,12 @@ export class Background {
       currentConfig.states[StateID.PUNC].value = config?.chos_init_punc_selection;
 
       // Set custom states.
-      currentConfig.vertical = config?.chos_init_vertical_selection ?? false;
+      currentConfig.enableVertical = config?.chos_init_vertical_selection ?? false;
 
-      // Simplified chinese to traditional chinese enable status.(hans2hanz)
-      currentConfig.traditional = config?.chos_init_enable_traditional ?? false;
-      if (currentConfig.traditional) {
+      // Simplified Chinese to Traditional Chinese enable status.(hans2hanz)
+      currentConfig.enableTraditional = config?.chos_init_enable_traditional ?? false;
+      if (currentConfig.enableTraditional) {
+        // Load Chinese Traditional dict.
         loadDict();
       }
 
@@ -134,7 +135,6 @@ export class Background {
         OnlineState.onlineStatus = config.onlineStatus;
         OnlineState.onlineEngine = config?.onlineEngine;
       }
-
 
       // Cache the current status.
       this._controller.localConfig = config;

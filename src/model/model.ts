@@ -2,6 +2,7 @@
 import { EventType, InputToolCode, Status } from "./enums";
 import { Candidate } from "./candidate";
 import { configFactoryInstance } from "./configfactory";
+import Module from "../../libGooglePinyin/decoder.js";
 /**
  * The model, which manages the state transfers and commits.
  */
@@ -46,7 +47,7 @@ interface IModel {
    * Updates the source text at the current cursor by the given
    * transform result. 
    */
-  updateSource(text: string): void;
+  updateSource(char: string, text: string): void;
 
   /** Processs revent. */
   revert(): void;
@@ -57,8 +58,11 @@ interface IModel {
   /** Fetches candidates from decoder. */
   fetchCandidates(): void;
 
+  /** Set current engine id. */
+  setEngineID(engineID: string): void;
   
 }
+
 export class Model extends EventTarget implements IModel {
   static DEFAULT_CANDIDATE_RANGE = 1000;
 
@@ -68,6 +72,7 @@ export class Model extends EventTarget implements IModel {
   static CLOSING_EVENT = new CustomEvent(EventType.CLOSING);
 
   protected _decoder?: IDecoder | undefined;
+
   configFactory = configFactoryInstance;
   /** Current model status. */
   status = Status.INIT;
@@ -75,6 +80,8 @@ export class Model extends EventTarget implements IModel {
   source: string = "";
   /** Current candidates. */
   candidates: Candidate[] = [];
+  /** Raw candidates set. */
+  rawCandidates: string[] = [];
   /** Raw source string. */
   rawSource = "";
   /** The cursor position in the segments. */
@@ -89,6 +96,19 @@ export class Model extends EventTarget implements IModel {
   commitPos = 0;
   /** Tokens string. */
   tokens: string[] = [];
+  /**
+   * @deprecated
+   * Require await commit status. Version 3 manifest had a deficiency. */
+  requireAwaitCommitStatus = true;
+  
+  /** Inactive state */
+  inactiveAbortState: boolean = false;
+
+  /** engineID */
+  engineID?: string;
+
+  /** candidate id. */
+  selectedCandID = -1;
 
   /** The current global configure. */
   get currentConfig() {
@@ -102,6 +122,42 @@ export class Model extends EventTarget implements IModel {
     let { pageSize } = this.currentConfig;
     return Math.floor(this.highlightIndex / pageSize);
   }
+
+  setEngineID(engineID: string): void {
+    if (this.engineID) {
+      // It's from inactive and reactive ime.
+      this.inactiveAbortState = true;
+    }
+    this.engineID = engineID;
+    try {
+      this._decoder = new Module.Decoder();
+    } catch(err) {
+
+    }
+  }
+
+  storageCurrentState() {
+    chrome.storage.local.set({
+      model: {
+        
+      }
+    })
+  }
+
+  revertFromStorage() {
+
+  }
+
+  get decoder() {
+    try {
+      this._decoder = this._decoder 
+        ?? (Module["Decoder"] ? new Module["Decoder"] : undefined);
+    } catch(err) {
+      
+    }
+    return this._decoder;
+  }
+
 
   updateHighlight(newHighlight: number) {
     if (this.status != Status.SELECT || newHighlight >= this.candidates.length) return ;
@@ -122,10 +178,11 @@ export class Model extends EventTarget implements IModel {
     this.updateHighlight((this.pageIndex + step) * pageSize);
   }
 
-  updateSource(text: string) {
+  updateSource(key: string, text: string) {
     if (this.source.length + text.length > this.currentConfig.maxInputLen) {
       this.selectCandidate(undefined, '');
     }
+    this.rawSource += key;
     this.source += text;
     this.highlightIndex = -1;
     if (this.status == Status.INIT) {
@@ -135,6 +192,7 @@ export class Model extends EventTarget implements IModel {
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
     }
+
     this.fetchCandidates();
   }
 
@@ -185,7 +243,9 @@ export class Model extends EventTarget implements IModel {
 
   /** @todo */
   selectCandidate(index?: number | undefined, commit?: string | undefined): void {
-    if (this.status == Status.FETCHING) return ;
+    console.log("shuangpin->selectCandidate", index, commit);
+    if (Status.FETCHING == this.status) return ;
+    
     this.status = Status.FETCHING;
 
     // Commit the raw source string.
@@ -195,21 +255,42 @@ export class Model extends EventTarget implements IModel {
       return this.clear();
     }
 
-    index = index ?? this.highlightIndex;
-    let candidate = this.candidates[index];
-    
-    if (!candidate) {
+
+    let candidateIndex = index ?? this.highlightIndex;
+
+    let candidate = this.candidates[candidateIndex];
+    this.selectedCandID  = candidate.candID;
+    console.log("shuangpin->selectCandidate->candidate", candidate, this.selectedCandID);
+    if (!candidate) { // commit the current segments.
       this.notifyUpdates(true);
       return this.clear();
     }
 
-    let source = "";
-    for (let i = 0; i < candidate.range; ++i) {
-      source += this.segments[i + this.commitPos];
-    }
+    // let source = "";
+    // for (let i = 0; i < candidate.range; ++i) {
+    //   source += this.segments[i + this.commitPos];
+    // }
 
-    this.tokens[this.commitPos] = source;
-    this.segments[this.commitPos] = candidate.target;
+    // this.tokens[this.commitPos] = source;
+    // this.segments[this.commitPos] = candidate.target;
+    // this.commitPos++;
+
+    this.segments = [this.candidates[0].target];
+    // this.segments = this.segments.slice(0, this.commitPos).concat(
+    //   this.segments.slice(this.commitPos - 1 + candidate.candID)
+    // );
+    if (this.candidates.length == 1 || commit != undefined) {
+      this.notifyUpdates(true);
+      return this.clear();
+    }
+    // if (this.commitPos == this.segments.length || commit != undefined) {
+    //   this.notifyUpdates(true);
+    //   return this.clear();
+    // }
+
+    this.highlightIndex = -1;
+    // this._decoder!.clear();
+    this.fetchCandidates();
   }
 
   clear() {
@@ -226,6 +307,8 @@ export class Model extends EventTarget implements IModel {
     this.candidates = [];
     this.status = Status.INIT;
     this._holdSelectStatus = false;
+    this.selectedCandID = -1;
+    this.requireAwaitCommitStatus = true;
   }
 
   abort() {
@@ -236,11 +319,11 @@ export class Model extends EventTarget implements IModel {
     this.clear();
     if (this._decoder) {
       // TODO
-      // this._decoder.clear();
+      this._decoder.clear();
     }
   }
 
-  notifyUpdates(commit: boolean = false) {
+  notifyUpdates(commit = false) {
     if (commit) {
       this.dispatchEvent(Model.COMMIT_EVENT);
       this.clear();
@@ -259,37 +342,55 @@ export class Model extends EventTarget implements IModel {
     this.highlightIndex = 0;
   }
 
-
   fetchCandidates() {
-    if (!this._decoder) return;
+    if (!this.decoder) return;
     this.status = Status.FETCHING;
     if (this.source.length == 1 && this.source === '\'') {
       this.status = Status.SELECT;
       return ;
     }
 
-    // TODO
-    let cand_id = -1;
-    let candidatesStr = this._decoder.decode(this.source, cand_id);
-    let candidates = candidatesStr.split("|");
-    console.log(candidates);
+    console.log('shuangpin->source', this.source);
+    let candidatesRawStr = this.decoder.decode(this.source, this.selectedCandID);
+    let candidates = candidatesRawStr.split("|");
+
+    candidatesRawStr = "";
+    if (!this.candidates) {
+      this.status = Status.FETCHED;
+      if (this.currentConfig.autoHighlight || this._holdSelectStatus) {
+        this.enterSelectInternal();
+      }
+
+      this.candidates = [];
+      this.notifyUpdates();
+      return;
+    }
     // TODO model.old.ts > 461;
     
     this.candidates = [];
 
     for (let i = 0, l = candidates.length; i < l; i++) {
-      this.candidates.push
-      (
-        new Candidate( candidates[i], candidates[i].length )
+      this.candidates.push(
+        new Candidate( 
+          candidates[i],
+          i
+        )
       );
     }
 
     this.status = Status.FETCHED;
-    if (this.configFactory.getCurrentConfig().autoHighlight || this._holdSelectStatus) {
+
+    if (this.candidates.length == 1) {
+      // TODO Need to adapt to current decoder.  
+      this.selectCandidate(0, "");
+
+    }
+    if (this.currentConfig.autoHighlight || this._holdSelectStatus) {
       this.enterSelectInternal();
     }
 
     this.notifyUpdates();
-    
   }
+
+
 }

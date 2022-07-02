@@ -46,23 +46,32 @@ export abstract class Config {
 
   /** Whether enables the user dictionary. */
   enableUserDict = true;
+  
+  /** Whether enable the Chinese Traditional. */
+  enableTraditional = false;
+
+  /**
+   * Virtual Keyboard support. 
+   * Whethe enable virtual keyboard. */
+  enabledVirtualKeyboard = false;
 
   /** The keyboard layout. */
   layout = KeyboardLayouts.STANDARD;
+
   /** The select keys. */
   selectKeys = '1234567890';
   get selectKeyReg() {
     return new RegExp(`[${this.selectKeys}]`);
   }
+
+  /** Whethe enable the shuangpin ime. */
+  enabelShuangpin = false;
   
   /** The shuangpin solution. */
-  solution = '';
-
-  /** Output Traditional Chinese. */
-  traditional = false;
+  shuangpinSolution = 'pinyinjiajia';
 
   /** Use vertical to show candidates. */
-  vertical = false;
+  enableVertical = false;
 
   /** Transform before the popup editor opened. */
   preTransform(_c: string) {

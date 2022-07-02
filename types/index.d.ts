@@ -1,6 +1,25 @@
 /// <reference path="./mvvm.d.ts" />
+
+
+interface IDecoder {
+  new (),
+  /** Gets the transliterations(without scores) for the source word. */
+  decode(sourceToken:string, chooseId: number): string,
+  /** Clear the decoder. */
+  clear(): void,
+}
+
+interface Module {
+  Decoder: IDecoder
+}
+
+declare module "../../libGooglePinyin/decoder.js" {
+  export default Module; 
+}
+
+
 interface Window {
-  dataloader: any
+  Module: Module
 }
 
 type TargetPosition = ({

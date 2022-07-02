@@ -13,7 +13,6 @@ using namespace std;
 using namespace ime_pinyin;
 using namespace emscripten;
 
-
 #define DICT_PATH "./dict/dict_pinyin.dat"
 #define USER_DICT_PATH "./dict/pinyin_user.dat"
 #define CAND_BUFFER_MAX_LEN 32 // Maximum for the sentence char length
@@ -38,7 +37,7 @@ class Decoder {
      * @param cand_id The chosen candidate id.
      * @return 
      */
-     string decode(string sps_buf, size_t cand_id) {
+     string decode(string sps_buf, short int cand_id) {
       
       size_t cand_num;
 
@@ -56,7 +55,7 @@ class Decoder {
       short int len = getCandidates(cand_num, candidates);
       // cout << "len:" << len << endl;
       for(short int i = 1; i < len; i++ ) {
-        cout << "i:" << i << "-" << candidates[i] << endl;
+        // cout << "i:" << i << "-" << candidates[i] << endl;
         candidates[0].append("|" + candidates[i]);
       }
 
@@ -73,76 +72,75 @@ class Decoder {
     bool clear() {
       return im_cancel_input();
     }
+    size_t search(string sps_buf) {
+      return im_search(sps_buf.c_str(), sps_buf.size());
+    }
 
-    // size_t search(string sps_buf) {
-    //   return im_search(sps_buf.c_str(), sps_buf.size());
-    // }
+    size_t del_search(size_t pos, bool is_pos_in_splid, bool clear_fixed_this_step) {
+      return im_delsearch(pos, is_pos_in_splid, clear_fixed_this_step);
+    }
 
-    // size_t del_search(size_t pos, bool is_pos_in_splid, bool clear_fixed_this_step) {
-    //   return im_delsearch(pos, is_pos_in_splid, clear_fixed_this_step);
-    // }
+    void reset_search() {
+      im_reset_search();
+    }
 
-    // void reset_search() {
-    //   im_reset_search();
-    // }
+    size_t add_letter(string str) {
+      char ch = str[0];
+      cout << "ch:" << ch << ",str:" << str << endl;
+      return im_add_letter(ch);
+    }
 
-    // size_t add_letter(string str) {
-    //   char ch = str[0];
-    //   cout << "ch:" << ch << ",str:" << str << endl;
-    //   return im_add_letter(ch);
-    // }
+    size_t decoded_len;
 
-    // size_t decoded_len;
+    string get_sps_str() {
+      return im_get_sps_str(&decoded_len);
+    }
 
-    // string get_sps_str() {
-    //   return im_get_sps_str(&decoded_len);
-    // }
-
-    // string get_candidate(size_t cand_id) {
-    //   char16 cand_str[CANDS_MAX_NUM];
+    string get_candidate(size_t cand_id) {
+      char16 cand_str[CANDS_MAX_NUM];
       
-    //   im_get_candidate(cand_id, cand_str, CAND_BUFFER_MAX_LEN);
+      im_get_candidate(cand_id, cand_str, CAND_BUFFER_MAX_LEN);
       
-    //   std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
-    //   return conv.to_bytes((char16_t *)cand_str);
-    // }
+      std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
+      return conv.to_bytes((char16_t *)cand_str);
+    }
 
-    // uint16_t spl_start;
+    uint16_t spl_start;
 
-    // size_t get_spl_start_pos() {
-    //   const uint16_t *spl_start_ptr = &spl_start;
-    //   return im_get_spl_start_pos(spl_start_ptr);
-    // }
+    size_t get_spl_start_pos() {
+      const uint16_t *spl_start_ptr = &spl_start;
+      return im_get_spl_start_pos(spl_start_ptr);
+    }
 
-    // size_t choose(size_t cand_id) {
-    //   return im_choose(cand_id);
-    // }
+    size_t choose(size_t cand_id) {
+      return im_choose(cand_id);
+    }
 
-    // size_t cancel_last_choice() {
-    //   return im_cancel_last_choice();
-    // }
+    size_t cancel_last_choice() {
+      return im_cancel_last_choice();
+    }
 
-    // size_t get_fixed_len() {
-    //   return im_get_fixed_len();
-    // }
+    size_t get_fixed_len() {
+      return im_get_fixed_len();
+    }
 
-    // bool cancel_input() {
-    //   return im_cancel_input();
-    // }
+    bool cancel_input() {
+      return im_cancel_input();
+    }
 
-    // size_t get_predicts() {
-    //   char16 cand_buf[CAND_BUFFER_MAX_LEN];
-    //   char16 (*pre_buf_ptr)[kMaxPredictSize + 1];
-    //   return im_get_predicts(cand_buf, pre_buf_ptr);
-    // }
+    size_t get_predicts() {
+      char16 cand_buf[CAND_BUFFER_MAX_LEN];
+      char16 (*pre_buf_ptr)[kMaxPredictSize + 1];
+      return im_get_predicts(cand_buf, pre_buf_ptr);
+    }
 
     private:
       size_t getCandidates(size_t cand_num, string *cands_list)
       {
         char16 cand_str[CAND_BUFFER_MAX_LEN];
-        // if (cand_num > CANDS_MAX_NUM) {
-        //   cand_num = CANDS_MAX_NUM;
-        // }
+        if (cand_num > CANDS_MAX_NUM) {
+          cand_num = CANDS_MAX_NUM;
+        }
 
         for(size_t i = 0; i < cand_num; i++)
         {
@@ -152,7 +150,7 @@ class Decoder {
           std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
           
           string u8str = conv.to_bytes((char16_t *)cand_str);
-          cout << "u8str:" << u8str << endl;
+          // cout << "u8str:" << u8str << endl;
           cands_list[i] = u8str;
         }
 
@@ -174,21 +172,20 @@ EMSCRIPTEN_BINDINGS(pinyin_decoder) {
     .function("decode", &Decoder::decode)
     .function("predicts", &Decoder::predicts)
     .function("clear", &Decoder::clear)
-    // Demo
-    // .function("search", &Decoder::search)
-    // .function("delSearch", &Decoder::del_search)
-    // .function("resetSearch", &Decoder::reset_search)
-    // .function("addLetter", &Decoder::add_letter)
-    // .function("getSpsStr", &Decoder::get_sps_str)
-    // .function("getCandidate", &Decoder::get_candidate)
-    // .function("getSplStartPos", &Decoder::get_spl_start_pos)
-    // .function("choose", &Decoder::choose)
-    // .function("cancelLastChoice", &Decoder::cancel_last_choice)
-    // .function("getFixedLen", &Decoder::get_fixed_len)
-    // .function("cancelInput", &Decoder::cancel_input)
-    // .function("getPredicts", &Decoder::get_predicts)
-    // .property("isopened", &Decoder::isopened)
-    // .property("decodedLen", &Decoder::decoded_len)
-    // .property("splStart", &Decoder::spl_start)
+    .function("search", &Decoder::search)
+    .function("delSearch", &Decoder::del_search)
+    .function("resetSearch", &Decoder::reset_search)
+    .function("addLetter", &Decoder::add_letter)
+    .function("getSpsStr", &Decoder::get_sps_str)
+    .function("getCandidate", &Decoder::get_candidate)
+    .function("getSplStartPos", &Decoder::get_spl_start_pos)
+    .function("choose", &Decoder::choose)
+    .function("cancelLastChoice", &Decoder::cancel_last_choice)
+    .function("getFixedLen", &Decoder::get_fixed_len)
+    .function("cancelInput", &Decoder::cancel_input)
+    .function("getPredicts", &Decoder::get_predicts)
+    .property("isopened", &Decoder::isopened)
+    .property("decodedLen", &Decoder::decoded_len)
+    .property("splStart", &Decoder::spl_start)
     ;
 }

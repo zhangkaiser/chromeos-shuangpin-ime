@@ -61,6 +61,7 @@ export class Controller extends EventTarget {
     this.model.addEventListener(EventType.OPENING, this.handleOpeningEvent.bind(this));
     this.model.addEventListener(EventType.CLOSING, this.handleClosingEvent.bind(this));
     this.model.addEventListener(EventType.MODELUPDATED, this.handleModelUpdatedEvent.bind(this));
+    console.log("Hello Controller!");
   }
 
   /**
@@ -68,6 +69,7 @@ export class Controller extends EventTarget {
    */
   activate(inputToolCode: InputToolCode) {
     this._configFactory.setInputTool(inputToolCode);
+    this.model.setEngineID(inputToolCode);
     this.view.updateInputTool();
     this._keyActionTable = this.getKeyActionTable();
     this._shortcutTable = this.getShortcutTable();
@@ -255,6 +257,14 @@ export class Controller extends EventTarget {
     return false;
   }
 
+  handleSurroundingText(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
+    console.log('surroundingTextInfo->', this.model.engineID);
+    if (!this.model.engineID) {
+
+      // this.model.setEngineID(engineID);
+    }
+  }
+
 
   /**
    * Pre-processes the key press event.
@@ -270,23 +280,17 @@ export class Controller extends EventTarget {
       return false;
     }
 
-    let config = this.currentConfig;
-    let trans = config.preTransform(e.key);
-    if (trans) {
-      if (this._context) {
-        chrome.input.ime.commitText({
-          'contextID': this._context.contextID,
-          'text': trans});
-      }
+    let trans = this.currentConfig.preTransform(e.key);
+    if (trans && this._context) {
+      chrome.input.ime.commitText({
+        contextID: this._context.contextID,
+        text: trans
+      });
       return true;
     }
+
     return false;
   }
-
-  processSurroundingText(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
-    
-  }
-
 
   /**
    * Processes the char key.
@@ -295,7 +299,6 @@ export class Controller extends EventTarget {
    * @return {boolean} Whether the key event is processed.
    */
   processCharKey(e: any) {
-
     let text = this.currentConfig.transform(
       this.model.rawSource,
       e.key,
@@ -306,9 +309,9 @@ export class Controller extends EventTarget {
       return this.model.status != Status.INIT;
     }
 
-    this.model.rawSource += e.key;
-    // console.log('processCharKey->', text, this.model.rawSource);
-    this.model.updateSource(text);
+    // this.model.addRawSource;
+    console.log('processCharKey->', text, this.model.rawSource);
+    this.model.updateSource(e.key, text);
     return true;
   }
 
@@ -394,8 +397,7 @@ export class Controller extends EventTarget {
   * @return {boolean} Whether the key event is processed.
   */
   processPuncKey(e: any) {
-    let config = this.currentConfig;
-    let punc = config.postTransform(e.key);
+    let punc = this.currentConfig.postTransform(e.key);
     this.model.selectCandidate(undefined, punc);
     return true;
   }
@@ -491,9 +493,11 @@ export class Controller extends EventTarget {
   handleCommitEvent() {
     if (this._context) {
       let segments = this.model.segments.join('');
-      if (this.currentConfig.traditional) {
+      
+      if (this.currentConfig.enableTraditional) {
         segments = hans2Hant(segments);
       }
+
       chrome.input.ime.commitText({
         'contextID': this._context.contextID,
         'text': segments
@@ -583,7 +587,7 @@ export class Controller extends EventTarget {
       // Shift + char?
       [EventType.KEYDOWN, Modifier.SHIFT, config.editorCharReg, null, null,
       this.processCharKey, this, null],
-      // Punc.
+      // Punch key.
       [EventType.KEYDOWN, 0, config.punctuationReg, null, onStageCondition,
       this.processPuncKey, this, null]
     ]);
@@ -603,10 +607,11 @@ export class Controller extends EventTarget {
     let shortcutTable: ActionType[] = [];
     let config = this.currentConfig;
     
-    for (let name in StateID) {
+    for (let name in shortcutTable) {
       let state = config.states[name as StateID];
-      if (state.shortcut.length == 1 &&
-          state.shortcut[0] == Modifier.SHIFT) {
+      // TODO `shift` shortcut key cannot run.
+      if (state.shortcut.length == 1 
+        && state.shortcut[0] == Modifier.SHIFT) {
         // switch language.
         // To handle SHIFT shortcut.
         shortcutTable.unshift(
@@ -616,6 +621,7 @@ export class Controller extends EventTarget {
             [EventType.KEYUP, Modifier.SHIFT, Modifier.SHIFT, null,
             () =>  this._lastKeyDownIsShift, this.switchInputToolState, this, name]);
       } else if (state.shortcut.length >= 1) {
+        // Switch state.
         shortcutTable.push(
             [EventType.KEYDOWN, state.shortcut[1], state.shortcut[0],
             null, null, this.switchInputToolState, this, name]);
@@ -630,18 +636,18 @@ export class Controller extends EventTarget {
    */
   switchInputToolState(engineID: string, stateId: StateID) {
 
-    let config = this.currentConfig;
+    let { states } = this.currentConfig;
     
-    config.states[stateId].value = !config.states[stateId].value;
-    let stateID = StateID;
-    if (stateId == stateID.LANG) {
-      config.states[stateID.PUNC].value = config.states[stateID.LANG].value;
+    states[stateId].value = !states[stateId].value;
+    if (stateId == StateID.LANG) {
+      states[StateID.PUNC].value = states[StateID.LANG].value;
     }
     if (stateId === StateID.PUNC) {
-      this.changePuncConfig(config.states[stateID.PUNC].value);
+      this.changePuncConfig(states[StateID.PUNC].value);
     }
+
     this.model.clear();
-    this.view.updateItems();
+    this.view.updateItems(stateId);
     this.view.hide();
   }
 
