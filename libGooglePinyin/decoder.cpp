@@ -15,13 +15,15 @@ using namespace emscripten;
 
 #define DICT_PATH "./dict/dict_pinyin.dat"
 #define USER_DICT_PATH "./dict/pinyin_user.dat"
-#define CAND_BUFFER_MAX_LEN 32 // Maximum for the sentence char length
+#define CAND_BUFFER_MAX_LEN 40 // Maximum for the sentence char length
+#define SPS_MAX_LEN 120 // Maximum for spelling string.
 #define CANDS_MAX_NUM 50 // Maximum for the candidates.
 
 class Decoder {
   public:
     Decoder() {
       isopened = im_open_decoder(DICT_PATH, USER_DICT_PATH);
+      im_set_max_lens(SPS_MAX_LEN, CAND_BUFFER_MAX_LEN);
     };
     ~Decoder() {
       im_cancel_input();
@@ -84,9 +86,9 @@ class Decoder {
       im_reset_search();
     }
 
-    size_t add_letter(string str) {
-      char ch = str[0];
-      cout << "ch:" << ch << ",str:" << str << endl;
+    size_t add_letter(char ch) {
+      // char ch = str[0];
+      cout << "ch:" << ch << endl;
       return im_add_letter(ch);
     }
 
@@ -105,11 +107,17 @@ class Decoder {
       return conv.to_bytes((char16_t *)cand_str);
     }
 
-    uint16_t spl_start;
+    uint16_t spl_start[CAND_BUFFER_MAX_LEN];
 
     size_t get_spl_start_pos() {
-      const uint16_t *spl_start_ptr = &spl_start;
-      return im_get_spl_start_pos(spl_start_ptr);
+      const uint16_t *spl_start_ptr = spl_start;
+      size_t spl_start_pos = im_get_spl_start_pos(spl_start_ptr);
+      
+      string sp;
+      for (short int i = 0; i < CAND_BUFFER_MAX_LEN; i++) {
+        cout << *(spl_start + i) << endl;
+      }
+      return spl_start_pos;
     }
 
     size_t choose(size_t cand_id) {
@@ -186,6 +194,6 @@ EMSCRIPTEN_BINDINGS(pinyin_decoder) {
     .function("getPredicts", &Decoder::get_predicts)
     .property("isopened", &Decoder::isopened)
     .property("decodedLen", &Decoder::decoded_len)
-    .property("splStart", &Decoder::spl_start)
+    // .property("splStart", &Decoder::spl_start)
     ;
 }

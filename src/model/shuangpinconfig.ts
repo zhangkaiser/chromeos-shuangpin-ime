@@ -90,96 +90,98 @@ export class ShuangpinConfig extends PinyinConfig {
     this.initialCharList = Object.keys(trans.initial);
   }
 
-  transform(/** The model rawStr */context: string, c: string, segmentsLastItem: string = "") {
+  transform(
+    /** The model raw source. */context: string, 
+    /** New char. */ c: string, 
+    /** @deprecated */ segmentsLastItem: string = "") {
+    // return super.transform(context, c, segmentsLastItem);
+    // let trans = this.#solutions[this.solution];
+    
 
-    let trans = this.#solutions[this.solution];
+    // if (!trans) return c;
 
-    if (!trans) {
-      return c;
-    }
+    // //  No context.
+    // if (!context) {
+    //   if (this.initialCharList.indexOf(c) > -1) {
+    //     return trans['initial'][c];
+    //   }
+    //   if (c === trans['bootKey']) {
+    //     return '\'';
+    //   }
+    // }
 
-    /** No context  */
-    if (!context) {
-      if (this.initialCharList.indexOf(c) > -1) {
-        return trans['initial'][c];
-      }
-      if (c === trans['bootKey']) {
-        return '\'';
-      }
-    }
+    // /** 
+    //  * transform to vowel.
+    //  */
+    // let isFirstBootMode = context === trans.bootKey;
+    // let segmentHasSplitChar = segmentsLastItem.slice(-1) === '\'';
+    // let segmentIsInitial = this.initialTokens.indexOf(segmentsLastItem) > -1;
+    // let contextLastCharIsBootKey = context.slice(-1) === trans.bootKey;
+    // let checkVowelIsToken = (v: string) => {
+    //   return this.tokensRegexp.test(v);
+    // }
 
-    /** 
-     * transform to vowel.
-     */
-    let isFirstBootMode = context === trans.bootKey;
-    let segmentHasSplitChar = segmentsLastItem.slice(-1) === '\'';
-    let segmentIsInitial = this.initialTokens.indexOf(segmentsLastItem) > -1;
-    let contextLastCharIsBootKey = context.slice(-1) === trans.bootKey;
-    let checkVowelIsToken = (v: string) => {
-      return this.tokensRegexp.test(v);
-    }
-
-    if (isFirstBootMode 
-        || segmentHasSplitChar
-        || segmentIsInitial) {
-      // debugLog('segmentHasSplitChar, segmentIsInitial',segmentHasSplitChar, segmentIsInitial, context, c, segmentsLastItem);
-      /** Output when 'c' is equal to boot key */
-      if (c === trans['bootKey'] && !segmentIsInitial){
-        return c;
-      }
+    // if (isFirstBootMode 
+    //     || segmentHasSplitChar
+    //     || segmentIsInitial) {
+    //   // debugLog('segmentHasSplitChar, segmentIsInitial',segmentHasSplitChar, segmentIsInitial, context, c, segmentsLastItem);
+    //   /** Output when 'c' is equal to boot key */
+    //   if (c === trans['bootKey'] && !segmentIsInitial){
+    //     return c;
+    //   }
       
-      /** Transfrom 'c' to vowel. */
-      let vowel = trans['vowel'][c];
-      if (vowel && Array.isArray(vowel)) {
-        vowel = vowel.filter(
-          (item) => {
-            let segment = segmentsLastItem
-            if (segmentHasSplitChar) {
-              segment = '';
-            }
-            return checkVowelIsToken(segment + item);
-          }
-        )[0];
+    //   /** Transfrom 'c' to vowel. */
+    //   let vowel = trans['vowel'][c];
+    //   if (vowel && Array.isArray(vowel)) {
+    //     vowel = (vowel as []).filter(
+    //       (item) => {
+    //         let segment = segmentsLastItem
+    //         if (segmentHasSplitChar) {
+    //           segment = '';
+    //         }
+    //         return checkVowelIsToken(segment + item);
+    //       }
+    //     )[0];
 
-        if (vowel && segmentHasSplitChar && !checkVowelIsToken(vowel) && !contextLastCharIsBootKey) {
-          return vowel + '\'';
-          // Prevent the decoder from changing result. 
-        } else if (vowel && !contextLastCharIsBootKey) {
-          return vowel;
-        }
-      }
+    //     if (vowel && segmentHasSplitChar && !checkVowelIsToken(vowel) && !contextLastCharIsBootKey) {
+    //       return vowel + '\'';
+    //       // Prevent the decoder from changing result. 
+    //     } else if (vowel && !contextLastCharIsBootKey) {
+    //       return vowel;
+    //     }
+    //   }
 
-      if (vowel && checkVowelIsToken(vowel) && contextLastCharIsBootKey) {
+    //   if (vowel && checkVowelIsToken(vowel) && contextLastCharIsBootKey) {
         
-        if (segmentHasSplitChar && !checkVowelIsToken(segmentsLastItem.slice(0, -1))) {
-          return vowel + '\'';
-        }
+    //     if (segmentHasSplitChar && !checkVowelIsToken(segmentsLastItem.slice(0, -1))) {
+    //       return vowel + '\'';
+    //     }
 
-        return vowel;
-      }
+    //     return vowel;
+    //   }
 
-      if (vowel && segmentIsInitial && checkVowelIsToken(segmentsLastItem + vowel)) {
-        return vowel;
-      }
-    }
+    //   if (vowel && segmentIsInitial && checkVowelIsToken(segmentsLastItem + vowel)) {
+    //     return vowel;
+    //   }
+    // }
 
-    /** transform to initial. */
-    let isToken = checkVowelIsToken(segmentsLastItem)
-     || checkVowelIsToken(segmentsLastItem.slice(0,-1))
-    if (isToken && this.initialCharList.indexOf(c) > -1) {
-      return trans['initial'][c];
-    }
+    // /** transform to initial. */
+    // let isToken = checkVowelIsToken(segmentsLastItem)
+    //  || checkVowelIsToken(segmentsLastItem.slice(0,-1))
+    // if (isToken && this.initialCharList.indexOf(c) > -1) {
+    //   return trans['initial'][c];
+    // }
 
-    if (isToken && c === trans['bootKey']) {
-      return '\'';
-    }
+    // if (isToken && c === trans['bootKey']) {
+    //   return '\'';
+    // }
 
-    let isSubToken = isToken && 
-      [segmentsLastItem, segmentsLastItem.slice(-2)]
-        .filter((item) => checkVowelIsToken(item + c));
-    if (isSubToken && !segmentHasSplitChar) {
-      return '\'' + c;
-    }
+    // let isSubToken = isToken && 
+    //   [segmentsLastItem, segmentsLastItem.slice(-2)]
+    //     .filter((item) => checkVowelIsToken(item + c));
+    // if (isSubToken && !segmentHasSplitChar) {
+    //   return '\'' + c;
+    // }
 
     return c;
   }
@@ -223,7 +225,7 @@ export class ShuangpinConfig extends PinyinConfig {
       composing_text = `${composing_text.slice(0, -1)} ~`
     }
 
-    if (this.traditional) {
+    if (this.enableTraditional) {
       composing_text = hans2Hant(composing_text)
     }
 

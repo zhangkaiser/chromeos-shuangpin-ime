@@ -6,3 +6,9 @@ test
 .vscode
 *.o
 CMakeFiles
+libGooglePinyin/Makefile
+libGooglePinyin/CmakeCache.txt
+libGooglePinyin/cmake_install.cmake
+libGooglePinyin/test*
+
+src/model/model.old.ts

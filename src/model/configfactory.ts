@@ -58,8 +58,7 @@ export default class ConfigFactory {
       this.#buildConfigs();
     }
 
-    let config = this._map[InputToolCode.SHUANGPIN_SIMPLIFIED]!;
-    return config;
+    return this._map[InputToolCode.SHUANGPIN_SIMPLIFIED]!
 
 
     // let code = this._inputToolCode;

@@ -68,7 +68,7 @@ export class Model extends EventTarget implements IModel {
 
   static OPENING_EVENT = new CustomEvent(EventType.OPENING);
   static COMMIT_EVENT = new CustomEvent(EventType.COMMIT);
-  static MODULEUPDATED_EVENT = new CustomEvent(EventType.MODELUPDATED);
+  static MODELUPDATE_EVENT = new CustomEvent(EventType.MODELUPDATED);
   static CLOSING_EVENT = new CustomEvent(EventType.CLOSING);
 
   protected _decoder?: IDecoder | undefined;
@@ -188,7 +188,7 @@ export class Model extends EventTarget implements IModel {
     if (this.status == Status.INIT) {
       this.dispatchEvent(Model.OPENING_EVENT);
     }
-    this.dispatchEvent(Model.MODULEUPDATED_EVENT);
+    this.dispatchEvent(Model.MODELUPDATE_EVENT);
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
     }
@@ -208,7 +208,7 @@ export class Model extends EventTarget implements IModel {
 
     this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
     this.highlightIndex = -1;
-    this.dispatchEvent(Model.MODULEUPDATED_EVENT);
+    this.dispatchEvent(Model.MODELUPDATE_EVENT);
     this._holdSelectStatus = true;
     if (this.source) {
       this.fetchCandidates();
@@ -241,9 +241,8 @@ export class Model extends EventTarget implements IModel {
 
   }
 
-  /** @todo */
+  /** @todo Need to fix the composition error. */
   selectCandidate(index?: number | undefined, commit?: string | undefined): void {
-    console.log("shuangpin->selectCandidate", index, commit);
     if (Status.FETCHING == this.status) return ;
     
     this.status = Status.FETCHING;
@@ -260,7 +259,6 @@ export class Model extends EventTarget implements IModel {
 
     let candidate = this.candidates[candidateIndex];
     this.selectedCandID  = candidate.candID;
-    console.log("shuangpin->selectCandidate->candidate", candidate, this.selectedCandID);
     if (!candidate) { // commit the current segments.
       this.notifyUpdates(true);
       return this.clear();
@@ -328,7 +326,7 @@ export class Model extends EventTarget implements IModel {
       this.dispatchEvent(Model.COMMIT_EVENT);
       this.clear();
     } else {
-      this.dispatchEvent(Model.MODULEUPDATED_EVENT);
+      this.dispatchEvent(Model.MODELUPDATE_EVENT);
     }
   }
 
@@ -350,7 +348,6 @@ export class Model extends EventTarget implements IModel {
       return ;
     }
 
-    console.log('shuangpin->source', this.source);
     let candidatesRawStr = this.decoder.decode(this.source, this.selectedCandID);
     let candidates = candidatesRawStr.split("|");
 

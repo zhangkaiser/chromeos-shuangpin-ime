@@ -9,11 +9,12 @@ interface IDecoder {
   clear(): void,
 }
 
-interface Module {
+interface IModule {
   Decoder: IDecoder
 }
 
 declare module "../../libGooglePinyin/decoder.js" {
+  let Module: IModule;
   export default Module; 
 }
 

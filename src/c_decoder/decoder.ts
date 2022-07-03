@@ -1,16 +1,33 @@
 
+import Module from "../../libGooglePinyin/decoder.js";
+
+
+
 class Decoder extends EventTarget {
     
-    _decoder: IDecoder;
+  _decoder?: IDecoder;
 
-    constructor() {
-        super();
-        let decoderModule = window.Module.Decoder;
-        this._decoder =  new decoderModule();
-    }
+  constructor() {
+    super();
+    try {
+      this._decoder = new Module["Decoder"]();
+    } catch(e) {}
+  }
 
-    decode() {
-        
-    }
+  get decoder() {
+    try {
+        this._decoder = this._decoder 
+            ?? (Module["Decoder"] ? new Module["Decoder"]() : undefined);
+    } catch(e) { }
+    return this._decoder;
+  }
+  /** @todo */
+  decode(source: string, selectedCandID: number) {
+    if (!this.decoder) return;
+    let candidatesStr = this.decoder.decode(source, selectedCandID);
+    let a;
+    let candidates = candidatesStr.split("|");
+    return candidates;
+  }
 
 }

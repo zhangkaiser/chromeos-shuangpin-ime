@@ -281,6 +281,7 @@ export class Controller extends EventTarget {
     }
 
     let trans = this.currentConfig.preTransform(e.key);
+    console.log(trans);
     if (trans && this._context) {
       chrome.input.ime.commitText({
         contextID: this._context.contextID,

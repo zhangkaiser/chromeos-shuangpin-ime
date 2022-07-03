@@ -62,7 +62,7 @@ export class CandidateWindow {
    * Show the candidate window. 
    * */
   show(contextID: number, /** TODO */currentCandID?: number) {
-    if (!this.candidates) return this.hide(contextID);
+    if (!this.candidates.length) return this.hide(contextID);
     let windowProps: ICandidateWindowProperties = { 
       visible: true, cursorVisible: true // TODO 
     }
@@ -103,6 +103,7 @@ export class CandidateWindow {
       windowProps.pageSize = this.config.pageSize;
 
       this.getCandidates((candidate, label) => {
+        console.log(candidate, label);
         candidates.push({
           annotation: `${label} ${candidate.target}`,
           candidate: candidate.target,
@@ -135,29 +136,33 @@ export class CandidateWindow {
 
   getCandidates(cb: (candidate: Candidate, label: number, id: number) => void, all: boolean = false) {
     let from, to;
+    let candsNum = this.candidates.length;
     if (all) {
       from = 0;
-      to = this.candidates.length;
+      to = candsNum;
     } else {
       let { pageSize } = this.config;
       from = this.pageIndex * pageSize;
       to = from + pageSize;
+      if (to > candsNum && candsNum < from) {
+        to = candsNum;
+      }
     }
     let index = 1;
+    
     for (let i = from; i < to; i++) {
-      cb(this.candidates[i], index++, i);
-    }
+      let candidate = this.candidates[i];
+      if (!candidate) break;
+      cb(candidate, index++, i);
+    }    
   }
 
   setPageNumber(pageIndex: number) {
     this.pageIndex = pageIndex;
   }
 
-  setComposition(text: string) {
+  showComposition(text: string, pos: number) {
     this.compositionText = text;
-  }
-
-  setCursor(cursorPos: number) {
-    this.cursorPos = cursorPos;
+    this.cursorPos = pos;
   }
 }

@@ -6,6 +6,7 @@ import { configFactoryInstance } from "./model/configfactory";
 import { StateID } from "./model/enums";
 import type { Model } from "./model/model";
 import { hans2Hant } from "./utils/transform";
+import { CandidateWindow } from "./view/candidate";
 
 export class View {
   configFactory = configFactoryInstance;
@@ -15,6 +16,10 @@ export class View {
 
   /** The current input tool. */
   _inputToolCode = '';
+
+  /** The ui window. */
+  window?: CandidateWindow;
+
 
   constructor(protected model:Model) { }
 
@@ -31,17 +36,20 @@ export class View {
   /** Updates the menu items. */
   updateInputTool() {
     this._inputToolCode = this.configFactory.getInputTool();
+    this.window = new CandidateWindow(this._inputToolCode, this.currentConfig);
     this.updateItems();
   }
 
   /**
    * Updates the menu items.
    */
-  updateItems() {
+  updateItems(stateId?: StateID) {
     if (!this._inputToolCode) return ;
   
     let states = this.configFactory.getCurrentConfig().states;
-    let menuItems = [];
+    let menuItemParameters = { engineID: this._inputToolCode, items: [] };
+
+    let menuItems = menuItemParameters.items as chrome.input.ime.MenuItem[];
     for (let key in states)
     {
       menuItems.push({
@@ -51,50 +59,32 @@ export class View {
         enabled: true,
         visible: true
       });
-  
-      chrome.input.ime.setMenuItems({
-        engineID: this._inputToolCode,
-        items: menuItems
-      });
+    }
+
+    if (!stateId) { // Add.
+      chrome.input.ime.setMenuItems(menuItemParameters);
+    } else {  // Update.
+      chrome.input.ime.updateMenuItems(menuItemParameters as any);
     }
   }
 
-  setCandidateWindowProperties(properties: any) {
-    if (!this._inputToolCode) return;
-    chrome.input.ime.setCandidateWindowProperties({
-      engineID: this._inputToolCode,
-      properties
-    });
-
-  }
 
   /**
+   * @todo Do nothing when the model is opening.
    * To show the editor.
    */
-  show() {
-    this.setCandidateWindowProperties({
-      visible: true
-    });
-  }
+  show() { }
 
   /**
    * To hide the editor.
    */
    hide() {
-
-    this.setCandidateWindowProperties({
-      visible: false
-    });
-  
-    if (this._context) {
-      chrome.input.ime.clearComposition({
-        'contextID': this._context.contextID
-      });
-      chrome.input.ime.hideInputView();
-    }
+    this.window?.hide(this._context?.contextID);
+    chrome.input.ime.hideInputView();
   }
 
   /**
+   * @todo
    * To refresh the editor.
    */
   refresh() {
@@ -114,12 +104,19 @@ export class View {
     }
     composing_text = this.configFactory.getCurrentConfig().transformView(
         composing_text, this.model.rawSource);
-    
-    chrome.input.ime.setComposition({
+    try {
+      chrome.input.ime.setComposition({
         contextID: this._context.contextID,
         text: composing_text,
         cursor: pos
-    });
+      });
+    } catch(e) {
+      chrome.input.ime.setComposition({
+        contextID: -1,
+        text: composing_text,
+        cursor: pos
+      });
+    }
     this.showCandidates();
   }
 
@@ -130,67 +127,10 @@ export class View {
 
     let pageIndex = this.model.pageIndex;
 
-    let { pageSize } = this.currentConfig;
-    let from = pageIndex * pageSize;
-    let to = from + pageSize;
-    if (to > this.model.candidates.length) {
-      to = this.model.candidates.length;
-    }
-    let vertical = this.configFactory.getCurrentConfig().vertical;
-    let displayItems = [];
-    let targetHandler = (target: string) => {
-      if (this.configFactory.getCurrentConfig().traditional) {
-        return hans2Hant(target);
-      } else {
-        return target;
-      }
-    }
-    if (vertical) {
-      for (let i = from; i < to; i++) {
-        let candidate = this.model.candidates[i];
-        let label = (i + 1 - from).toString();        
-        displayItems.push({
-          'candidate': targetHandler(candidate.target),
-          'label': label,
-          'id': i - from});
-      }
-    } else {
-      for (let i = from; i < to; i++) {
-        let candidate = this.model.candidates[i];
-        let label = (i + 1 - from).toString();        
-        displayItems.push({
-          annotation: `${label} ${targetHandler(candidate.target)}`,
-          'candidate': candidate.target,
-          'label': label,
-          'id': i - from
-        });
-      }
-    }
-
-    chrome.input.ime.setCandidates({
-      'contextID': this._context.contextID,
-      'candidates': displayItems});
-    if (to > from) {
-      let hasHighlight = (this.model.highlightIndex >= 0);
-
-      let properties = {
-        vertical,
-        visible: true,
-        'cursorVisible': hasHighlight,
-        'pageSize': to - from
-      }
-      chrome.input.ime.setCandidateWindowProperties({
-        'engineID': this._inputToolCode,
-        properties});
-      if (hasHighlight) {
-        chrome.input.ime.setCursorPosition({
-          'contextID': this._context.contextID,
-          'candidateID': this.model.highlightIndex % pageSize});
-      }
-    } else {
-      chrome.input.ime.setCandidateWindowProperties({
-        'engineID': this._inputToolCode,
-        'properties': {'visible': false}});
+    if (this.window) {
+      this.window.setPageNumber(pageIndex);
+      this.window.setCandidates(this.model.candidates);
+      this.window.show(this._context.contextID, )
     }
   }
 }
