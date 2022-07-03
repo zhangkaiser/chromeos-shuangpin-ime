@@ -1,0 +1,7 @@
+node_modules
+dist
+private
+test
+.vscode
+libGooglePinyin
+src/model/model.old.ts
