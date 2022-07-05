@@ -13,4 +13,8 @@ export class PinyinConfig extends ChineseConfig {
   editorCharReg = /[a-z\']/;
   pageupCharReg = /[=.]/;
   pagedownCharReg = /[\-,]/;
+
+  [Symbol.toStringTag]() {
+    return "PinyinConfig";
+  }
 }

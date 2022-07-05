@@ -237,8 +237,23 @@ export class Model extends EventTarget implements IModel {
     this.fetchCandidates();
   }
 
+  /** @todo */
   revert() {
+    console.log('revert', this.cursorPos, this.source.length);
+    if (this.status == Status.FETCHING) return ;
+    if (this.status == Status.SELECT) {
+      this._holdSelectStatus = true;
+    }
 
+    if (this.cursorPos > 0 && this.cursorPos == this.source.length) {
+      this.source = this.source.slice(0, -1);
+    }
+    if (this.source == '') {
+      this.notifyUpdates(true);
+    } else {
+      this.notifyUpdates();
+    }
+    this.fetchCandidates();
   }
 
   /** @todo Need to fix the composition error. */
@@ -341,7 +356,7 @@ export class Model extends EventTarget implements IModel {
   }
 
   fetchCandidates() {
-    if (!this.decoder) return;
+    if (!this.decoder || !this.source) return;
     this.status = Status.FETCHING;
     if (this.source.length == 1 && this.source === '\'') {
       this.status = Status.SELECT;
@@ -350,6 +365,7 @@ export class Model extends EventTarget implements IModel {
 
     let candidatesRawStr = this.decoder.decode(this.source, this.selectedCandID);
     let candidates = candidatesRawStr.split("|");
+    this.cursorPos = this.source.length;
 
     candidatesRawStr = "";
     if (!this.candidates) {

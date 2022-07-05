@@ -91,139 +91,19 @@ export class ShuangpinConfig extends PinyinConfig {
   }
 
   transform(
-    /** The model raw source. */context: string, 
+    /** The model raw source. */ context: string, 
     /** New char. */ c: string, 
-    /** @deprecated */ segmentsLastItem: string = "") {
-    // return super.transform(context, c, segmentsLastItem);
-    // let trans = this.#solutions[this.solution];
-    
-
-    // if (!trans) return c;
-
-    // //  No context.
-    // if (!context) {
-    //   if (this.initialCharList.indexOf(c) > -1) {
-    //     return trans['initial'][c];
-    //   }
-    //   if (c === trans['bootKey']) {
-    //     return '\'';
-    //   }
-    // }
-
-    // /** 
-    //  * transform to vowel.
-    //  */
-    // let isFirstBootMode = context === trans.bootKey;
-    // let segmentHasSplitChar = segmentsLastItem.slice(-1) === '\'';
-    // let segmentIsInitial = this.initialTokens.indexOf(segmentsLastItem) > -1;
-    // let contextLastCharIsBootKey = context.slice(-1) === trans.bootKey;
-    // let checkVowelIsToken = (v: string) => {
-    //   return this.tokensRegexp.test(v);
-    // }
-
-    // if (isFirstBootMode 
-    //     || segmentHasSplitChar
-    //     || segmentIsInitial) {
-    //   // debugLog('segmentHasSplitChar, segmentIsInitial',segmentHasSplitChar, segmentIsInitial, context, c, segmentsLastItem);
-    //   /** Output when 'c' is equal to boot key */
-    //   if (c === trans['bootKey'] && !segmentIsInitial){
-    //     return c;
-    //   }
-      
-    //   /** Transfrom 'c' to vowel. */
-    //   let vowel = trans['vowel'][c];
-    //   if (vowel && Array.isArray(vowel)) {
-    //     vowel = (vowel as []).filter(
-    //       (item) => {
-    //         let segment = segmentsLastItem
-    //         if (segmentHasSplitChar) {
-    //           segment = '';
-    //         }
-    //         return checkVowelIsToken(segment + item);
-    //       }
-    //     )[0];
-
-    //     if (vowel && segmentHasSplitChar && !checkVowelIsToken(vowel) && !contextLastCharIsBootKey) {
-    //       return vowel + '\'';
-    //       // Prevent the decoder from changing result. 
-    //     } else if (vowel && !contextLastCharIsBootKey) {
-    //       return vowel;
-    //     }
-    //   }
-
-    //   if (vowel && checkVowelIsToken(vowel) && contextLastCharIsBootKey) {
-        
-    //     if (segmentHasSplitChar && !checkVowelIsToken(segmentsLastItem.slice(0, -1))) {
-    //       return vowel + '\'';
-    //     }
-
-    //     return vowel;
-    //   }
-
-    //   if (vowel && segmentIsInitial && checkVowelIsToken(segmentsLastItem + vowel)) {
-    //     return vowel;
-    //   }
-    // }
-
-    // /** transform to initial. */
-    // let isToken = checkVowelIsToken(segmentsLastItem)
-    //  || checkVowelIsToken(segmentsLastItem.slice(0,-1))
-    // if (isToken && this.initialCharList.indexOf(c) > -1) {
-    //   return trans['initial'][c];
-    // }
-
-    // if (isToken && c === trans['bootKey']) {
-    //   return '\'';
-    // }
-
-    // let isSubToken = isToken && 
-    //   [segmentsLastItem, segmentsLastItem.slice(-2)]
-    //     .filter((item) => checkVowelIsToken(item + c));
-    // if (isSubToken && !segmentHasSplitChar) {
-    //   return '\'' + c;
-    // }
-
+    /** @deprecated */ rawSource: string = "") {
     return c;
   }
 
   getTransform(c: string) {
-    let trans = this.#solutions[this.solution]
-    if (c === trans['bootKey']) {
-      let vowel = trans['vowel'][c];
-      if (vowel && !Array.isArray(vowel)) {
-        return [vowel, c];
-      } else {
-        return [c];
-      }
-    }
-
-    if (this.initialCharList.indexOf(c) > -1) {
-      let vowel = trans['vowel'][c]
-      if (Array.isArray(vowel)) {
-        return [c, trans['initial'][c], ...vowel];
-      }
-      if (vowel) {
-        return [c, trans['initial'][c], vowel]
-      }
-      return [c, trans['initial'][c]];
-    }
-
-    let vowel = trans['vowel'][c];
-    if (Array.isArray(vowel)) {
-      return [...vowel, c];
-    }
-    return [vowel, c];
+    let trans = this.#solutions[this.solution];
+    return c;
 
   }
 
-  transformView(composing_text: string, rawStr: string) {
-    if (composing_text === '\'') {
-      composing_text = '~';
-    }
-    if (composing_text.slice(-1) === '\'' 
-      && rawStr.slice(-1) === this.#solutions[this.solution].bootKey) {
-      composing_text = `${composing_text.slice(0, -1)} ~`
-    }
+  transformView(composing_text: string, context: string) {
 
     if (this.enableTraditional) {
       composing_text = hans2Hant(composing_text)

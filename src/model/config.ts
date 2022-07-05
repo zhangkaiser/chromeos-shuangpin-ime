@@ -81,7 +81,7 @@ export abstract class Config {
   /**
    * Transform when the popup editor opened.
    */
-  transform(_context: string, c: string, _raw?:string) {
+  transform(context: string, c: string, raw: string) {
     return c;
   }
 
@@ -104,7 +104,5 @@ export abstract class Config {
     return c;
   }
 
-  setSolution(text: string) {
-
-  }
+  setSolution(text: string) { }
 }

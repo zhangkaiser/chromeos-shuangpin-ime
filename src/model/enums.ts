@@ -92,8 +92,8 @@ export enum MessageKey {
 }
 
 export enum InputToolCode {
-  PINYIN_SIMPLIFIED = 'zh-t-i0-pinyin',
-  PINYIN_TRADITIONAL = 'zh-hant-t-i0-pinyin',
-  SHUANGPIN_SIMPLIFIED = 'zh-t-i0-shuangpin',
-  SHUANGPIN_TRADITIONAL = 'zh-hant-t-i0-shuangpin'
+  WASM_PINYIN = 'zh-wasm-pinyin',
+  WASM_SHUANGPIN = "zh-wasm-shuangpin",
+  JS_PINYIN = "zh-js-pinyin",
+  JS_SHUANGPIN = "zh-js-shuangpin"
 }

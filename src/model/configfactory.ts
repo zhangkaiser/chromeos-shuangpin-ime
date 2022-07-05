@@ -3,32 +3,25 @@
  */
 
 import { Config } from "./config";
-import ChineseConfig from "./chineseconfig";
 import { InputToolCode } from "./enums";
 import { PinyinConfig } from "./pinyinconfig";
 import { ShuangpinConfig } from "./shuangpinconfig";
-
 
 /**
  * The input mothod config factory.
  */
 export default class ConfigFactory {
   /** The current input tool code.  */
-  private _inputToolCode: string = '';
+  private _inputToolCode: InputToolCode = InputToolCode.WASM_PINYIN;
 
   /** The map of input tool code to config object. */
-  private _map:Record<string, Config> = {};
-
-  /** The default config. */
-  private _defaultConfig?: Config;
-
-
-
+  private _map: Partial<Record<InputToolCode, Config>> = {};
   /**
    * Sets the current input tool by the given input tool code.
    */
-  setInputTool(inputToolCode: string) {
+  setInputTool(inputToolCode: InputToolCode) {
     this._inputToolCode = inputToolCode;
+    this.#buildConfig(inputToolCode)
   }
 
   getInputTool() {
@@ -38,14 +31,9 @@ export default class ConfigFactory {
   /**
    * Gets the config for a given input tool code.
    */
-  getConfig(inputToolCode: string) {
-    if (!this._map) {
-      this.#buildConfigs(); 
-    }
-    if (this._map[inputToolCode]) {
-      return this._map[inputToolCode];
-    }
-    return ;
+  getConfig(inputToolCode: InputToolCode) {
+    return this._map[inputToolCode] 
+      ?? this.#buildConfig(inputToolCode);
   }
 
   /**
@@ -53,32 +41,22 @@ export default class ConfigFactory {
    * Gets the config for the current input tool.
    */
   getCurrentConfig() {
-    
-    if (!Reflect.has(this._map, InputToolCode.SHUANGPIN_SIMPLIFIED)) {
-      this.#buildConfigs();
-    }
-
-    return this._map[InputToolCode.SHUANGPIN_SIMPLIFIED]!
-
-
-    // let code = this._inputToolCode;
-    // if (code && this._map[code]) {
-    //   return this._map[code];
-    // }
-
-    // if (!this._defaultConfig) {
-    //   this._defaultConfig = new Config()
-    // }
-
-    // return this._defaultConfig;
+    return this._map[this._inputToolCode]!;
   }
 
-  /** Builds input method configs. */
-  #buildConfigs() {
-    let code = InputToolCode;
+  /** Build configs. */
+  #buildConfig(inputToolCode: InputToolCode) {
+    switch (inputToolCode) {
+      case InputToolCode.JS_SHUANGPIN:
+      case InputToolCode.WASM_SHUANGPIN:
 
-    let shuangpinConfig = new ShuangpinConfig();
-    this._map[code.SHUANGPIN_SIMPLIFIED] = shuangpinConfig;
+        return this._map[inputToolCode] = new ShuangpinConfig();
+
+      case InputToolCode.WASM_PINYIN:
+      case InputToolCode.JS_PINYIN:
+      default:
+        return this._map[inputToolCode] = new PinyinConfig();
+    }
   }
 }
 

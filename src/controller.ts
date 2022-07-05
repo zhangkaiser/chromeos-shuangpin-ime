@@ -138,7 +138,7 @@ export class Controller extends EventTarget {
    * Enables/Disables user dictionary for a given input tool.
    */
    setUserDictEnabled(
-    inputToolCode:InputToolCode, enableUserDict: boolean) {
+    inputToolCode: InputToolCode, enableUserDict: boolean) {
     // this.model.enableUserDict(inputToolCode, enableUserDict);
   }
 
@@ -194,7 +194,7 @@ export class Controller extends EventTarget {
   setPageSettings(
     inputToolCode: string, layout: KeyboardLayouts, 
     selectKeys: string, pageSize: number) {
-    let config = this._configFactory.getConfig(inputToolCode);
+    let config = this._configFactory.getConfig(inputToolCode as InputToolCode);
     if (config) {
       config.layout = layout;
       config.selectKeys = selectKeys;
@@ -212,6 +212,7 @@ export class Controller extends EventTarget {
     if (!this._context || !this._keyActionTable) {
       return false;
     }
+    console.log('status', keyEvent.key, this.model.status);
 
     // ctrl + shift and from extensionId.
     if (
