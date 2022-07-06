@@ -1,5 +1,5 @@
 
-interface SolutionDataType {
+export interface SolutionDataType {
   bootKey: string
   initial: Record<string, string>
   vowel: Record<string, string| string[]>

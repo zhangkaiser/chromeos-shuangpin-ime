@@ -1,4 +1,6 @@
+import { InputToolCode } from "../model/enums";
 import { binarySearch, defaultCompare } from "../utils/binarySearch";
+import { SolutionDataType } from "../utils/double-solutions";
 import { DataLoader } from "./dataloader";
 import { InputTool } from "./enums";
 
@@ -32,6 +34,10 @@ export class TokenPath {
      * separators. */ public separators: boolean[]) {}
 }
 
+export class TokenBase extends EventTarget {
+  
+}
+
 /**
  * The token decoder can generates different token paths for an input text, it
  * also selects the best one from them.
@@ -45,13 +51,13 @@ export class TokenDecoder extends EventTarget {
   private _tokenReg = /xyz/g;
 
   /** The fuzzy expansion pairs. */
-  private _fuzzyMap:Record<string, string[]> = {};
+  private _fuzzyMap: Record<string, string[]> = {};
 
   /**
    * The initial character map, it maps an initial character to all possible
    * normalized tokens.
    */
-  private _initialMap:Record<string, string[]> = {};
+  private _initialMap: Record<string, string[]> = {};
 
   /**
    * The current source string, without separators.
@@ -72,13 +78,14 @@ export class TokenDecoder extends EventTarget {
   static readonly _INVALID_PATH_INIT_NUM = 100;
   
   constructor(
-    private inputTool: InputTool,
+    private inputTool: InputToolCode,
     /** The data loader. */
     private _dataLoader: DataLoader,
+    fuzzyPairsOrSolutionPairs?:string[] | SolutionDataType
 
-    fuzzyPairs?:string[]) {
-      super()
-      this.#init(fuzzyPairs)
+    ) {
+      super();
+      this.#init(fuzzyPairsOrSolutionPairs);
 
   }
   
@@ -86,9 +93,8 @@ export class TokenDecoder extends EventTarget {
    * Initialize the token decoder
    * @TODO
    */
-  #init(fuzzyPairs?: string[]) {
+  #init(fuzzyPairs?: string[] | SolutionDataType) {
     let { tokens, initialTokens } = this._dataLoader;
-    // console.log(tokens, initialTokens);
     // 这里可以设置分割用户输入字符的识别算法
     this._tokenReg = new RegExp(`^(${tokens}|${initialTokens})$`);
 

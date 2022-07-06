@@ -2,11 +2,13 @@
 import { EventType, InputToolCode, Status } from "./enums";
 import { Candidate } from "./candidate";
 import { configFactoryInstance } from "./configfactory";
+import JSDecoder from "../decoder/decoder";
+import WASMDecoder from "../decoder/cdecoder";
 import Module from "../../libGooglePinyin/decoder.js";
+
 /**
  * The model, which manages the state transfers and commits.
  */
-
 interface IModel {
   
 

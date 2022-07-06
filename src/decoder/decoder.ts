@@ -9,15 +9,18 @@ import UserDecoder from "./userdecoder";
  */
 export class IMEResponse {
   constructor(
-    /** The source tokens with separators */public tokens: string[],
-    /** The candidate list */public candidates: Candidate[]) {}
+    /** The source tokens with separators */
+    public tokens: string[],
+    /** The candidate list */
+    public candidates: Candidate[]
+  ) {}
 }
 
 /**
  * The offline decoder can provide a list of candidates for given source
  * text.
  */
-export class Decoder {
+export default class Decoder {
   #dataLoader: DataLoader;
   #tokenDecoder: TokenDecoder; 
   #userDecoder?: UserDecoder | null;
@@ -48,10 +51,7 @@ export class Decoder {
   /**
    * Gets the transliterations (without scores) for the source word.
    */
-  decode(sourceWord: string, resultsNum: number) {
-    if (!sourceWord) {
-      return null;
-    }
+  decode(sourceWord: string, selectedCandID: number) {
     let tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
     if (!tokenPath) {
       return null;
@@ -61,7 +61,7 @@ export class Decoder {
       tokenPath.tokens);
     let isAllInitials = this.#tokenDecoder.isAllInitials(tokenPath.tokens);
     let translits = this.#mlDecoder.transliterate(normalizedTokens, 
-      resultsNum, isAllInitials);
+      MLDecoder.DEFAULT_RESULTS_NUM, isAllInitials);
 
     /** Filtering the tanslits. */
     let candidates:Candidate[] = [];
@@ -71,7 +71,7 @@ export class Decoder {
       if (targetWords.indexOf(translit.target) < 0) {
         candidates.push(translit);
         targetWords.push(translit.target);
-        if (candidates.length >= resultsNum) {
+        if (candidates.length >= MLDecoder.DEFAULT_RESULTS_NUM) {
           break;
         }
       }
