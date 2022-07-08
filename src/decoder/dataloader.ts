@@ -12,9 +12,7 @@ import { targetProbs } from "./targetProbs";
 export class DataLoader {
 
   sourceMap:{[str: string]: number[]} = sourceMap;
-  tokens: string = chosTokens;
   defaultProb: number = defaultProb;
-  initialTokens: string = initialTokens;
   targetMap = targetMap;
   targetPositions = targetPositions;
   targetSegments = targetSegments;

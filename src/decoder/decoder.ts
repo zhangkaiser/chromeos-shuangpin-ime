@@ -1,4 +1,5 @@
 
+import { InputToolCode } from "../model/enums";
 import { Candidate } from "./candidate";
 import {DataLoader} from "./dataloader";
 import { MLDecoder } from "./mldecoder";
@@ -20,7 +21,7 @@ export class IMEResponse {
  * The offline decoder can provide a list of candidates for given source
  * text.
  */
-export default class Decoder {
+export default class Decoder implements IDecoder {
   #dataLoader: DataLoader;
   #tokenDecoder: TokenDecoder; 
   #userDecoder?: UserDecoder | null;
@@ -34,7 +35,7 @@ export default class Decoder {
     this.#dataLoader = new DataLoader(inputTool);
     
     /** The token decoder. */
-    this.#tokenDecoder = new TokenDecoder(this.inputTool, this.#dataLoader);
+    this.#tokenDecoder = new TokenDecoder(this.inputTool);
 
     /** The machine learning based decoder. */
     this.#mlDecoder = new MLDecoder(this.inputTool, this.#dataLoader);

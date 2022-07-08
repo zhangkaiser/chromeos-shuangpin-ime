@@ -2,7 +2,7 @@ import { InputToolCode } from "../model/enums";
 import { binarySearch, defaultCompare } from "../utils/binarySearch";
 import { SolutionDataType } from "../utils/double-solutions";
 import { DataLoader } from "./dataloader";
-import { InputTool } from "./enums";
+import { initialTokens, chosTokens as tokens } from "./staticdata";
 
 /**
  * The lattice node contains the index of each start end of all in-edges, and
@@ -79,8 +79,6 @@ export class TokenDecoder extends EventTarget {
   
   constructor(
     private inputTool: InputToolCode,
-    /** The data loader. */
-    private _dataLoader: DataLoader,
     fuzzyPairsOrSolutionPairs?:string[] | SolutionDataType
 
     ) {
@@ -94,7 +92,6 @@ export class TokenDecoder extends EventTarget {
    * @TODO
    */
   #init(fuzzyPairs?: string[] | SolutionDataType) {
-    let { tokens, initialTokens } = this._dataLoader;
     // 这里可以设置分割用户输入字符的识别算法
     this._tokenReg = new RegExp(`^(${tokens}|${initialTokens})$`);
 

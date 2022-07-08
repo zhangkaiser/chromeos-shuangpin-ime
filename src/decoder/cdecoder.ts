@@ -9,7 +9,7 @@ export default class Decoder {
 
   constructor(public inputTool: InputToolCode) {
     // TODO
-    this.#tokenDecoder = new TokenDecoder(inputTool as string, { });
+    this.#tokenDecoder = new TokenDecoder(inputTool, { });
     try {
       this.#decoder = new Module["Decoder"]();
     } catch(e) {}

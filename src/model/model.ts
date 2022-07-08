@@ -5,6 +5,7 @@ import { configFactoryInstance } from "./configfactory";
 import JSDecoder from "../decoder/decoder";
 import WASMDecoder from "../decoder/cdecoder";
 import Module from "../../libGooglePinyin/decoder.js";
+import { isJS } from "../utils/regexp";
 
 /**
  * The model, which manages the state transfers and commits.
@@ -131,10 +132,11 @@ export class Model extends EventTarget implements IModel {
       this.inactiveAbortState = true;
     }
     this.engineID = engineID;
-    try {
-      this._decoder = new Module.Decoder();
-    } catch(err) {
-
+    if (isJS(engineID)) {
+      // TODO
+      this._decoder = new JSDecoder(engineID);
+    } else {
+      this._decoder = new WASMDecoder(engineID as InputToolCode);
     }
   }
 
