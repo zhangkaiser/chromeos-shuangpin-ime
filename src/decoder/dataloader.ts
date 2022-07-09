@@ -1,23 +1,46 @@
-import { sourceMap, chosTokens, defaultProb, initialTokens } from "./staticdata";
-import { InputTool } from "./enums";
-import { targetMap } from "./targetMap";
-import { targetPositions } from "./targetPositions";
-import { targetSegments } from "./targetSegments";
-import { sourceSegments } from "./sourceSegments";
-import { targetProbs } from "./targetProbs";
+import staticData from "./staticdata";
+import targetMap from "./targetMap";
+import targetPositions from "./targetPositions";
+import targetSegments from "./targetSegments";
+import sourceSegments from "./sourceSegments";
+import targetProbs from "./targetProbs";
+
+import { isJS } from "../utils/regexp";
 /**
  * DataLoader provides the functions to load token
  * dictionary, generation model and dictionary for the offline transliterator.
  */
 export class DataLoader {
 
-  sourceMap:{[str: string]: number[]} = sourceMap;
-  defaultProb: number = defaultProb;
-  targetMap = targetMap;
-  targetPositions = targetPositions;
-  targetSegments = targetSegments;
-  targetProbs = targetProbs;
-  sourceSegments = sourceSegments;
-  constructor(private inputTool: InputTool) {
+  defaultProb: number = 10000;
+
+  sourceMap:{[str: string]: number[]} = {};
+  chosTokens: string = "";
+  initialTokens: string = "";
+
+  targetMap: any[] = [];
+  targetPositions: any[] = [];
+  targetSegments: any[] = [];
+  targetProbs: any[]  = [];
+  sourceSegments: any[] = [];
+  constructor(public inputToolCode: string) {
+    
+    if (isJS(inputToolCode)) {
+      let { sourceMap, chosTokens, initialTokens } = staticData();
+      this.sourceMap = sourceMap;
+      this.chosTokens = chosTokens;
+      this.initialTokens = initialTokens;
+
+      this.targetMap = targetMap();
+      this.targetPositions = targetPositions();
+      this.targetSegments = targetSegments();
+      this.targetProbs = targetProbs();
+      this.sourceSegments = sourceSegments();
+
+    } else {
+      let { chosTokens, initialTokens } = staticData();
+      this.chosTokens = chosTokens;
+      this.initialTokens = initialTokens;
+    }
   }
 }

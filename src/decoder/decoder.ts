@@ -1,9 +1,10 @@
 
 import { InputToolCode } from "../model/enums";
 import { Candidate } from "./candidate";
-import {DataLoader} from "./dataloader";
+import { DataLoader } from "./dataloader";
 import { MLDecoder } from "./mldecoder";
 import { TokenDecoder } from "./tokendecoder";
+import type { CustomShuangpin, IShuangpinModel } from "../model/customShuangpin";
 import UserDecoder from "./userdecoder";
 /**
  * The IME response offline decoders provided.
@@ -26,16 +27,19 @@ export default class Decoder implements IDecoder {
   #tokenDecoder: TokenDecoder; 
   #userDecoder?: UserDecoder | null;
   #mlDecoder: MLDecoder;
+
+  constructor(inputTool: any, opt_shuangpinSolution?: IShuangpinModel)
+  constructor(inputTool: any, opt_fuzzyPairs?: string[])
   constructor(
     private inputTool: any, 
-    public opt_fuzzyPairs?: string[],
-    public opt_enableUserDict?: boolean, 
-    public opt_enableShuangpinInput?: string[]) {
-    /** The callback function when the decoder is ready. */
+    opt_solution?: string[] | IShuangpinModel,
+    opt_enableUserDict?: boolean) {
+    
     this.#dataLoader = new DataLoader(inputTool);
     
+    this.#tokenDecoder = new TokenDecoder(this.#dataLoader, opt_solution = []);
+    
     /** The token decoder. */
-    this.#tokenDecoder = new TokenDecoder(this.inputTool);
 
     /** The machine learning based decoder. */
     this.#mlDecoder = new MLDecoder(this.inputTool, this.#dataLoader);

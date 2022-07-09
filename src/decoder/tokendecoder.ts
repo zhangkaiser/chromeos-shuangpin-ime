@@ -2,8 +2,6 @@ import { InputToolCode } from "../model/enums";
 import { binarySearch, defaultCompare } from "../utils/binarySearch";
 import { SolutionDataType } from "../utils/double-solutions";
 import { DataLoader } from "./dataloader";
-import { initialTokens, chosTokens as tokens } from "./staticdata";
-
 /**
  * The lattice node contains the index of each start end of all in-edges, and
  * the minimum number of initials in paths to this node.
@@ -76,13 +74,16 @@ export class TokenDecoder extends EventTarget {
    * valid path.
    */
   static readonly _INVALID_PATH_INIT_NUM = 100;
-  
+  constructor(_dataLoader: DataLoader);
+  constructor(_dataLoader: DataLoader, shuangpinSolution?: IShuangpinModel);
+  constructor(_dataLoader: DataLoader, fuzzyPairs?: string[]);
   constructor(
-    private inputTool: InputToolCode,
-    fuzzyPairsOrSolutionPairs?:string[] | SolutionDataType
+    private _dataLoader: DataLoader,
+    solution?: string[] | IShuangpinModel
 
     ) {
       super();
+
       this.#init(fuzzyPairsOrSolutionPairs);
 
   }
@@ -91,7 +92,8 @@ export class TokenDecoder extends EventTarget {
    * Initialize the token decoder
    * @TODO
    */
-  #init(fuzzyPairs?: string[] | SolutionDataType) {
+  #init(fuzzyPairs?: string[] | IShuangpinModel) {
+    let { initialTokens } = this._dataLoader;
     // 这里可以设置分割用户输入字符的识别算法
     this._tokenReg = new RegExp(`^(${tokens}|${initialTokens})$`);
 

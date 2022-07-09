@@ -2,7 +2,7 @@
 
 
 interface IDecoder {
-  new (),
+  new (inputTool: string),
   /** Gets the transliterations(without scores) for the source word. */
   decode(sourceToken:string, chooseId: number): string,
   /** Clear the decoder. */
