@@ -28,19 +28,16 @@ export default class Decoder implements IDecoder {
   #userDecoder?: UserDecoder | null;
   #mlDecoder: MLDecoder;
 
-  constructor(inputTool: any, opt_shuangpinSolution?: IShuangpinModel)
-  constructor(inputTool: any, opt_fuzzyPairs?: string[])
   constructor(
     private inputTool: any, 
     opt_solution?: string[] | IShuangpinModel,
     opt_enableUserDict?: boolean) {
     
     this.#dataLoader = new DataLoader(inputTool);
-    
-    this.#tokenDecoder = new TokenDecoder(this.#dataLoader, opt_solution = []);
-    
+  
     /** The token decoder. */
-
+    this.#tokenDecoder = new TokenDecoder(this.#dataLoader, opt_solution);
+  
     /** The machine learning based decoder. */
     this.#mlDecoder = new MLDecoder(this.inputTool, this.#dataLoader);
 
@@ -69,11 +66,11 @@ export default class Decoder implements IDecoder {
       MLDecoder.DEFAULT_RESULTS_NUM, isAllInitials);
 
     /** Filtering the tanslits. */
-    let candidates:Candidate[] = [];
+    let candidates: Candidate[] = [];
     let targetWords = [];
     for (var i = 0; i < translits.length; ++i) {
       let translit = translits[i];
-      if (targetWords.indexOf(translit.target) < 0) {
+      if (translit.target && translit.target.length >= 1 && targetWords.indexOf(translit.target) < 0) {
         candidates.push(translit);
         targetWords.push(translit.target);
         if (candidates.length >= MLDecoder.DEFAULT_RESULTS_NUM) {
@@ -95,7 +92,11 @@ export default class Decoder implements IDecoder {
         }
 
         if (index != 0) {
-          let candidate = new Candidate(sourceWord.length, userCommitCandidate, 0);
+          let candidate = new Candidate(
+            sourceWord.length, 
+            userCommitCandidate, 
+            0,
+            -1);
           candidates.splice(1, 0, candidate);
         }
       }
@@ -111,8 +112,8 @@ export default class Decoder implements IDecoder {
    * Adds user selected candidates.
    */
   addUserCommits(
-    /** The source text. */source: string, 
-    /** The target text commits */target: string) {
+    /** The source text. */ source: string, 
+    /** The target text commits */ target: string) {
     if (this.#userDecoder) {
       this.#userDecoder.add(source, target);
     }

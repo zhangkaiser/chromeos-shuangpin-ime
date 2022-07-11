@@ -2,6 +2,8 @@ import { InputToolCode } from "../model/enums";
 import { binarySearch, defaultCompare } from "../utils/binarySearch";
 import { SolutionDataType } from "../utils/double-solutions";
 import { DataLoader } from "./dataloader";
+import type { IShuangpinModel } from "../model/customShuangpin";
+
 /**
  * The lattice node contains the index of each start end of all in-edges, and
  * the minimum number of initials in paths to this node.
@@ -69,22 +71,21 @@ export class TokenDecoder extends EventTarget {
   /** The lattice nodes. */
   private _lattice:LatticeNode[] = [];
 
+  /** The shuangpin solution. */
+  private _solution?: IShuangpinModel;
+
   /**
    * The init number given to invalid path, to make sure it is larger than any
    * valid path.
    */
   static readonly _INVALID_PATH_INIT_NUM = 100;
-  constructor(_dataLoader: DataLoader);
-  constructor(_dataLoader: DataLoader, shuangpinSolution?: IShuangpinModel);
-  constructor(_dataLoader: DataLoader, fuzzyPairs?: string[]);
   constructor(
     private _dataLoader: DataLoader,
     solution?: string[] | IShuangpinModel
-
-    ) {
+  ) {
       super();
 
-      this.#init(fuzzyPairsOrSolutionPairs);
+      this.#init(solution);
 
   }
   
@@ -92,8 +93,8 @@ export class TokenDecoder extends EventTarget {
    * Initialize the token decoder
    * @TODO
    */
-  #init(fuzzyPairs?: string[] | IShuangpinModel) {
-    let { initialTokens } = this._dataLoader;
+  #init(solution?: string[] | IShuangpinModel) {
+    let { initialTokens, chosTokens: tokens } = this._dataLoader;
     // 这里可以设置分割用户输入字符的识别算法
     this._tokenReg = new RegExp(`^(${tokens}|${initialTokens})$`);
 
@@ -114,14 +115,21 @@ export class TokenDecoder extends EventTarget {
       }
     }
 
-    if (fuzzyPairs) {
-      this.updateFuzzyPairs(fuzzyPairs);
+    if (solution && Array.isArray(solution)) {
+      this.updateFuzzyPairs(solution);
+    } else if (solution && this._dataLoader.shuangpinStatus) {
+      this.updateShuangpinSolution(solution);
     }
       
     this.clear();
   }
 
   static #INVALID_PATH_INIT_NUM = 100;
+
+  updateShuangpinSolution(solution: IShuangpinModel) {
+    this._solution = solution;
+  }
+
   /**
    * Updates fuzzy-pinyin expansion paris. For each fuzzy-pinyin expansion
    *  pairs.the syllables are separated by '_', such as 'z_zh'.

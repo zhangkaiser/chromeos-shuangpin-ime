@@ -1,7 +1,11 @@
 /// <reference path="./mvvm.d.ts" />
 
+interface IIMEResponse {
+  tokens: string[],
+  candidates: Candidate[]
+}
 
-interface IDecoder {
+interface IWASMDecoder {
   new (inputTool: string),
   /** Gets the transliterations(without scores) for the source word. */
   decode(sourceToken:string, chooseId: number): string,
@@ -9,15 +13,21 @@ interface IDecoder {
   clear(): void,
 }
 
+/** Decoder interface. */
+interface IDecoder {
+  decode(sourceToken: string, chooseId: number): IIMEResponse | null,
+  clear(): void;
+}
+
+/** WASM Module interface */
 interface IModule {
-  Decoder: IDecoder
+  Decoder: IWASMDecoder
 }
 
 declare module "../../libGooglePinyin/decoder.js" {
   let Module: IModule;
   export default Module; 
 }
-
 
 interface Window {
   Module: Module

@@ -1,15 +1,25 @@
 
-import Module from "../../libGooglePinyin/decoder.js";
-import { InputToolCode } from "../model/enums.js";
+import Module from "../../libGooglePinyin/decoder";
+import { IShuangpinModel } from "../model/customShuangpin";
+import { InputToolCode } from "../model/enums";
+import { Candidate } from "./candidate";
+import { DataLoader } from "./dataloader";
+import { IMEResponse } from "./decoder.js";
 import { TokenDecoder } from "./tokendecoder";
 export default class Decoder {
     
-  #decoder?: IDecoder;
+  #decoder?: IWASMDecoder;
+  #dataloader: DataLoader;
   #tokenDecoder: TokenDecoder; 
 
-  constructor(public inputTool: InputToolCode) {
+  constructor(inputTool: any, 
+    solution?: string[] | IShuangpinModel,
+    enableUserDict?: boolean
+  ) {
     // TODO
-    this.#tokenDecoder = new TokenDecoder(inputTool, { });
+    this.#dataloader = new DataLoader(inputTool);
+    this.#tokenDecoder = new TokenDecoder(inputTool, solution);
+    
     try {
       this.#decoder = new Module["Decoder"]();
     } catch(e) {}
@@ -23,16 +33,40 @@ export default class Decoder {
     return this.#decoder;
   }
   
-  /** @todo */
-  decode(source: string, selectedCandID: number) {
-    if (!this.decoder) return ;
+  /** @todo selectedCandID argument is not used. */
+  decode(sourceWord: string, selectedCandID: number) {
+    if (!this.decoder) return null;
+    let { shuangpinStatus } = this.#dataloader;
 
     // Get the pinyin best token.(support pinyin and shuangpin).
-    let tokens = this.#tokenDecoder.getBestTokens(source);
-    let candidatesStr = this.decoder.decode(source, selectedCandID);
-    let a;
-    let candidates = candidatesStr.split("|");
-    return candidates;
+    let tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
+    if (!tokenPath) return null;
+    
+    let candidates: Candidate[] = []
+    
+    if (shuangpinStatus) {
+      // Shuangpin decode.
+      let tokens = tokenPath.tokens;
+      let targets = this.decoder.decode(tokens.join('\''), -1).split('|');
+
+      for (let i = 0, l = targets.length; i < l; i++) {
+        let target = targets[i];
+        candidates.push(new Candidate(
+          sourceWord.length,
+          target,
+          0,
+          -1
+        ));
+      }
+    } else {
+      // Pinyin decode.
+      let isAllInitials = this.#tokenDecoder.isAllInitials(tokenPath.tokens);
+  
+    }
+    // Also return the token list.
+    let originalTokenList = this.#tokenDecoder.getOriginalTokens(tokenPath);
+    return new IMEResponse(originalTokenList, candidates);
+
   }
 
 }

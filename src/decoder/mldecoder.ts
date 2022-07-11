@@ -199,7 +199,11 @@ export class MLDecoder {
         for (let j = 0; j < targetPrefixes.length; ++j) {
           let targetPrefix = targetPrefixes[j];
           let candidate = new Candidate(
-              sourcePrefix.length, targetPrefix.segment, targetPrefix.prob);
+              sourcePrefix.length, 
+              targetPrefix.segment, 
+              targetPrefix.prob,
+              j
+              );
           candidates.insert(candidate.score, candidate);
         }
         if (candidates.size > resultsNum) {
@@ -248,7 +252,7 @@ export class MLDecoder {
         let score = Number(translits.peekKey());
         let target = translits.remove().toString();
         candidate = new Candidate(
-            tokens.length, target, score);
+            tokens.length, target, score, 0);
       } else {
         candidate = prefixCandidates.remove();
       }
@@ -263,7 +267,7 @@ export class MLDecoder {
       let score = Number(translits.peekKey());
       let target = translits.remove().toString();
       let candidate = new Candidate(
-          tokens.length, target, score);
+          tokens.length, target, score, 0);
       candidates.unshift(candidate);
     }
     return candidates;

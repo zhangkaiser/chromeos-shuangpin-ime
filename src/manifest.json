@@ -33,6 +33,22 @@
       "description": "",
       "language": "zh",
       "layouts": ["us"]
+    },
+    {
+      "name": "Chinese online shuangpin - 1",
+      "type": "ime",
+      "id": "zh-js-shuangpin",
+      "description": "",
+      "language": "zh",
+      "layouts": ["us"]
+    },
+    {
+      "name": "Chinese online shuangpin",
+      "type": "ime",
+      "id": "zh-wasm-shuangpin",
+      "description": "",
+      "language": "zh",
+      "layouts": ["us"]
     }
   ],
   "options_page": "option.html",

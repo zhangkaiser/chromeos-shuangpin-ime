@@ -5,7 +5,7 @@ import targetSegments from "./targetSegments";
 import sourceSegments from "./sourceSegments";
 import targetProbs from "./targetProbs";
 
-import { isJS } from "../utils/regexp";
+import { isJS, isPinyin } from "../utils/regexp";
 /**
  * DataLoader provides the functions to load token
  * dictionary, generation model and dictionary for the offline transliterator.
@@ -23,6 +23,9 @@ export class DataLoader {
   targetSegments: any[] = [];
   targetProbs: any[]  = [];
   sourceSegments: any[] = [];
+
+  /** Shuangpin status. */
+  shuangpinStatus: boolean = false;
   constructor(public inputToolCode: string) {
     
     if (isJS(inputToolCode)) {
@@ -36,11 +39,12 @@ export class DataLoader {
       this.targetSegments = targetSegments();
       this.targetProbs = targetProbs();
       this.sourceSegments = sourceSegments();
-
     } else {
       let { chosTokens, initialTokens } = staticData();
       this.chosTokens = chosTokens;
       this.initialTokens = initialTokens;
     }
+
+    this.shuangpinStatus = isPinyin(inputToolCode) ? false : true;
   }
 }
