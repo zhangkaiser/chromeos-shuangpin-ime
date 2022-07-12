@@ -5,7 +5,6 @@
 import { configFactoryInstance } from "./model/configfactory";
 import { StateID } from "./model/enums";
 import type { Model } from "./model/model";
-import { hans2Hant } from "./utils/transform";
 import { CandidateWindow } from "./view/candidate";
 
 export class View {
@@ -20,7 +19,7 @@ export class View {
   /** The ui window. */
   window?: CandidateWindow;
 
-  constructor(protected model:Model) { }
+  constructor(protected model: Model) { }
 
   /** Get the current config from config factory. */
   get currentConfig() {
@@ -101,7 +100,7 @@ export class View {
     if (segmentsAfterCursor.length > 0) {
       composing_text += ' ' + segmentsAfterCursor.join(' ');
     }
-    composing_text = this.configFactory.getCurrentConfig().transformView(
+    composing_text = this.currentConfig.transformView(
         composing_text, this.model.rawSource);
     try {
       chrome.input.ime.setComposition({

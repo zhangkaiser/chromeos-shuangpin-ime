@@ -1,12 +1,11 @@
 
-import Module from "../../libGooglePinyin/decoder";
+import Module from "../../libGooglePinyin/decoder.js";
 import { IShuangpinModel } from "../model/customShuangpin";
-import { InputToolCode } from "../model/enums";
 import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
-import { IMEResponse } from "./decoder.js";
+import { IMEResponse } from "./decoder";
 import { TokenDecoder } from "./tokendecoder";
-export default class Decoder {
+export default class Decoder implements IDecoder {
     
   #decoder?: IWASMDecoder;
   #dataloader: DataLoader;
@@ -18,7 +17,7 @@ export default class Decoder {
   ) {
     // TODO
     this.#dataloader = new DataLoader(inputTool);
-    this.#tokenDecoder = new TokenDecoder(inputTool, solution);
+    this.#tokenDecoder = new TokenDecoder(this.#dataloader, solution);
     
     try {
       this.#decoder = new Module["Decoder"]();
@@ -35,6 +34,7 @@ export default class Decoder {
   
   /** @todo selectedCandID argument is not used. */
   decode(sourceWord: string, selectedCandID: number) {
+    console.log('cdecode', sourceWord, selectedCandID)
     if (!this.decoder) return null;
     let { shuangpinStatus } = this.#dataloader;
 
@@ -42,31 +42,39 @@ export default class Decoder {
     let tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
     if (!tokenPath) return null;
     
-    let candidates: Candidate[] = []
+    let candidates: Candidate[] = [];
+    let targets: string[] = [];
+    let originalTokenList = this.#tokenDecoder.getOriginalTokens(tokenPath);
     
     if (shuangpinStatus) {
       // Shuangpin decode.
       let tokens = tokenPath.tokens;
-      let targets = this.decoder.decode(tokens.join('\''), -1).split('|');
+      targets = this.decoder.decode(tokens.join('\''), -1).split('|');
 
-      for (let i = 0, l = targets.length; i < l; i++) {
-        let target = targets[i];
-        candidates.push(new Candidate(
-          sourceWord.length,
-          target,
-          0,
-          -1
-        ));
-      }
+      
     } else {
       // Pinyin decode.
-      let isAllInitials = this.#tokenDecoder.isAllInitials(tokenPath.tokens);
-  
+      let pinyin = originalTokenList.join('');
+      console.log(pinyin);
+      targets = this.decoder.decode(pinyin, -1).split('|');
+      
+    }
+    for (let i = 0, l = targets.length; i < l; i++) {
+      let target = targets[i];
+      candidates.push(new Candidate(
+        sourceWord.length,
+        target,
+        0,
+        -1
+      ));
     }
     // Also return the token list.
-    let originalTokenList = this.#tokenDecoder.getOriginalTokens(tokenPath);
     return new IMEResponse(originalTokenList, candidates);
+  }
 
+  clear() {
+    this.#tokenDecoder.clear();
+    this.decoder?.clear();
   }
 
 }

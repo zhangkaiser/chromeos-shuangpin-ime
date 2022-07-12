@@ -105,13 +105,15 @@ export class Model extends EventTarget implements IModel {
   requireAwaitCommitStatus = true;
   
   /** Inactive state */
-  inactiveAbortState: boolean = false;
+  isFromInactive: boolean = false;
 
   /** engineID */
   engineID?: string;
 
   /** candidate id. */
   selectedCandID = -1;
+  
+  stateCache: any = '';
 
   /** The current global configure. */
   get currentConfig() {
@@ -128,8 +130,8 @@ export class Model extends EventTarget implements IModel {
 
   setEngineID(engineID: string): void {
     if (this.engineID) {
-      // It's from inactive and reactive ime.
-      this.inactiveAbortState = true;
+      // It's from inactive and reactivate ime.
+      this.isFromInactive = true;
     }
     this.engineID = engineID;
     if (isJS(engineID)) {
@@ -140,31 +142,13 @@ export class Model extends EventTarget implements IModel {
     }
   }
 
-  storageCurrentState() {
-    chrome.storage.local.set({
-      model: {
-        
-      }
-    })
-  }
-
-  revertFromStorage() {
-
-  }
-
   get decoder() {
-    try {
-      this._decoder = this._decoder 
-        ?? (Module["Decoder"] ? new Module["Decoder"] : undefined);
-    } catch(err) {
-      
-    }
     return this._decoder;
   }
 
 
   updateHighlight(newHighlight: number) {
-    if (this.status != Status.SELECT || newHighlight >= this.candidates.length) return ;
+    if (this.status != Status.SELECT || newHighlight < this.candidates.length) return ;
     if (newHighlight < 0) newHighlight = 0;
     
     this.highlightIndex = newHighlight;
@@ -178,10 +162,12 @@ export class Model extends EventTarget implements IModel {
 
   movePage(step: number): void {
     if (this.status != Status.SELECT) return;
+
     let { pageSize } = this.currentConfig;
     this.updateHighlight((this.pageIndex + step) * pageSize);
   }
 
+  /** @todo */
   updateSource(key: string, text: string) {
     if (this.source.length + text.length > this.currentConfig.maxInputLen) {
       this.selectCandidate(undefined, '');
@@ -203,6 +189,7 @@ export class Model extends EventTarget implements IModel {
   /** @todo */
   moveCursorLeft() {
     if (this.status != Status.SELECT || this.cursorPos <= 0) return;
+    
     if (this.cursorPos == this.commitPos) {
       this.commitPos--;
       this.segments[this.commitPos] = this.tokens[this.commitPos];
@@ -243,21 +230,41 @@ export class Model extends EventTarget implements IModel {
 
   /** @todo */
   revert() {
-    console.log('revert', this.cursorPos, this.source.length);
     if (this.status == Status.FETCHING) return ;
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
     }
 
-    if (this.cursorPos > 0 && this.cursorPos == this.source.length) {
-      this.source = this.source.slice(0, -1);
+    let deletedChar = '';
+    if (this.commitPos > 0) {
+      for (let i = 0; i < this.commitPos; ++i) {
+        this.segments[i] = this.tokens[i];
+      }
+      this.commitPos = 0;
+    } else if (this.cursorPos > 0) {
+      let segment = this.segments[this.cursorPos - 1];
+      deletedChar = segment.slice(-1);
+      segment = segment.slice(0, -1);
+      if (segment) {
+        this.segments[this.cursorPos - 1] = segment;
+      } else {
+        this.segments = this.segments.slice(0, this.cursorPos - 1).concat(
+          this.segments.slice(this.cursorPos)
+        );
+        this.cursorPos--;
+      }
     }
+
+    this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
     if (this.source == '') {
       this.notifyUpdates(true);
     } else {
       this.notifyUpdates();
+      if (deletedChar == '\'') {
+        this.decoder?.clear();
+      }
+      this.fetchCandidates();
     }
-    this.fetchCandidates();
   }
 
   /** @todo Need to fix the composition error. */
@@ -273,40 +280,35 @@ export class Model extends EventTarget implements IModel {
       return this.clear();
     }
 
-
     let candidateIndex = index ?? this.highlightIndex;
 
     let candidate = this.candidates[candidateIndex];
-    this.selectedCandID  = candidate.candID;
     if (!candidate) { // commit the current segments.
       this.notifyUpdates(true);
       return this.clear();
     }
+    this.selectedCandID  = candidate.candID;
 
-    // let source = "";
-    // for (let i = 0; i < candidate.range; ++i) {
-    //   source += this.segments[i + this.commitPos];
-    // }
+    let source = "";
+    for (let i = 0; i < candidate.range; ++i) {
+      source += this.segments[i + this.commitPos];
+    }
 
-    // this.tokens[this.commitPos] = source;
-    // this.segments[this.commitPos] = candidate.target;
-    // this.commitPos++;
-
-    this.segments = [this.candidates[0].target];
-    // this.segments = this.segments.slice(0, this.commitPos).concat(
-    //   this.segments.slice(this.commitPos - 1 + candidate.candID)
-    // );
-    if (this.candidates.length == 1 || commit != undefined) {
+    this.tokens[this.commitPos] = source;
+    this.segments[this.commitPos] = candidate.target;
+    this.commitPos++;
+    this.segments = this.segments.slice(0, this.commitPos).concat(
+      this.segments.slice(this.commitPos - 1 + candidate.range)
+    );
+    
+    if (this.commitPos == this.segments.length || commit != undefined) {
       this.notifyUpdates(true);
       return this.clear();
     }
-    // if (this.commitPos == this.segments.length || commit != undefined) {
-    //   this.notifyUpdates(true);
-    //   return this.clear();
-    // }
 
     this.highlightIndex = -1;
-    // this._decoder!.clear();
+    this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
+    this._decoder?.clear();
     this.fetchCandidates();
   }
 
@@ -319,17 +321,39 @@ export class Model extends EventTarget implements IModel {
     this.rawSource = "";
     this.source = "";
     this.cursorPos = 0;
+    this.commitPos = 0;
     this.segments = [];
     this.highlightIndex = -1;
     this.candidates = [];
     this.status = Status.INIT;
     this._holdSelectStatus = false;
+    this.stateCache = '';
+    this.isFromInactive = false;
     this.selectedCandID = -1;
-    this.requireAwaitCommitStatus = true;
   }
 
   abort() {
     this.clear();
+  }
+
+  reactivate(engineID: string) {
+    this.engineID = engineID;
+    chrome.storage.local.get('stateCache',(data) => {
+      let stateCache = 'stateCache' in data ? data['stateCache'] : '';
+      this.stateCache = stateCache;
+    })
+  }
+
+  /** Resume state. */
+  resume() {
+    if (this.stateCache) {
+      let cacheNames = Object.keys(this.stateCache);
+      for (let i in cacheNames) {
+        (this as any)[i] = this.stateCache[cacheNames[i]];
+      }
+    }
+    this.isFromInactive = false;
+    this.stateCache = '';
   }
 
   reset() {
@@ -341,6 +365,19 @@ export class Model extends EventTarget implements IModel {
   }
 
   notifyUpdates(commit = false) {
+    chrome.storage.local.set({
+      stateCache: {
+        rawSource: this.rawSource,
+        source: this.source,
+        cursorPos: this.cursorPos,
+        commitPos: this.commitPos,
+        segments: this.segments,
+        highlightIndex: this.highlightIndex,
+        candidates: this.candidates,
+        status: this.status,
+        _holdSelectStatus: this._holdSelectStatus,
+      }
+    });
     if (commit) {
       this.dispatchEvent(Model.COMMIT_EVENT);
       this.clear();
@@ -362,17 +399,14 @@ export class Model extends EventTarget implements IModel {
   fetchCandidates() {
     if (!this.decoder || !this.source) return;
     this.status = Status.FETCHING;
-    if (this.source.length == 1 && this.source === '\'') {
-      this.status = Status.SELECT;
-      return ;
-    }
-
-    let candidatesRawStr = this.decoder.decode(this.source, this.selectedCandID);
-    let candidates = candidatesRawStr.split("|");
-    this.cursorPos = this.source.length;
-
-    candidatesRawStr = "";
-    if (!this.candidates) {
+    // if (this.source.length == 1 && this.source === '\'') {
+    //   this.status = Status.SELECT;
+    //   return ;
+    // }
+    console.log('fetchCandidates -> source', this.source);
+    let imeResponse = this.decoder.decode(this.source, this.selectedCandID);
+    
+    if (!imeResponse) {
       this.status = Status.FETCHED;
       if (this.currentConfig.autoHighlight || this._holdSelectStatus) {
         this.enterSelectInternal();
@@ -382,26 +416,35 @@ export class Model extends EventTarget implements IModel {
       this.notifyUpdates();
       return;
     }
-    // TODO model.old.ts > 461;
     
     this.candidates = [];
+    let { candidates, tokens } = imeResponse;
+
+    let committedSegments = this.segments.slice(0, this.commitPos);
+    let prefixSegments = committedSegments.concat(tokens);
+    let suffixSegments = this.segments.slice(this.cursorPos);
+
+    this.source = tokens.join('');
+    this.segments = prefixSegments.concat(suffixSegments);
+    this.cursorPos = prefixSegments.length;
 
     for (let i = 0, l = candidates.length; i < l; i++) {
+      let candidate = candidates[i];
       this.candidates.push(
         new Candidate( 
-          candidates[i],
-          i
+          candidate.target.toString(),
+          Number(candidate.range)
         )
       );
     }
 
     this.status = Status.FETCHED;
 
-    if (this.candidates.length == 1) {
-      // TODO Need to adapt to current decoder.  
-      this.selectCandidate(0, "");
+    // if (this.candidates.length == 1) {
+    //   // TODO Need to adapt to current decoder.  
+    //   this.selectCandidate(0, "");
 
-    }
+    // }
     if (this.currentConfig.autoHighlight || this._holdSelectStatus) {
       this.enterSelectInternal();
     }

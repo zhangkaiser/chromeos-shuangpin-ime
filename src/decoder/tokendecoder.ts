@@ -96,6 +96,7 @@ export class TokenDecoder extends EventTarget {
   #init(solution?: string[] | IShuangpinModel) {
     let { initialTokens, chosTokens: tokens } = this._dataLoader;
     // 这里可以设置分割用户输入字符的识别算法
+    console.log(initialTokens, tokens);
     this._tokenReg = new RegExp(`^(${tokens}|${initialTokens})$`);
 
     let initials = initialTokens.split('|');

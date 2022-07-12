@@ -1,8 +1,19 @@
 /// <reference path="./mvvm.d.ts" />
 
+interface ICandidate {
+  /** The number of source tokens transliterated */
+  range: number;
+  /** The target word. */ 
+  target:string;
+  /** The score. */
+  score: number;
+  /** The candidate id. */ 
+  candID: number;
+}
+
 interface IIMEResponse {
   tokens: string[],
-  candidates: Candidate[]
+  candidates: ICandidate[]
 }
 
 interface IWASMDecoder {

@@ -29,10 +29,10 @@ export class Controller extends EventTarget {
   _context?: any;
   
   /** The key action table. */
-  _keyActionTable?: Set<ActionType>;
+  _keyActionTable?: ActionType[];
 
   /** The shortcut table. */
-  _shortcutTable?: Set<ActionType>;
+  _shortcutTable?: ActionType[];
 
   /** True if the last key down is shift (with not modifiers). */
   _lastKeyDownIsShift = false;
@@ -80,7 +80,7 @@ export class Controller extends EventTarget {
    * Deactivates the input tool.
    */
   deactivate(engineID: string) {
-    this._configFactory.setInputTool('');
+    this._configFactory.clearInputTool();
     this.model.reset();
     this.view.updateInputTool();
     this._keyActionTable = undefined;
@@ -212,7 +212,12 @@ export class Controller extends EventTarget {
     if (!this._context || !this._keyActionTable) {
       return false;
     }
-    console.log('status', keyEvent.key, this.model.status);
+
+    if (this.model.isFromInactive && keyEvent.type === Key.UP) {
+      console.log('isFromActive', this.model.stateCache);
+      this.model.resume();
+      this.processCharKey(keyEvent);
+    }
 
     // ctrl + shift and from extensionId.
     if (
@@ -259,9 +264,9 @@ export class Controller extends EventTarget {
   }
 
   handleSurroundingText(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
-    console.log('surroundingTextInfo->', this.model.engineID);
     if (!this.model.engineID) {
-
+      // Current state is reactivate from inactive.
+      this.model.reactivate(engineID)
       // this.model.setEngineID(engineID);
     }
   }
@@ -282,7 +287,6 @@ export class Controller extends EventTarget {
     }
 
     let trans = this.currentConfig.preTransform(e.key);
-    console.log(trans);
     if (trans && this._context) {
       chrome.input.ime.commitText({
         contextID: this._context.contextID,
@@ -326,7 +330,7 @@ export class Controller extends EventTarget {
   * @return {boolean} True if the key is handled.
   * @private
   */
-  #handleKeyInActionTable(e: chrome.input.ime.KeyboardEvent, table: Set<ActionType>) {
+  #handleKeyInActionTable(e: chrome.input.ime.KeyboardEvent, table: ActionType[]) {
     let key = this.#getKey(e);
     for (let item of table) {
       // Each item of the key action table is an array with this format:
@@ -495,7 +499,7 @@ export class Controller extends EventTarget {
   handleCommitEvent() {
     if (this._context) {
       let segments = this.model.segments.join('');
-      
+      console.log('handleCommitEvent -> segments', segments);
       if (this.currentConfig.enableTraditional) {
         segments = hans2Hant(segments);
       }
@@ -536,8 +540,7 @@ export class Controller extends EventTarget {
 
     // [EventType, Modifier, KeyCode/KeyChar, ModelStatus, MoreConditionFunc,
     //  ActionFunc, ActionFuncScopeObj, args]
-    let actionList = new Set<ActionType>
-    ([
+    let actionList: ActionType[] = [
       // Pageup action.
       [EventType.KEYDOWN, 0, Key.PAGE_UP, null, onStageCondition, 
         this.model.movePage, this.model, 1],
@@ -592,7 +595,7 @@ export class Controller extends EventTarget {
       // Punch key.
       [EventType.KEYDOWN, 0, config.punctuationReg, null, onStageCondition,
       this.processPuncKey, this, null]
-    ]);
+    ];
 
     return actionList;
   }
@@ -630,7 +633,7 @@ export class Controller extends EventTarget {
       }
     }
     
-    return new Set(shortcutTable);
+    return shortcutTable;
   }
 
   /**

@@ -12,7 +12,7 @@ import { ShuangpinConfig } from "./shuangpinconfig";
  */
 export default class ConfigFactory {
   /** The current input tool code.  */
-  private _inputToolCode: InputToolCode = InputToolCode.WASM_PINYIN;
+  private _inputToolCode?: InputToolCode = InputToolCode.WASM_PINYIN;
 
   /** The map of input tool code to config object. */
   private _map: Partial<Record<InputToolCode, Config>> = {};
@@ -24,8 +24,12 @@ export default class ConfigFactory {
     this.#buildConfig(inputToolCode)
   }
 
+  clearInputTool() {
+    this._inputToolCode = undefined;
+  }
+
   getInputTool() {
-    return this._inputToolCode;
+    return this._inputToolCode!;
   }
 
   /**
@@ -41,7 +45,7 @@ export default class ConfigFactory {
    * Gets the config for the current input tool.
    */
   getCurrentConfig() {
-    return this._map[this._inputToolCode]!;
+    return this._map[this._inputToolCode!]!;
   }
 
   /** Build configs. */
