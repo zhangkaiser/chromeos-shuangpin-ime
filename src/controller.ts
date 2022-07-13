@@ -48,6 +48,9 @@ export class Controller extends EventTarget {
     'solution': "pinyinjiajia"
   }
 
+  /** If from inactive, Need to delete the surround text. */
+  _lastKeyChar: string = '';
+
   protected _configFactory = configFactoryInstance;
   
   get currentConfig() {
@@ -209,14 +212,24 @@ export class Controller extends EventTarget {
    * @return {boolean} True if the event is handled successfully.
    */
   handleEvent(inputToolCode: InputToolCode, keyEvent: chrome.input.ime.KeyboardEvent, requestId: number) {
+    
     if (!this._context || !this._keyActionTable) {
       return false;
     }
 
-    if (this.model.isFromInactive && keyEvent.type === Key.UP) {
-      console.log('isFromActive', this.model.stateCache);
-      this.model.resume();
-      this.processCharKey(keyEvent);
+
+    // TODO `chrome.input.ime.sendKeyEvents` also too
+    if (this.model.isFromInactive && keyEvent.type == EventType.KEYUP && keyEvent.key == this._lastKeyChar) {
+      chrome.input.ime.deleteSurroundingText({
+        contextID: this._context.contextID,
+        engineID: this._configFactory.getInputTool(),
+        length: 1,
+        offset: -1,
+      }, () => {
+        this.model.resume();
+        this.processCharKey(keyEvent);
+      });
+      return true;
     }
 
     // ctrl + shift and from extensionId.
@@ -267,6 +280,7 @@ export class Controller extends EventTarget {
     if (!this.model.engineID) {
       // Current state is reactivate from inactive.
       this.model.reactivate(engineID)
+      this._lastKeyChar = surroundingInfo.text.slice(-1);
       // this.model.setEngineID(engineID);
     }
   }

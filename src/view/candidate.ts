@@ -103,7 +103,6 @@ export class CandidateWindow {
       windowProps.pageSize = this.config.pageSize;
 
       this.getCandidates((candidate, label) => {
-        console.log(candidate, label);
         candidates.push({
           annotation: `${label} ${candidate.target}`,
           candidate: candidate.target,

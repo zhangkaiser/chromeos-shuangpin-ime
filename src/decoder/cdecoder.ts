@@ -34,7 +34,6 @@ export default class Decoder implements IDecoder {
   
   /** @todo selectedCandID argument is not used. */
   decode(sourceWord: string, selectedCandID: number) {
-    console.log('cdecode', sourceWord, selectedCandID)
     if (!this.decoder) return null;
     let { shuangpinStatus } = this.#dataloader;
 
@@ -55,7 +54,6 @@ export default class Decoder implements IDecoder {
     } else {
       // Pinyin decode.
       let pinyin = originalTokenList.join('');
-      console.log(pinyin);
       targets = this.decoder.decode(pinyin, -1).split('|');
       
     }

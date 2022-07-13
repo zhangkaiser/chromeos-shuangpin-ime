@@ -6,7 +6,6 @@ export function hans2Hant(hans: string){
 	if (dict) {
 		let hant = hans.replace(/[^\x00-\xFF]/g, 
 			(s: string) => ((s in dict) ? dict[s] : s));
-		console.log(hant, hans, dict);
 		return hant;
 	} else {
 		return hans;

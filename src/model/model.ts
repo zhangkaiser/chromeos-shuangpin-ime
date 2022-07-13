@@ -129,10 +129,6 @@ export class Model extends EventTarget implements IModel {
   }
 
   setEngineID(engineID: string): void {
-    if (this.engineID) {
-      // It's from inactive and reactivate ime.
-      this.isFromInactive = true;
-    }
     this.engineID = engineID;
     if (isJS(engineID)) {
       // TODO
@@ -327,8 +323,8 @@ export class Model extends EventTarget implements IModel {
     this.candidates = [];
     this.status = Status.INIT;
     this._holdSelectStatus = false;
-    this.stateCache = '';
-    this.isFromInactive = false;
+    // this.stateCache = '';
+    // this.isFromInactive = false;
     this.selectedCandID = -1;
   }
 
@@ -338,6 +334,8 @@ export class Model extends EventTarget implements IModel {
 
   reactivate(engineID: string) {
     this.engineID = engineID;
+    // It's from inactive and reactivate ime.
+    this.isFromInactive = true;
     chrome.storage.local.get('stateCache',(data) => {
       let stateCache = 'stateCache' in data ? data['stateCache'] : '';
       this.stateCache = stateCache;
@@ -403,7 +401,6 @@ export class Model extends EventTarget implements IModel {
     //   this.status = Status.SELECT;
     //   return ;
     // }
-    console.log('fetchCandidates -> source', this.source);
     let imeResponse = this.decoder.decode(this.source, this.selectedCandID);
     
     if (!imeResponse) {

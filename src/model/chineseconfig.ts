@@ -138,8 +138,6 @@ export default class ChineseConfig extends Config {
       if (punc) {
         if (Array.isArray(punc)) {
           ch = punc[0].charAt(punc[1]);
-          console.log(punc)
-          console.log(ch)
           punc[1] ^= 1;
           punc = ch;
         }
