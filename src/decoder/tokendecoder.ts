@@ -545,74 +545,60 @@ export class TokenDecoder extends EventTarget {
   }
 
   getShuangpinTokens(source: string) {
-    let splitStr = source.split(/(\w.)/, 2);
-    let splitList = splitStr.filter((a) => a);
-    console.log('getShuangpinTokens -> splitList', splitList);
 
-    let tokenList: string[] = [];
-    let separatorList = [];
-
-    console.log('getShuangpinTokens:begin');
-    for (let i = 0, l = splitList.length; i < l; i++) {
-      console.log('getShuangpinTokens -> splitList item', i, splitList[i]);
-      let item = splitList[i];
-      let cache;
-      if (cache = this.#cache.get(item)) {
-        tokenList.push(cache)
-        separatorList.push(true);
-        continue;
-      }
-
+    let tokenList = source.split("'");
+    let lastToken  = tokenList.pop();
+    let separatorList = new Array(tokenList.length).fill(true);
+    
+    if (lastToken && lastToken.length == 1) {
       let findIndex;
-      if (item.length == 1 
-        && (findIndex = this.#shengmuKey.indexOf(item)) > -1) 
-      {
+      if((findIndex = this.#shengmuKey.indexOf(lastToken)) > -1) {
         tokenList.push(this.#shengmu[findIndex]);
-        separatorList.push(true);
-        this.#cache.set(item, this.#shengmu[findIndex]);
-        continue;
-      }
-
-      if (item.length == 1
-        && (findIndex = this.#yinjieInitials.indexOf(item)) > -1) 
-      {
-        tokenList.push('');
         separatorList.push(false);
-        this.#cache.set(item, '');
-        continue;
+      } else {
+        // TODO
+        tokenList.push(lastToken);
+        separatorList.push(false);
       }
+    } else if (lastToken) {
+      let firstCh = lastToken[0];
+      let lastCh = lastToken.slice(-1);
+      if (this.#yinjieInitials.indexOf(firstCh) > -1) {
+        let findIndex = this.#yinjieKey.indexOf(lastToken);
+        if (findIndex > -1) {
+          tokenList.push(this.#yinjie[findIndex]);
+          separatorList.push(true);
+        } else {
+          // todo
+          tokenList.push(lastToken);
+          separatorList.push(false);
+        }
+      } else {
+        let shengmu = lastToken.slice(0, -1);
 
-      if ((findIndex = this.#yinjieKey.indexOf(item)) > -1) {
-        tokenList.push(this.#yinjie[findIndex]);
-        separatorList.push(true);
-        this.#cache.set(item, this.#yinjie[findIndex]);
-        continue;
+        let yunmuList = this.#yunmuEntries.filter(entry => lastCh == entry[1]);
+        console.log("filter yunmuList", yunmuList);
+        if (yunmuList.length > 0) {
+          let spellingList: string[] = [];
+          yunmuList.forEach(entry => spellingList.push(shengmu + entry[0]));
+          spellingList = spellingList.filter(spelling => this._tokenReg.test(spelling));
+          console.log("filter spellingList", spellingList);
+          
+          if (spellingList.length == 1) {
+            tokenList.push(spellingList[0]);
+            separatorList.push(true);
+          } else {
+            // todo
+
+          }
+        } else {
+          // todo
+        }
+
       }
       
-      let ch1 = item[0];
-      let ch2 = item[1];
-
-      let spellingList = [];
-      let shengmuIndex = this.#shengmuKey.indexOf(ch1);
-      // if (shengmuIndex < 0) throw Error("Input error.");
-      if (shengmuIndex < 0) return null;
-      let shengmu = this.#shengmu[shengmuIndex];
-      
-      let yunmuList = this.#yunmuEntries.filter((entry) => ch2 == entry[1]);
-      // if (yunmuList.length == 0) throw Error("Input error.");
-      if (yunmuList.length == 0) return null;
-      else if (yunmuList.length == 1) spellingList.push(shengmu + yunmuList[0][0]);
-      else yunmuList.forEach(entry => spellingList.push(shengmu + entry[0]));
-
-      spellingList.filter((spelling) => this._tokenReg.test(spelling));
-      if (spellingList.length > 0) {
-        tokenList.push(spellingList[0]);
-        separatorList.push(true);
-        this.#cache.set(item, spellingList[0]);
-        continue;
-      }
-      // throw Error("Input error.");
-      return null;
+    } else {
+      // TODO
     }
     
     return new TokenPath(tokenList, separatorList);
