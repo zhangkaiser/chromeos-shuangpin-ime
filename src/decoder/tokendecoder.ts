@@ -64,7 +64,7 @@ export class TokenDecoder extends EventTarget {
    */
   private _currentStr = '';
 
-  private _separators:number[] = [];
+  private _separators: number[] = [];
   /** The separator character. */
   private _separatorChar = '\'';
 
@@ -73,6 +73,8 @@ export class TokenDecoder extends EventTarget {
 
   /** The shuangpin solution. */
   private _solution?: IShuangpinModel;
+
+  #cache = new Map<string, string>();
 
   /**
    * The init number given to invalid path, to make sure it is larger than any
@@ -126,8 +128,26 @@ export class TokenDecoder extends EventTarget {
 
   static #INVALID_PATH_INIT_NUM = 100;
 
+  #yinjie: string[] = [];
+  #yinjieKey: string[] = [];
+  #yinjieInitials: string[] = [];
+
+  #shengmu: string[] = [];
+  #shengmuKey: string[] = [];
+
+  #yunmuEntries: [string, string][] = [];
+
   updateShuangpinSolution(solution: IShuangpinModel) {
-    this._solution = solution;
+    
+    this.#yinjie = Object.keys(solution.yinjie);
+    this.#yinjieKey = Object.values(solution.yinjie);
+    this.#yinjieInitials = this.#yinjieKey.map((item) => item[0]);
+
+
+    this.#shengmu = Object.keys(solution.shengmu);
+    this.#shengmuKey = Object.values(solution.shengmu);
+
+    this.#yunmuEntries = Object.entries(solution.yunmu);
   }
 
   /**
@@ -258,6 +278,7 @@ export class TokenDecoder extends EventTarget {
    */
   getBestTokens(source: string) {
     let tokenLists = this.getTokens(source);
+
     if (tokenLists.length == 0) {
       return null;
     }
@@ -318,6 +339,7 @@ export class TokenDecoder extends EventTarget {
     this._lattice = [];
     this._lattice[0] = new LatticeNode();
     this._lattice[0].initNum = 0;
+    this.#cache = new Map();
   }
 
   /**
@@ -521,4 +543,79 @@ export class TokenDecoder extends EventTarget {
     }
     return res;
   }
+
+  getShuangpinTokens(source: string) {
+    let splitStr = source.split(/(\w.)/, 2);
+    let splitList = splitStr.filter((a) => a);
+    console.log('getShuangpinTokens -> splitList', splitList);
+
+    let tokenList: string[] = [];
+    let separatorList = [];
+
+    console.log('getShuangpinTokens:begin');
+    for (let i = 0, l = splitList.length; i < l; i++) {
+      console.log('getShuangpinTokens -> splitList item', i, splitList[i]);
+      let item = splitList[i];
+      let cache;
+      if (cache = this.#cache.get(item)) {
+        tokenList.push(cache)
+        separatorList.push(true);
+        continue;
+      }
+
+      let findIndex;
+      if (item.length == 1 
+        && (findIndex = this.#shengmuKey.indexOf(item)) > -1) 
+      {
+        tokenList.push(this.#shengmu[findIndex]);
+        separatorList.push(true);
+        this.#cache.set(item, this.#shengmu[findIndex]);
+        continue;
+      }
+
+      if (item.length == 1
+        && (findIndex = this.#yinjieInitials.indexOf(item)) > -1) 
+      {
+        tokenList.push('');
+        separatorList.push(false);
+        this.#cache.set(item, '');
+        continue;
+      }
+
+      if ((findIndex = this.#yinjieKey.indexOf(item)) > -1) {
+        tokenList.push(this.#yinjie[findIndex]);
+        separatorList.push(true);
+        this.#cache.set(item, this.#yinjie[findIndex]);
+        continue;
+      }
+      
+      let ch1 = item[0];
+      let ch2 = item[1];
+
+      let spellingList = [];
+      let shengmuIndex = this.#shengmuKey.indexOf(ch1);
+      // if (shengmuIndex < 0) throw Error("Input error.");
+      if (shengmuIndex < 0) return null;
+      let shengmu = this.#shengmu[shengmuIndex];
+      
+      let yunmuList = this.#yunmuEntries.filter((entry) => ch2 == entry[1]);
+      // if (yunmuList.length == 0) throw Error("Input error.");
+      if (yunmuList.length == 0) return null;
+      else if (yunmuList.length == 1) spellingList.push(shengmu + yunmuList[0][0]);
+      else yunmuList.forEach(entry => spellingList.push(shengmu + entry[0]));
+
+      spellingList.filter((spelling) => this._tokenReg.test(spelling));
+      if (spellingList.length > 0) {
+        tokenList.push(spellingList[0]);
+        separatorList.push(true);
+        this.#cache.set(item, spellingList[0]);
+        continue;
+      }
+      // throw Error("Input error.");
+      return null;
+    }
+    
+    return new TokenPath(tokenList, separatorList);
+  }
+
 }

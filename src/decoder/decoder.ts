@@ -54,7 +54,14 @@ export default class Decoder implements IDecoder {
    * Gets the transliterations (without scores) for the source word.
    */
   decode(sourceWord: string, selectedCandID: number) {
-    let tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
+
+    let tokenPath;
+    if (this.#dataLoader.shuangpinStatus) {
+      tokenPath = this.#tokenDecoder.getShuangpinTokens(sourceWord);
+    } else {
+      tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
+    }
+
     if (!tokenPath) {
       return null;
     }

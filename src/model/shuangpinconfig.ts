@@ -11,11 +11,9 @@ export class ShuangpinConfig extends PinyinConfig {
   editorCharReg = /[a-z;]/;
 
   initialCharList = 'iuv'.split('');
-  tokensRegexp: RegExp;
 
   constructor() {
     super();
-    this.tokensRegexp = new RegExp(`^(${this.tokens})$`);
   }
 
   solution = 'pinyinjiajia';

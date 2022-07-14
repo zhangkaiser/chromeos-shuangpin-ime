@@ -37,8 +37,14 @@ export default class Decoder implements IDecoder {
     if (!this.decoder) return null;
     let { shuangpinStatus } = this.#dataloader;
 
-    // Get the pinyin best token.(support pinyin and shuangpin).
-    let tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
+    let tokenPath;
+    if (shuangpinStatus) {
+      tokenPath = this.#tokenDecoder.getShuangpinTokens(sourceWord);
+    } else {
+      tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
+    }
+    console.log(tokenPath);
+
     if (!tokenPath) return null;
     
     let candidates: Candidate[] = [];

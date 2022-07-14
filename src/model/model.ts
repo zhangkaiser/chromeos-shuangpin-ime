@@ -5,7 +5,8 @@ import { configFactoryInstance } from "./configfactory";
 import JSDecoder from "../decoder/decoder";
 import WASMDecoder from "../decoder/cdecoder";
 import Module from "../../libGooglePinyin/decoder.js";
-import { isJS } from "../utils/regexp";
+import { isJS, isPinyin } from "../utils/regexp";
+import { pinyinjiajia } from "./shuangpinSolutions";
 
 /**
  * The model, which manages the state transfers and commits.
@@ -131,10 +132,13 @@ export class Model extends EventTarget implements IModel {
   setEngineID(engineID: string): void {
     this.engineID = engineID;
     if (isJS(engineID)) {
-      // TODO
-      this._decoder = new JSDecoder(engineID);
+      this._decoder = isPinyin(engineID) 
+        ? new JSDecoder(engineID)
+        : new JSDecoder(engineID, pinyinjiajia());
     } else {
-      this._decoder = new WASMDecoder(engineID as InputToolCode);
+      this._decoder = isPinyin(engineID) 
+        ? new WASMDecoder(engineID)
+        : new WASMDecoder(engineID, pinyinjiajia());
     }
   }
 
@@ -344,13 +348,13 @@ export class Model extends EventTarget implements IModel {
 
   /** Resume state. */
   resume() {
+    this.isFromInactive = false;
     if (this.stateCache) {
       let cacheNames = Object.keys(this.stateCache);
       for (let i in cacheNames) {
         (this as any)[i] = this.stateCache[cacheNames[i]];
       }
     }
-    this.isFromInactive = false;
     this.stateCache = '';
   }
 
