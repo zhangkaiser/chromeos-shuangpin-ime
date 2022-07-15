@@ -577,12 +577,10 @@ export class TokenDecoder extends EventTarget {
         let shengmu = lastToken.slice(0, -1);
 
         let yunmuList = this.#yunmuEntries.filter(entry => lastCh == entry[1]);
-        console.log("filter yunmuList", yunmuList);
         if (yunmuList.length > 0) {
           let spellingList: string[] = [];
           yunmuList.forEach(entry => spellingList.push(shengmu + entry[0]));
           spellingList = spellingList.filter(spelling => this._tokenReg.test(spelling));
-          console.log("filter spellingList", spellingList);
           
           if (spellingList.length == 1) {
             tokenList.push(spellingList[0]);

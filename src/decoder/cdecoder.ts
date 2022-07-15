@@ -43,7 +43,6 @@ export default class Decoder implements IDecoder {
     } else {
       tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
     }
-    console.log(tokenPath);
 
     if (!tokenPath) return null;
     

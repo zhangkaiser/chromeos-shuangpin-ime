@@ -15,7 +15,7 @@ interface IModel {
   
 
   /** Highlight string, Moves and Updates this.highlightIndex */
-  updateHighlight(newHighlight: number): void;
+  updateHighlight(newIndex: number): void;
   moveHighlight(step: number): void;
 
   /** Page, Moves the current page and Gets the current page. */
@@ -147,20 +147,23 @@ export class Model extends EventTarget implements IModel {
   }
 
 
-  updateHighlight(newHighlight: number) {
-    if (this.status != Status.SELECT || newHighlight < this.candidates.length) return ;
-    if (newHighlight < 0) newHighlight = 0;
+  updateHighlight(newIndex: number) {
+    console.log('updateHighlight', newIndex);
+    if (this.status != Status.SELECT || newIndex >= this.candidates.length) return ;
+    if (newIndex < 0) newIndex = 0;
     
-    this.highlightIndex = newHighlight;
+    this.highlightIndex = newIndex;
     this.notifyUpdates();
   }
 
   moveHighlight(step: number) {
+    console.log('moveHighlight', step);
     if (this.status != Status.SELECT) return;
     this.updateHighlight(this.highlightIndex + step);
   }
 
   movePage(step: number): void {
+    console.log('movePage', step);
     if (this.status != Status.SELECT) return;
 
     let { pageSize } = this.currentConfig;

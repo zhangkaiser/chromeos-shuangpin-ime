@@ -92,7 +92,7 @@ export default class ChineseConfig extends Config {
 			}
 		}
 		
-		let langState = new State( '输入语言为中文', true, [' ', Modifier.ALT] );
+		let langState = new State( '输入语言为中文', true, [Modifier.SHIFT] );
 		let sbcState = new State('字符宽度为全角', false, [' ', Modifier.SHIFT]);
 		let puncState = new State('标点符号宽度为全角', true, ['\\.', Modifier.CTRL]);
     let traditionalState = new State('Chinese traditional output.', false, ['t', Modifier.SHIFT]);

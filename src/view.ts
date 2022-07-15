@@ -123,12 +123,15 @@ export class View {
    */
   showCandidates() {
 
-    let pageIndex = this.model.pageIndex;
+    let { pageIndex, highlightIndex } = this.model;
+    let { pageSize } = this.currentConfig;
 
     if (this.window) {
       this.window.setPageNumber(pageIndex);
-      this.window.setCandidates(this.model.candidates);
-      this.window.show(this._context.contextID, )
+      this.window.setCandidates(this.model.candidates);      
+      // TODO 
+      let currentIndex = highlightIndex >= 0 ? highlightIndex % pageSize : 0;
+      this.window.show(this._context.contextID, currentIndex);
     }
   }
 }

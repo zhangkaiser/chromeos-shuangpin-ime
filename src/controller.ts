@@ -64,7 +64,6 @@ export class Controller extends EventTarget {
     this.model.addEventListener(EventType.OPENING, this.handleOpeningEvent.bind(this));
     this.model.addEventListener(EventType.CLOSING, this.handleClosingEvent.bind(this));
     this.model.addEventListener(EventType.MODELUPDATED, this.handleModelUpdatedEvent.bind(this));
-    console.log("Hello Controller!");
   }
 
   /**
@@ -246,7 +245,7 @@ export class Controller extends EventTarget {
       && keyEvent.ctrlKey
       && keyEvent.key === Modifier.SHIFT 
     ) {
-      this.switchInputToolState(inputToolCode, StateID.LANG);
+      this.switchInputToolState(StateID.LANG, inputToolCode);
       return true;
     }
 
@@ -338,7 +337,6 @@ export class Controller extends EventTarget {
     }
 
     // this.model.addRawSource;
-    console.log('processCharKey->', text, this.model.rawSource);
     this.model.updateSource(e.key, text);
     return true;
   }
@@ -359,15 +357,17 @@ export class Controller extends EventTarget {
       if (e.type != item[0]) continue;
 
       let modifier = item[1];
+
+      if (modifier == 0 && (e.ctrlKey || e.altKey || e.shiftKey)) {
+        continue;
+      }
+
+      // TODO Shift shortcut bug.
       if (
         modifier == Modifier.SHIFT && !e.shiftKey 
         || modifier == Modifier.CTRL && !e.ctrlKey 
         || modifier == Modifier.ALT && !e.altKey
       ) {
-        continue;
-      }
-
-      if (modifier == 0 && (e.ctrlKey || e.altKey || e.shiftKey)) {
         continue;
       }
 
@@ -377,15 +377,21 @@ export class Controller extends EventTarget {
           continue;
         }
       
-      if (item[3] && this.model.status != item[3]) {
+      if (item[3] 
+        && this.model.status != item[3]) {
         continue;
       }
+      
       // TODO
-      if (!item[4] || item[4]()) {
-        if (item[5].apply(
-            item[6], item[7] != undefined ? item.slice(7) : [e]) != false) {
-          return true;
-        }
+      if ((!item[4] || item[4]()) &&
+        item[5].apply(
+          item[6], 
+          item[7] 
+            ? item.slice(7) 
+            : [e]
+        ) != false
+      ) {
+        return true;
       }
 
     }
@@ -521,7 +527,6 @@ export class Controller extends EventTarget {
   handleCommitEvent() {
     if (this._context) {
       let segments = this.model.segments.join('');
-      console.log('handleCommitEvent -> segments', segments);
       if (this.currentConfig.enableTraditional) {
         segments = hans2Hant(segments);
       }
@@ -540,7 +545,7 @@ export class Controller extends EventTarget {
   * @return {!Array.<!Array>} The key action table.
   * @protected
   */
-  getKeyActionTable()
+  getKeyActionTable(): ActionType[]
   {
     let config = this.currentConfig;
 
@@ -562,7 +567,7 @@ export class Controller extends EventTarget {
 
     // [EventType, Modifier, KeyCode/KeyChar, ModelStatus, MoreConditionFunc,
     //  ActionFunc, ActionFuncScopeObj, args]
-    let actionList: ActionType[] = [
+    return [
       // Pageup action.
       [EventType.KEYDOWN, 0, Key.PAGE_UP, null, onStageCondition, 
         this.model.movePage, this.model, 1],
@@ -580,6 +585,7 @@ export class Controller extends EventTarget {
       // Select keys regexp action.
       [EventType.KEYDOWN, 0, config.selectKeyReg, Status.SELECT, null,
         this.processNumberKey, this, null],
+
       // Default select action for Space key .
       [EventType.KEYDOWN, 0, Key.SPACE, null, onStageNotSelectableCondition,
         this.processSelectKey, this, null],
@@ -618,8 +624,6 @@ export class Controller extends EventTarget {
       [EventType.KEYDOWN, 0, config.punctuationReg, null, onStageCondition,
       this.processPuncKey, this, null]
     ];
-
-    return actionList;
   }
 
 
@@ -634,7 +638,7 @@ export class Controller extends EventTarget {
     let shortcutTable: ActionType[] = [];
     let config = this.currentConfig;
     
-    for (let name in shortcutTable) {
+    for (let name in config.states) {
       let state = config.states[name as StateID];
       // TODO `shift` shortcut key cannot run.
       if (state.shortcut.length == 1 
@@ -642,16 +646,16 @@ export class Controller extends EventTarget {
         // switch language.
         // To handle SHIFT shortcut.
         shortcutTable.unshift(
-            [EventType.KEYDOWN, 0, Modifier.SHIFT, null, null,
-            this._updateLastKeyIsShift, this, null]);
+            [EventType.KEYDOWN, Modifier.SHIFT, Modifier.SHIFT, null, null,
+              this._updateLastKeyIsShift, this, null]);
         shortcutTable.push(
-            [EventType.KEYUP, Modifier.SHIFT, Modifier.SHIFT, null,
-            () =>  this._lastKeyDownIsShift, this.switchInputToolState, this, name]);
-      } else if (state.shortcut.length >= 1) {
+            [EventType.KEYUP, 0, Modifier.SHIFT, null, () =>  this._lastKeyDownIsShift, 
+              this.switchInputToolState, this, name]);
+      } else {
         // Switch state.
         shortcutTable.push(
-            [EventType.KEYDOWN, state.shortcut[1], state.shortcut[0],
-            null, null, this.switchInputToolState, this, name]);
+            [EventType.KEYDOWN, state.shortcut[1], state.shortcut[0], null, null, 
+              this.switchInputToolState, this, name]);
       }
     }
     
@@ -661,7 +665,7 @@ export class Controller extends EventTarget {
   /**
    * Switch the input tool state.
    */
-  switchInputToolState(engineID: string, stateId: StateID) {
+  switchInputToolState(stateId: StateID, engineID: string) {
 
     let { states } = this.currentConfig;
     
@@ -676,6 +680,7 @@ export class Controller extends EventTarget {
     this.model.clear();
     this.view.updateItems(stateId);
     this.view.hide();
+    return true;
   }
 
   /**

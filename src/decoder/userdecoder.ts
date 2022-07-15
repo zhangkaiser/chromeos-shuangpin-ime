@@ -53,7 +53,6 @@ export default class UserDecoder {
   }
 
   add(source: string, target: string) {
-    // console.log(source, target, this._latestMap, this._permantMap);
     if (!this._latestMap[source]) {
       this._latestMap[source] = {};
       this._latestMap[source][target] = 1;
