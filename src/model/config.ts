@@ -22,7 +22,7 @@ export abstract class Config {
 
   /** The punctuationReg. */
   punctuationReg = /[^a-z0-9 \r]/i
-
+  
   /** The regexp for editor chars. */
   editorCharReg = /[a-z]/i;
 

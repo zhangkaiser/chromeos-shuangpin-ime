@@ -355,6 +355,9 @@ export class Controller extends EventTarget {
     for (let item of table) {
       // Each item of the key action table is an array with this format:
       if (e.type != item[0]) continue;
+      if (this._lastKeyDownIsShift && e.key != Modifier.SHIFT) {
+        this._lastKeyDownIsShift = false;
+      }
 
       let modifier = item[1];
 
@@ -372,16 +375,15 @@ export class Controller extends EventTarget {
       }
 
       if (item[2] 
-          && key != item[2]
-          && (key.length != 1 || !key.match(item[2]))) {
-          continue;
-        }
-      
+        && key != item[2]
+        && (key.length != 1 || !key.match(item[2]))) {
+        continue;
+      }
+
       if (item[3] 
         && this.model.status != item[3]) {
         continue;
       }
-      
       // TODO
       if ((!item[4] || item[4]()) &&
         item[5].apply(
@@ -393,7 +395,6 @@ export class Controller extends EventTarget {
       ) {
         return true;
       }
-
     }
     return false;
   }
@@ -619,7 +620,8 @@ export class Controller extends EventTarget {
       this.processCharKey, this, null],
       // Shift + char?
       [EventType.KEYDOWN, Modifier.SHIFT, config.editorCharReg, null, null,
-      this.processCharKey, this, null],
+        this.processCharKey, this, null],
+      
       // Punch key.
       [EventType.KEYDOWN, 0, config.punctuationReg, null, onStageCondition,
       this.processPuncKey, this, null]
@@ -643,7 +645,7 @@ export class Controller extends EventTarget {
       // TODO `shift` shortcut key cannot run.
       if (state.shortcut.length == 1 
         && state.shortcut[0] == Modifier.SHIFT) {
-        // switch language.
+        // Switch language.
         // To handle SHIFT shortcut.
         shortcutTable.unshift(
             [EventType.KEYDOWN, Modifier.SHIFT, Modifier.SHIFT, null, null,
