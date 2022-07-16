@@ -5,7 +5,7 @@ import { configFactoryInstance } from "./configfactory";
 import JSDecoder from "../decoder/decoder";
 import WASMDecoder from "../decoder/cdecoder";
 import { isJS, isPinyin } from "../utils/regexp";
-import { pinyinjiajia } from "./shuangpinSolutions";
+import { getShuangpinSolution } from "./shuangpinSolutions";
 
 /**
  * The model, which manages the state transfers and commits.
@@ -133,11 +133,11 @@ export class Model extends EventTarget implements IModel {
     if (isJS(engineID)) {
       this._decoder = isPinyin(engineID) 
         ? new JSDecoder(engineID)
-        : new JSDecoder(engineID, pinyinjiajia());
+        : new JSDecoder(engineID, getShuangpinSolution(this.currentConfig.shuangpinSolution));
     } else {
       this._decoder = isPinyin(engineID) 
         ? new WASMDecoder(engineID)
-        : new WASMDecoder(engineID, pinyinjiajia());
+        : new WASMDecoder(engineID, getShuangpinSolution(this.currentConfig.shuangpinSolution));
     }
   }
 
@@ -245,8 +245,12 @@ export class Model extends EventTarget implements IModel {
       this.commitPos = 0;
     } else if (this.cursorPos > 0) {
       let segment = this.segments[this.cursorPos - 1];
-      deletedChar = segment.slice(-1);
-      segment = segment.slice(0, -1);
+      let revertConfig = this.currentConfig.revert(segment, this.rawSource);
+      console.log(segment, revertConfig)
+      deletedChar = revertConfig.deletedChar;
+      segment = revertConfig.segment;
+      this.rawSource = revertConfig.source;
+
       if (segment) {
         this.segments[this.cursorPos - 1] = segment;
       } else {
@@ -256,7 +260,6 @@ export class Model extends EventTarget implements IModel {
         this.cursorPos--;
       }
     }
-
     this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
     if (this.source == '') {
       this.notifyUpdates(true);

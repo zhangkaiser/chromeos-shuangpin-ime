@@ -545,7 +545,6 @@ export class TokenDecoder extends EventTarget {
   }
 
   getShuangpinTokens(source: string) {
-
     let tokenList = source.split("'");
     let lastToken  = tokenList.pop();
     let separatorList = new Array(tokenList.length).fill(true);
@@ -588,9 +587,13 @@ export class TokenDecoder extends EventTarget {
           } else {
             // todo
 
+            tokenList.push(lastToken);
+            separatorList.push(false);
           }
         } else {
           // todo
+        tokenList.push(lastToken);
+        separatorList.push(false);
         }
 
       }

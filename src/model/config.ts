@@ -104,5 +104,13 @@ export abstract class Config {
     return c;
   }
 
+  revert(segment: string, source: string) {
+    return {
+      deletedChar: segment.slice(-1),
+      segment: segment.slice(0, -1),
+      source: source.slice(0, -1)
+    }
+  }
+
   setSolution(text: string) { }
 }

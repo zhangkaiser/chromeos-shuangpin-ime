@@ -51,7 +51,7 @@ export const shengmuDefaultMap: ShengMuType = {
 type YunMuType = Record<|
   "uang" | "iang" | "iong" | "ang" | "eng" | "ian" | "iao" | "ing" |
   "ong" | "uai" | "ai" | "ao" | "an"| "ei" | "en" | "er" | "ua" | "ie" | 
-  "in" | "iu" | "ou" | "ia" | "ue" | "ui" | "un" | "uo" |
+  "in" | "iu" | "ou" | "ia" | "ue" | "ui" | "un" | "uo" | 'uan' |
   "a" | "e" | "i" | "o" | "u" | "v", CharKeyType>;
 
 export const yunmuDefaultMap: YunMuType = {
@@ -61,7 +61,7 @@ export const yunmuDefaultMap: YunMuType = {
   "uo": "o", "ai": "s", "ao": "d", "an": "f", "ian": "j",
   "iao": "k", "in": "l", "un": "z", "iu": "n", "ie": "m",
   "eng": "t", "uai": "x", "ue": "x", "ia": "b", "ua": "b",
-  "ou": "p", "ui": "v"
+  "ou": "p", "ui": "v", "uan": 'c'
 }
 
 type YinJieType = Record<|
@@ -69,8 +69,8 @@ type YinJieType = Record<|
   "o" | "ou", string>;
 export const yinjieDefaultMap: YinJieType = {
   "a": "oa", "ai": "os", "an": "of", "ang": "og",
-  "ao": "od", "e": "oe", "en": "or", "eng": "ot", "er": "oq",
-  "o": "oo", "ou": "op", "ei": "ow"
+  "ao": "od", "e": "oe", "en": "or", "eng": "ot", 
+  "er": "oq", "o": "oo", "ou": "op", "ei": "ow"
 }
 
 
