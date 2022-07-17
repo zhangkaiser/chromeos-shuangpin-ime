@@ -4,7 +4,7 @@
 
 import { KeyboardLayouts } from "./enums";
 import type { State } from "./state";
-import type { StateID} from "./enums";
+import { StateID} from "./enums";
 
 export interface IConfig {
   states: Record<StateID, State>;

@@ -97,3 +97,8 @@ export enum InputToolCode {
   JS_PINYIN = "zh-js-pinyin",
   JS_SHUANGPIN = "zh-js-shuangpin"
 }
+
+export enum MessageType {
+  UPDATE_STATE = 1,
+  GET_STATES
+}

@@ -1,7 +1,8 @@
 import { Controller } from "./controller";
+import { IMessage } from "./model/common";
 import { configFactoryInstance } from "./model/configfactory";
-import { EventType, InputToolCode, StateID } from "./model/enums";
-import { OnlineState } from "./model/state";
+import { EventType, InputToolCode, MessageType, StateID } from "./model/enums";
+import { IMessageDataOfUpdateState, OnlineState } from "./model/state";
 import { enableDebug } from "./utils/debug";
 import { loadDict } from "./utils/transform";
 
@@ -32,8 +33,9 @@ export class Background {
   }
 
   #updateStateToStorage() {
-    chrome.storage.sync.set({
-      config: this._controller.localConfig
+    let states = this._controller.model.states;
+    chrome.storage.local.set({
+      states
     })
   }
 
@@ -47,7 +49,7 @@ export class Background {
     })
 
     chrome.input.ime.onActivate.addListener((engineID) => {
-      this.#updateSettingsFromLocalStorage();
+      this.#restoreState();
       this._controller.activate(engineID as InputToolCode);
     })
 
@@ -83,11 +85,7 @@ export class Background {
     // TODO
     chrome.input.ime.onMenuItemActivated.addListener((
       engineID, name) => {
-      this._controller.switchInputToolState(engineID, name as StateID);
-    });
-    
-    chrome.input.ime.onInputContextUpdate.addListener(() => {
-
+      this._controller.switchInputToolState(name as any, engineID);
     });
   
     // TODO
@@ -103,41 +101,17 @@ export class Background {
   }
 
   /**
-   * @todo
-   * Updates settings from local storage.
+   * Restore the state from cached.
    */
-  #updateSettingsFromLocalStorage() {
-    chrome.storage.sync.get('config', (res) => {
-      if (!res || !res['config']) return ;
-      let config = res['config'];
-      
-      let currentConfig = this.configFactory.getCurrentConfig();
-
-      // Set the current shuangpin solution.
-      currentConfig.setSolution(config['solution']);
-
-      // Set SBC/PUBC states.
-      currentConfig.states[StateID.SBC].value = config?.chos_init_sbc_selection;
-      currentConfig.states[StateID.PUNC].value = config?.chos_init_punc_selection;
-
-      // Set custom states.
-      currentConfig.enableVertical = config?.chos_init_vertical_selection ?? false;
-
-      // Simplified Chinese to Traditional Chinese enable status.(hans2hanz)
-      currentConfig.enableTraditional = config?.chos_init_enable_traditional ?? false;
-      if (currentConfig.enableTraditional) {
-        // Load Chinese Traditional dict.
-        loadDict();
+  #restoreState() {
+    chrome.storage.local.get('states', (res) => {
+      if (res && res['states']) {
+        this._controller.model.setStates(res["states"]);
+        if (res["states"].enableTraditional) {
+          // Early Loading Chinese Traditional dict.
+          loadDict();
+        }
       }
-
-      // Online decoder enable status.
-      if (Reflect.has(config, 'onlineStatus')) {
-        OnlineState.onlineStatus = config.onlineStatus;
-        OnlineState.onlineEngine = config?.onlineEngine;
-      }
-
-      // Cache the current status.
-      this._controller.localConfig = config;
     });
   }
 
@@ -145,11 +119,19 @@ export class Background {
    * Processes incoming requests from option page.
    */
   processRequest(
-    message: any, 
+    message: IMessage, 
     sender: chrome.runtime.MessageSender, 
-    sendResponse: (response?: any) => void ) {
-    if (message['update']) {
-      chrome.storage.sync.set({ config: message['config']});
+    sendResponse: (responseData?: any) => void ) {
+    
+    switch (message['type']) {
+      case MessageType.UPDATE_STATE:
+        let data = <IMessageDataOfUpdateState>message.data;
+        this._controller.updateState(data.state, data.value);
+        sendResponse(true);
+        return true;
+      case MessageType.GET_STATES:
+        sendResponse(this._controller.model.states);
+        return true;
     }
   }
 }

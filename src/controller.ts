@@ -1,6 +1,7 @@
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, Key, KeyboardLayouts, Modifier, StateID, Status } from "./model/enums";
 import { Model } from "./model/model";
+import { IIMEState } from "./model/state";
 import { debugLog } from "./utils/debug";
 import { hans2Hant } from "./utils/transform";
 import { View } from "./view";
@@ -20,6 +21,8 @@ type ActionType = [
  * The controller for os chrome os extension.
  */
 export class Controller extends EventTarget {
+
+  static UPDATE_STATE_EVENT = new CustomEvent(EventType.UPDATESTATE);
   /** The model. */
   model = new Model();
 
@@ -36,17 +39,6 @@ export class Controller extends EventTarget {
 
   /** True if the last key down is shift (with not modifiers). */
   _lastKeyDownIsShift = false;
-
-  /** The user local storage config. */
-  localConfig: UserStorageConfig = {
-    'chos_init_punc_selection': true,
-    'chos_next_page_selection': true,
-    'chos_prev_page_selection': true,
-    'chos_init_sbc_selection': false,
-    'chos_init_vertical_selection': false,
-    'chos_init_enable_traditional': false,
-    'solution': "pinyinjiajia"
-  }
 
   /** If from inactive, Need to delete the surround text. */
   _lastKeyChar: string = '';
@@ -180,9 +172,13 @@ export class Controller extends EventTarget {
     }
   }
 
+  updateState(key: string, value: any) {
+    this.model.setStates({ [key]: value });
+    this.dispatchEvent(Controller.UPDATE_STATE_EVENT)
+  }
+
   changePuncConfig(value: boolean) {
-    this.localConfig['chos_init_punc_selection'] = value;
-    this.dispatchEvent(new CustomEvent(EventType.UPDATESTATE));
+    this.updateState('punc', value);
   }
 
   /**
@@ -667,20 +663,15 @@ export class Controller extends EventTarget {
   /**
    * Switch the input tool state.
    */
-  switchInputToolState(stateId: StateID, engineID: string) {
+  switchInputToolState(stateId: keyof IIMEState, engineID: string) {
 
-    let { states } = this.currentConfig;
-    
-    states[stateId].value = !states[stateId].value;
-    if (stateId == StateID.LANG) {
-      states[StateID.PUNC].value = states[StateID.LANG].value;
-    }
-    if (stateId === StateID.PUNC) {
-      this.changePuncConfig(states[StateID.PUNC].value);
+    let { states } = this.model;
+    if (typeof states[stateId] == 'boolean') {
+      this.updateState(stateId, !states[stateId]);
     }
 
     this.model.clear();
-    this.view.updateItems(stateId);
+    this.view.updateMenuItems(stateId as StateID);
     this.view.hide();
     return true;
   }
@@ -720,5 +711,9 @@ export class Controller extends EventTarget {
       }
     }
     return key;
+  }
+
+  [Symbol.toStringTag]() {
+    return "Controller";
   }
 }

@@ -1,11 +1,14 @@
 
-import { EventType, InputToolCode, Status } from "./enums";
+import { EventType, InputToolCode, StateID, Status } from "./enums";
 import { Candidate } from "./candidate";
 import { configFactoryInstance } from "./configfactory";
 import JSDecoder from "../decoder/decoder";
 import WASMDecoder from "../decoder/cdecoder";
 import { isJS, isPinyin } from "../utils/regexp";
 import { getShuangpinSolution } from "./shuangpinSolutions";
+
+import { IIMEState, State, getStates, setStates } from "./state";
+import { Config } from "./config";
 
 /**
  * The model, which manages the state transfers and commits.
@@ -118,6 +121,15 @@ export class Model extends EventTarget implements IModel {
   /** The current global configure. */
   get currentConfig() {
     return this.configFactory.getCurrentConfig()!;
+  }
+
+  /** The user local storage config. */
+  get states(): IIMEState {
+    return getStates(this.currentConfig);
+  }
+
+  setStates(states: Partial<IIMEState>) {
+    setStates(this.currentConfig, states);
   }
 
   /** The current page index. */

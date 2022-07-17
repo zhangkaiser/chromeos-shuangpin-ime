@@ -109,7 +109,6 @@ export default class ChineseConfig extends Config {
 
   createState() {
     let state = new State();
-
   }
 	
 	/**

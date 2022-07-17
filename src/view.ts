@@ -35,13 +35,13 @@ export class View {
   updateInputTool() {
     this._inputToolCode = this.configFactory.getInputTool();
     this.window = new CandidateWindow(this._inputToolCode, this.currentConfig);
-    this.updateItems();
+    this.updateMenuItems();
   }
 
   /**
    * Updates the menu items.
    */
-  updateItems(stateId?: StateID) {
+  updateMenuItems(stateId?: StateID) {
     if (!this._inputToolCode) return ;
   
     let states = this.configFactory.getCurrentConfig().states;
