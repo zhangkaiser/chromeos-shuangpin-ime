@@ -49,8 +49,8 @@ export class Background {
     })
 
     chrome.input.ime.onActivate.addListener((engineID) => {
-      this.#restoreState();
       this._controller.activate(engineID as InputToolCode);
+      this.#restoreState();
     })
 
     chrome.input.ime.onDeactivated.addListener((engineID) => {
@@ -116,17 +116,20 @@ export class Background {
   }
 
   /**
+   * @todo IME may be inactive.
    * Processes incoming requests from option page.
    */
   processRequest(
     message: IMessage, 
     sender: chrome.runtime.MessageSender, 
     sendResponse: (responseData?: any) => void ) {
-    
+
+    this.configFactory.setInputTool(message.inputToolCode);
     switch (message['type']) {
       case MessageType.UPDATE_STATE:
-        let data = <IMessageDataOfUpdateState>message.data;
-        this._controller.updateState(data.state, data.value);
+        let data = message.data;
+        this._controller.updateState(data.name, data.value);
+        
         sendResponse(true);
         return true;
       case MessageType.GET_STATES:

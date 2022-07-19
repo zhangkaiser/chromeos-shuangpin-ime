@@ -120,7 +120,7 @@ export function xiaohe(): IShuangpinModel {
   }
 }
 
-let solutions: Record<string, Function> = {
+export let solutions = {
   pinyinjiajia_o,
   pinyinjiajia,
   ziranma_o,
@@ -128,10 +128,9 @@ let solutions: Record<string, Function> = {
   zhongwenzhixing_o,
   xiaohe_o,
   xiaohe
-
 }
 
 export function getShuangpinSolution(name: string) {
-  let func = solutions[name]; 
+  let func = (solutions as any)[name]; 
   return func ? func() : pinyinjiajia_o();
 }

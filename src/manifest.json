@@ -24,7 +24,8 @@
     "id": "zh-wasm-pinyin",
     "description": "支持拼音加加,小鹤等解决方法.",
     "language": "zh",
-    "layouts": ["us"]
+    "layouts": ["us"],
+    "options_page": "option.html?code=zh-wasm-pinyin"
     },
     {
       "name": "Chinese online pinyin - 1",
@@ -32,7 +33,9 @@
       "id": "zh-js-pinyin",
       "description": "",
       "language": "zh",
-      "layouts": ["us"]
+      "layouts": ["us"],
+      "options_page": "option.html?code=zh-js-pinyin"
+
     },
     {
       "name": "Chinese online shuangpin - 1",
@@ -40,7 +43,8 @@
       "id": "zh-js-shuangpin",
       "description": "",
       "language": "zh",
-      "layouts": ["us"]
+      "layouts": ["us"],
+      "options_page": "option.html?code=zh-js-shuangpin"
     },
     {
       "name": "Chinese online shuangpin",
@@ -48,7 +52,8 @@
       "id": "zh-wasm-shuangpin",
       "description": "",
       "language": "zh",
-      "layouts": ["us"]
+      "layouts": ["us"],
+      "options_page": "option.html?code=zh-wasm-shuangpin"
     }
   ],
   "options_page": "option.html",

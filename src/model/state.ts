@@ -39,7 +39,9 @@ export interface IIMEState {
   sbc: boolean,
   enableVertical: boolean,
   enableTraditional: boolean,
-  shuangpinSolution: string
+  shuangpinSolution: string,
+  enableOnline: boolean,
+  onlineEngine: number
 }
 
 export interface IMessageDataOfUpdateState {
