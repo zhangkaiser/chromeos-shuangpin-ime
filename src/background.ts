@@ -129,13 +129,16 @@ export class Background {
       case MessageType.UPDATE_STATE:
         let data = message.data;
         this._controller.updateState(data.name, data.value);
-        
         sendResponse(true);
-        return true;
+        break;
       case MessageType.GET_STATES:
         sendResponse(this._controller.model.states);
-        return true;
+        break;
+      default:
+        console.error("No handler", message.type);
     }
+
+    return true;
   }
 }
 

@@ -62,7 +62,10 @@ export function getStates(config: Config) {
 }
 
 export function setStates(config: Config, states: Partial<IIMEState>) {
-  for (const [key, value] of Object.entries(states)) {
+  if (!states) return ;
+  let entries = Object.entries(states);
+  if (!entries) return ;
+  for (const [key, value] of entries) {
     if (stateKeyList.indexOf(key as StateID) > -1) {
       config.states[key as StateID].value = value as boolean;
     } else {

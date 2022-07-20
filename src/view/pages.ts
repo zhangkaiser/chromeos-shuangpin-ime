@@ -330,4 +330,48 @@ embed {
   padding: 0 auto;
 }
 
+`
+
+
+export const virtualKeyBoardStyles = css`
+.vk-box {
+  height: auto;
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #b8b8b8;
+  border: 1px solid rgba(0,0,0,0.3);
+  z-index: 2147483644;
+  font-family: arial,sans-serif;
+  font-size: 14px;
+  position: fixed;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
+  touch-action: pinch-zoom; 
+}
+
+.vk-btn {
+  // border: 1px solid rgba(0,0,0,0.1);
+  width: 45pt;
+  height: 45pt;
+  margin: 2px;
+  text-align: center;
+  vertical-align: middle;
+  position: relative;
+  padding: 1px;
+  min-width: 0px;
+  max-width: 600px;
+  min-height: 0px;
+  max-height: 100px;
+  color: #444;
+  background-color: #f5f5f5;
+    
+  background-image: linear-gradient(to bottom,#f5f5f5,#f1f1f1);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#f5f5f5',EndColorStr='#f1f1f1');
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+
+.vk-cap {
+  cursor: default;
+  display: inline-block;
+}
 `;

@@ -7,6 +7,8 @@ import { MessageType, StateID } from "./model/enums";
 import { IIMEState } from "./model/state";
 import { solutions } from "./model/shuangpinSolutions";
 
+import "./components/virtualKeyboard";
+
 import { optionPageStyles } from "./view/pages";
 
 const codeRegExp = /[?code=.]zh-(js|wasm)-(shuangpin|pinyin)/i
@@ -150,18 +152,21 @@ class OptionPage extends LitElement {
 
 
   // 
-  onClickCheckbox(e: HTMLInputElement) {
-    let {id, value} = e;
+  onClickCheckbox(e: Event) {
+    let target = e.target as HTMLInputElement;
+    let {id, value} = target;
     this.updateState(id, value);
   }
 
-  onChooseEngine(e: HTMLSelectElement) {
-    let { value } = e;
+  onChooseEngine(e: Event) {
+    let target = e.target as HTMLSelectElement;
+    let { value } = target;
     this.updateState('onlineEngine', +value);
   }
 
-  onChooseShuangpin(e: HTMLSelectElement) {
-    let { value } = e;
+  onChooseShuangpin(e: Event) {
+    let target = e.target as HTMLSelectElement;
+    let { value } = target;
     this.updateState('shuangpinSolution', value);
   }
 
@@ -188,17 +193,17 @@ class OptionPage extends LitElement {
         <span><a href="#herf">See solution</a></span>
       </span>
     </div>
-    ${baseList.map((item) => {
-      return this.states ? html`
+    ${this.states && baseList.map((item) => {
+      return html`
         <div>
           <span class="controlled-setting-with-label">
-            <input @click=${this.onClickCheckbox} .type=${item.type} ?checked=${this.states[item.id as keyof IIMEState]} .id=${item.id}>
+            <input @click=${this.onClickCheckbox} .type=${item.type} ?checked=${this.states![item.id as keyof IIMEState]} .id=${item.id}>
             <span>
               <label .for=${item.id}>${item.label}</label>
             </span>
           </span>
         </div>
-      ` : html`<div>Error!</div>`;
+      `;
     })}
   </section>
 </div>
@@ -238,11 +243,9 @@ class OptionPage extends LitElement {
   }
 
   customShuangpin() {
-    
-    return html`
-      ${this.showCustomShuangpin ? html`<button>aa</button>
-      ` : ""}
-      `
+    return this.showCustomShuangpin ? html`
+<button>aa</button>
+    ` : "";
   }
 
 
@@ -251,16 +254,18 @@ class OptionPage extends LitElement {
   }): TemplateResult | TemplateResult[] {
     if (typeof value === 'string') {
       return html`
-      <span style="s-tag">${value}</span>;
-      `
+<span class="s-tag">${value}</span>
+`;
     } else if (Array.isArray(value)) {
       return value.map((item, index) => html`
-        <span style="s-tag">${value}</span>
-      `)
+<span class="s-tag">${value}</span>
+`);
     } else {
       // if (value.link) {
       // }
-      return html`<a href="${value.link}"></a>`;
+      return html`
+<a href="${value.link}"></a>
+`;
     }
   }
 
@@ -289,10 +294,10 @@ class OptionPage extends LitElement {
 
   render() {
     return html`
-      <header><h1>设置页面</h1><header>
-      ${this.baseSetting()}
-      ${this.onlineSetting()}
-      ${this.moreIntro()}
+<header><h1>设置页面</h1><header>
+${this.baseSetting()}
+${this.onlineSetting()}
+${this.moreIntro()}
     `;
   }
 }
