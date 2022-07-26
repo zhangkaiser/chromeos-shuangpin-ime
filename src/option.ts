@@ -255,17 +255,17 @@ class OptionPage extends LitElement {
     if (typeof value === 'string') {
       return html`
 <span class="s-tag">${value}</span>
-`;
+      `;
     } else if (Array.isArray(value)) {
       return value.map((item, index) => html`
 <span class="s-tag">${value}</span>
-`);
+      `);
     } else {
       // if (value.link) {
       // }
       return html`
 <a href="${value.link}"></a>
-`;
+      `;
     }
   }
 
@@ -298,6 +298,7 @@ class OptionPage extends LitElement {
 ${this.baseSetting()}
 ${this.onlineSetting()}
 ${this.moreIntro()}
+<virtual-keyboard></virtual-keyboard>
     `;
   }
 }

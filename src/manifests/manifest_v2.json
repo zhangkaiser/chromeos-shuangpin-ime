@@ -1,0 +1,61 @@
+{
+  "name": "Google Pinyin",
+  "version": "0.0.1",
+  "description": "支持拼音加加,小鹤等解决方法.",
+  "manifest_version": 2,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "input",
+    "unlimitedStorage",
+    "background",
+    "storage",
+    "https://olime.baidu.com/py?*",
+    "https://www.google.com/inputtools/request?*",
+    "https://www.google.cn/inputtools/request?*"
+  ],
+  "input_components": [
+    {
+    "name": "Chinese online pinyin",
+    "type": "ime",
+    "id": "zh-wasm-pinyin",
+    "description": "支持拼音加加,小鹤等解决方法.",
+    "language": "zh",
+    "layouts": ["us"],
+    "options_page": "option.html?code=zh-wasm-pinyin"
+    },
+    {
+      "name": "Chinese online pinyin - 1",
+      "type": "ime",
+      "id": "zh-js-pinyin",
+      "description": "",
+      "language": "zh",
+      "layouts": ["us"],
+      "options_page": "option.html?code=zh-js-pinyin"
+
+    },
+    {
+      "name": "Chinese online shuangpin - 1",
+      "type": "ime",
+      "id": "zh-js-shuangpin",
+      "description": "",
+      "language": "zh",
+      "layouts": ["us"],
+      "options_page": "option.html?code=zh-js-shuangpin"
+    },
+    {
+      "name": "Chinese online shuangpin",
+      "type": "ime",
+      "id": "zh-wasm-shuangpin",
+      "description": "",
+      "language": "zh",
+      "layouts": ["us"],
+      "options_page": "option.html?code=zh-wasm-shuangpin"
+    }
+  ],
+  "options_page": "option.html",
+  "content_security_policy": {
+    "extension_page": "script-src 'self' 'wasm-eval'; object-src 'self'"
+  }
+}

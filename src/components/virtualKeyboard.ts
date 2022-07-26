@@ -25,7 +25,7 @@ const specificList = {
   [keyList[3].slice(-1)[0]]: '103.5pt',
   [keyList[4][0]]: '96pt',
   [keyList[4][1]]: '96pt',
-  [keyList[4][2]]: '325pt'
+  [keyList[4][2]]: '314pt'
 
 }
 
@@ -37,6 +37,9 @@ export class VirtualKeyboard extends LitElement {
   getId(value: any) {
     return 'id-' + value;
   }
+
+  @property({type: Object})
+  keyValue = {}
 
   getSpecificKeyWidth(key: any) {
     return key in specificList ? `width: ${specificList[key]}` : "";

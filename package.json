@@ -1,12 +1,13 @@
 {
-  "name": "cros-shuangpin",
+  "name": "cros-pinyin",
   "version": "0.0.1",
-  "description": "shuangpin ime for chromeos",
+  "description": "Chinese pinyin ime for chromeos",
   "main": "dist/index.js",
   "scripts": {
     "test": "mocha",
     "build": "webpack",
     "watch": "webpack --mode development --watch",
+    "build:split": "export MANIFEST=ime,decoder && webpack",
     "node:wasm": "node --experimental-wasm-threads --experimental-wasm-bulk-memory",
     "debug:googlepinyin": "cd googlepinyin/googlepinyin && npm run node:wasm",
     "decoder": "cd libGooglePinyin && emcc -pthread -sDYNAMIC_EXECUTION=0 -lembind --embed-file dict libGooglePinyin.a decoder.cpp",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@types/chrome": "^0.0.157",
     "@types/mocha": "^9.0.0",
+    "@types/node": "^18.6.1",
     "@types/webpack": "^5.28.0",
     "@typescript-eslint/parser": "^4.31.2",
     "chai": "^4.3.4",
