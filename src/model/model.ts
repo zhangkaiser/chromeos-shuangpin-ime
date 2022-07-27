@@ -8,7 +8,6 @@ import { isJS, isPinyin } from "../utils/regexp";
 import { getShuangpinSolution } from "./shuangpinSolutions";
 
 import { IIMEState, State, getStates, setStates } from "./state";
-import { Config } from "./config";
 
 /**
  * The model, which manages the state transfers and commits.

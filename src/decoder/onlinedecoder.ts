@@ -18,7 +18,7 @@ export class OnlineDecoder {
   private _ime: string = 'pinyin';
 
   /** The setTimeout id. */
-  private _timeout: number = 0;
+  private _timeout?: any;
 
   constructor(
     /** The decoder engine. */ private engine: OnlineEngine = OnlineEngine.BAIDU,
@@ -46,7 +46,7 @@ export class OnlineDecoder {
     // return Fetch.get(url);
     return new Promise((resolve, reject) => {
       this._timeout = setTimeout(() => {
-        this._timeout = 0;
+        this._timeout = undefined;
         this._lastRequest = Fetch.get(url);
         this._lastRequest.promise.then(resolve, reject);
       }, 300);
@@ -67,7 +67,8 @@ export class OnlineDecoder {
     return new Candidate(
       target.length,
       target,
-      10000
+      10000,
+      -1
     );
   }
 
@@ -124,8 +125,10 @@ export class OnlineDecoder {
   }
 
   clear() {
-    clearTimeout(this._timeout);
-    this._timeout = 0;
+    if (this._timeout) {
+      clearTimeout(this._timeout);
+    }
+    this._timeout = undefined;
     this._lastRequest?.abort();
     this._lastRequest = null;
   }
