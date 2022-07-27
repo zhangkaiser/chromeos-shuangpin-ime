@@ -104,9 +104,9 @@
   "include": [
     "./src",
     "./test",
-    "./build"
-
-, "build"  ],
+    "./build",
+    "./types"
+],
   "exclude": [
     "node_modules",
     "./src/mvvm/*.ts"

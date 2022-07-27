@@ -5,9 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "mocha",
-    "build": "webpack",
+    "build": "export PRODUCTION=1 && webpack",
     "watch": "webpack --mode development --watch",
-    "build:split": "export MANIFEST=ime,decoder && webpack",
+    "watch:split": "export MANIFEST=ime,decoder && webpack --watch",
+    "build:split": "export MANIFEST=ime,decoder && npm run build",
     "node:wasm": "node --experimental-wasm-threads --experimental-wasm-bulk-memory",
     "debug:googlepinyin": "cd googlepinyin/googlepinyin && npm run node:wasm",
     "decoder": "cd libGooglePinyin && emcc -pthread -sDYNAMIC_EXECUTION=0 -lembind --embed-file dict libGooglePinyin.a decoder.cpp",
@@ -39,5 +40,6 @@
   },
   "dependencies": {
     "lit": "^2.0.2"
-  }
+  },
+  "sideEffects": false
 }

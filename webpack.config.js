@@ -28,7 +28,7 @@ console.log("MODE", mode);
 manifests = manifests.filter(name => name in manifestList);
 
 
-module.exports = manifests.map((manifest) => {
+let webpackConfig = manifests.map((manifest) => {
   let outputPath = "dist/" + manifest;
 
   let copyPatterns = [
@@ -37,24 +37,27 @@ module.exports = manifests.map((manifest) => {
   ]
 
   let defineObj = {
-    "process.env.DECODER": "false",
-    "process.env.MAIN": "false",
-    "process.env.IME": "false"
+    "process.env.DECODER": false,
+    "process.env.MAIN": false,
+    "process.env.IME": false,
+    "ENVIRONMENT_IS_NODE": false
   };
 
   let copyDecoder = {from: "./libGooglePinyin/decoder.wasm", to: "."};
   switch(manifest) {
     case "v3":
     case "v2":
-      defineObj['process.env.MAIN'] = JSON.stringify(true);
+      defineObj['process.env.MAIN'] = true;
       copyPatterns.push(copyDecoder);
       break;
     case "decoder":
-      defineObj['process.env.DECODER'] = JSON.stringify(true);
+      defineObj['process.env.DECODER'] = true;
+      copyPatterns.push(copyDecoder);
       break;
     case "ime":
       defineObj['process.env.IME'] = JSON.stringify(true);
     default:
+
   }
 
   return {
@@ -72,11 +75,19 @@ module.exports = manifests.map((manifest) => {
         {test: /\.ts$/, use: "ts-loader"}
       ]
     },
-    devtool: mode === 'development' ? "source-map" : false,
+    devtool: mode == 'development' ? "source-map" : false,
     resolve: {
       extensions: [".ts", "..."],
       alias: {
         src: path.resolve(process.cwd(), 'src')
+      },
+      fallback: { 
+        "path": false,
+        "perf_hooks": false,
+        fs: false,
+        worker_threads: false,
+        crypto: false,
+        
       }
     },
     plugins: [
@@ -86,4 +97,9 @@ module.exports = manifests.map((manifest) => {
       new webpack.DefinePlugin(defineObj)
     ]
   }
-})
+});
+if (webpackConfig.length == 1) {
+  webpackConfig = webpackConfig[0]
+}
+
+module.exports = webpackConfig;
