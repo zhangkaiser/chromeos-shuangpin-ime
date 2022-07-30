@@ -12,7 +12,7 @@ import { loadDict } from "src/utils/transform";
  * The background class implements the script for the background page of chrome
  * os extension for os input tools.
  */
-export class Background {
+export default class Background {
 
   /**
    * The controller for chrome os extension.
@@ -27,7 +27,7 @@ export class Background {
     this.#init();
 
     this._controller.addEventListener(
-      EventType.UPDATESTATE, 
+      EventType.UPDATESTATE,
       this.#updateStateToStorage.bind(this)
     );
   }

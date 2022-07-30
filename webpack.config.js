@@ -2,6 +2,7 @@ let path = require("path");
 let CopyWebpackPlugin = require("copy-webpack-plugin");
 let HtmlWebpackPlugin = require("html-webpack-plugin");
 let webpack = require("webpack");
+const rimraf = require("rimraf");
 
 let manifestList = {
   v3: "Manifest v3", // Have bugs,
@@ -27,9 +28,9 @@ console.log("MODE", mode);
 
 manifests = manifests.filter(name => name in manifestList);
 
-
 let webpackConfig = manifests.map((manifest) => {
   let outputPath = "dist/" + manifest;
+  rimraf(outputPath, (error) => null);
 
   let copyPatterns = [
     {from: `./src/manifests/manifest_${manifest}.json`, to: "./manifest.json"},
@@ -57,6 +58,8 @@ let webpackConfig = manifests.map((manifest) => {
     case "ime":
       defineObj['process.env.IME'] = JSON.stringify(true);
     default:
+      defineObj["process.env.MAIN"] = true;
+
 
   }
 
@@ -81,7 +84,7 @@ let webpackConfig = manifests.map((manifest) => {
       alias: {
         src: path.resolve(process.cwd(), 'src')
       },
-      fallback: { 
+      fallback: {
         "path": false,
         "perf_hooks": false,
         fs: false,

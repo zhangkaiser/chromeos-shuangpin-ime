@@ -6,7 +6,7 @@ import { IMEType } from "../utils/double-solutions";
 /** 
  * The IME response online decoder.
  */
-export class OnlineDecoder {
+export default class OnlineDecoder {
 
   /** The decoder request object. */
   private _lastRequest?: FetchReturnType | null;

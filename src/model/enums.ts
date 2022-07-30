@@ -102,3 +102,9 @@ export enum MessageType {
   UPDATE_STATE = 1,
   GET_STATES
 }
+
+export enum Decoders {
+  WASM,
+  JS,
+  ONLINE
+}

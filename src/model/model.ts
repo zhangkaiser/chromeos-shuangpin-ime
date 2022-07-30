@@ -8,6 +8,7 @@ import { isJS, isPinyin } from "../utils/regexp";
 import { getShuangpinSolution } from "./shuangpinSolutions";
 
 import { IIMEState, State, getStates, setStates } from "./state";
+import { IMEDecoder } from "src/decoder/imedecoder";
 
 /**
  * The model, which manages the state transfers and commits.
@@ -141,14 +142,19 @@ export class Model extends EventTarget implements IModel {
 
   setEngineID(engineID: string): void {
     this.engineID = engineID;
-    if (isJS(engineID)) {
-      this._decoder = isPinyin(engineID) 
-        ? new JSDecoder(engineID)
-        : new JSDecoder(engineID, getShuangpinSolution(this.currentConfig.shuangpinSolution));
+    if (process.env.IME) {
+      this._decoder = new IMEDecoder(engineID);
     } else {
-      this._decoder = isPinyin(engineID) 
-        ? new WASMDecoder(engineID)
-        : new WASMDecoder(engineID, getShuangpinSolution(this.currentConfig.shuangpinSolution));
+      if (isJS(engineID)) {
+        this._decoder = isPinyin(engineID) 
+          ? new JSDecoder(engineID)
+          : new JSDecoder(engineID, getShuangpinSolution(this.currentConfig.shuangpinSolution));
+      } else {
+        this._decoder = isPinyin(engineID) 
+          ? new WASMDecoder(engineID)
+          : new WASMDecoder(engineID, getShuangpinSolution(this.currentConfig.shuangpinSolution));
+      }
+
     }
   }
 
