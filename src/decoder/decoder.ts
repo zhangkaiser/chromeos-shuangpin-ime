@@ -4,19 +4,8 @@ import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
 import { MLDecoder } from "./mldecoder";
 import { TokenDecoder } from "./tokendecoder";
-import type { CustomShuangpin, IShuangpinModel } from "../model/customShuangpin";
 import UserDecoder from "./userdecoder";
-/**
- * The IME response offline decoders provided.
- */
-export class IMEResponse {
-  constructor(
-    /** The source tokens with separators */
-    public tokens: string[],
-    /** The candidate list */
-    public candidates: Candidate[]
-  ) {}
-}
+import { IMEResponse } from "./response";
 
 /**
  * The offline decoder can provide a list of candidates for given source

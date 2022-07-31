@@ -3,7 +3,7 @@ import Module from "../../libGooglePinyin/decoder.js";
 import { IShuangpinModel } from "../model/customShuangpin";
 import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
-import { IMEResponse } from "./decoder";
+import { IMEResponse } from "./response";
 import { TokenDecoder } from "./tokendecoder";
 export default class Decoder implements IDecoder {
     

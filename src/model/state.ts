@@ -1,4 +1,3 @@
-import { OnlineEngine } from "../decoder/enums";
 import type { Config } from "./config";
 import { Key, Modifier, StateID } from "./enums";
 
@@ -9,17 +8,6 @@ export class State {
     /** The shortcut of the state. */ public shortcut: [string, Modifier] | [Modifier] | any[] = []
   ) { }
 }
-
-
-export class OnlineState {
-
-  /** Online decoder status. */
-  static onlineStatus: boolean = true;
-
-  /** Online decoder engine. */
-  static onlineEngine: OnlineEngine = 0;
-}
-
 
 /**
  * @todo

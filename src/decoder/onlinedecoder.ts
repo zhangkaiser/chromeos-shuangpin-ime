@@ -1,13 +1,13 @@
 import { IMEResponse } from "./response";
 
-export class IMEDecoder implements IDecoder {
+export default class OnlineDecoder implements IDecoder {
   
   constructor(engineID: string) {
     
   }
 
   decode(sourceToken: string, chooseId: number) {
-    return new IMEResponse([], []);
+    return new IMEResponse([], [])
   }
 
   clear() {

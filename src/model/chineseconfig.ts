@@ -8,12 +8,11 @@ const IMEState = {
   lang: true,
   punc: true,
   sbc: false,
+  predictor: true,
+  traditional: false,
   enableVertical: false,
-  enableTraditional: false,
   shuangpinSolution: 'pinyinjiajia_o',
-  enableOnline: true,
-  onlineEngine: 0,
-  enablePredictor: true
+  predictEngine: 0
 }
 
 const IMEStateKeys = Object.keys(IMEState);

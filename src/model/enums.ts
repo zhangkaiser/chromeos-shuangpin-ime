@@ -108,3 +108,9 @@ export enum Decoders {
   JS,
   ONLINE
 }
+
+export enum PredictEngine {
+  BAIDU,
+  GOOGLE,
+  GOOGLE_CN
+}

@@ -4,9 +4,10 @@ import { Candidate } from "./candidate";
 import { configFactoryInstance } from "./configfactory";
 import JSDecoder from "../decoder/decoder";
 import WASMDecoder from "../decoder/cdecoder";
-import { isJS, isPinyin } from "../utils/regexp";
-import { getShuangpinSolution } from "./shuangpinSolutions";
+import OnlineDecoder from "src/decoder/onlinedecoder";
+import Predictor from "src/decoder/predictor";
 
+import { isJS, isPinyin } from "../utils/regexp";
 import { IMEDecoder } from "src/decoder/imedecoder";
 
 /**
@@ -77,6 +78,7 @@ export class Model extends EventTarget implements IModel {
   static CLOSING_EVENT = new CustomEvent(EventType.CLOSING);
 
   protected _decoder?: IDecoder | undefined;
+  protected _predictor?: Predictor;
 
   configFactory = configFactoryInstance;
   /** Current model status. */
@@ -115,7 +117,7 @@ export class Model extends EventTarget implements IModel {
   /** candidate id. */
   selectedCandID = -1;
   
-  stateCache: any = '';
+  stateCache: any = '';  
 
   /** The current global configure. */
   get currentConfig() {
@@ -168,9 +170,10 @@ export class Model extends EventTarget implements IModel {
             ? new WASMDecoder(engineID)
             : new WASMDecoder(engineID, this.currentConfig.shuangpinSolution);
         }
-      }
-      
+      } 
     }
+
+    this._predictor = new Predictor();
   }
 
   get decoder() {
@@ -487,9 +490,7 @@ export class Model extends EventTarget implements IModel {
       this.enterSelectInternal();
     }
 
-    if ('enablePredictor' in this.states && (this.states as any)['enablePredictor']) {
-      this.predictor();
-    }
+    this.predictor();
 
     this.notifyUpdates();
   }
@@ -497,8 +498,46 @@ export class Model extends EventTarget implements IModel {
   /** 
    * Cloud prediction of candidate.
    */
-  predictor() {
-    
+  async predictor() {
+    if (!this._predictor) return;
+    if (!('predictor' in this.states) || !(this.states as any)['predictor']) return;
+
+    this._predictor.setEngine((this.states as any).predictEngine);
+
+    let rawSource = this.rawSource;
+    if (this.commitPos) {
+      let segment = this.segments.slice(0, this.commitPos).join('');
+      rawSource = rawSource.slice(segment.length * 2);
+    }
+
+    let predict = await this._predictor.decode(this.source, rawSource);
+    if (!predict) return;
+    if (!this.candidates.length || this.candidates[0].target == predict.target) return;
+
+    let { pageSize } = this.currentConfig;
+    let swapped = false;
+    for (let i = 0; i <= pageSize; i++) {
+      let candidate = this.candidates[i];
+      if (predict.target == candidate.target) {
+        let left = this.candidates[0];
+        this.candidates[0] = candidate;
+        this.candidates[i] = left;
+        swapped = true;
+        break;
+      }
+    }
+
+    if (!swapped) {
+      this.candidates.unshift(
+        new Candidate(
+          predict.target.toString(),
+          Number(predict.range),
+          -1
+        )
+      )
+    }
+
+    this.notifyUpdates();
   }
 
 

@@ -1,12 +1,12 @@
-import { OnlineEngine } from "./enums";
 import { FetchReturnType, Fetch } from "../utils/fetch";
 import { Candidate } from "./candidate";
 import { IMEType } from "../utils/double-solutions";
+import { PredictEngine } from "src/model/enums";
 
 /** 
  * The IME response online decoder.
  */
-export default class OnlineDecoder {
+export default class Predictor {
 
   /** The decoder request object. */
   private _lastRequest?: FetchReturnType | null;
@@ -21,24 +21,24 @@ export default class OnlineDecoder {
   private _timeout?: any;
 
   constructor(
-    /** The decoder engine. */ private engine: OnlineEngine = OnlineEngine.BAIDU,
+    /** The decoder engine. */ private engine: PredictEngine = PredictEngine.BAIDU,
     /** The shuangpin solution. */ solution: string = 'pinyinjiajia'
   ) {
     this.setSolution(solution);
   }
 
-  #getRequestUrl(engine: OnlineEngine, source: string, raw: string) {
+  #getRequestUrl(engine: PredictEngine, source: string, raw: string) {
     switch(engine) {
-      case OnlineEngine.BAIDU: 
+      case PredictEngine.BAIDU: 
         return `https://olime.baidu.com/py?py=${source}&rn=0&pn=1&ol=1`;
-      case OnlineEngine.GOOGLE:
-      case OnlineEngine.GOOGLE_CN:
+      case PredictEngine.GOOGLE:
+      case PredictEngine.GOOGLE_CN:
         let text = this._ime == 'pinyin' ? source : raw;
         let domain = 'google.com';
-        if (engine == OnlineEngine.GOOGLE_CN) {
+        if (engine == PredictEngine.GOOGLE_CN) {
           domain = 'google.cn';
         }
-        return `https://www.google.${engine == OnlineEngine.GOOGLE_CN ? 'cn' : 'com'}/inputtools/request?ime=${this._ime}&text=${text}`;    
+        return `https://www.google.${engine == PredictEngine.GOOGLE_CN ? 'cn' : 'com'}/inputtools/request?ime=${this._ime}&text=${text}`;    
     }
   }
 
@@ -54,7 +54,7 @@ export default class OnlineDecoder {
   }
 
   /** Set the decoder engine. */
-  setEngine(engine: OnlineEngine) {
+  setEngine(engine: PredictEngine) {
     this.engine = engine;
   }
 
@@ -76,13 +76,13 @@ export default class OnlineDecoder {
   async #engineHandler(data: any) {
     data = await data.json();
     
-    if (this.engine == OnlineEngine.BAIDU) {
+    if (this.engine == PredictEngine.BAIDU) {
       if (data[0] && data[0][0] && data[0][0][0]) {
         let target = data[0][0][0][0];
         let candidate = this.getCandidate(target);
         return candidate;
       }
-    } else if (this.engine == OnlineEngine.GOOGLE_CN || this.engine == OnlineEngine.GOOGLE) {
+    } else if (this.engine == PredictEngine.GOOGLE_CN || this.engine == PredictEngine.GOOGLE) {
       if (data[0] == 'SUCCESS') {
         if (data[1] && data[1][0] && data[1][0][1]) {
           let target = data[1][0][1][0];

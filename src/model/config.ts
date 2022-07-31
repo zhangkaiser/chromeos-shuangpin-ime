@@ -2,7 +2,7 @@
  * @fileoverview Defines the model configs.
  */
 
-import { KeyboardLayouts } from "./enums";
+import { KeyboardLayouts, PredictEngine } from "./enums";
 import type { State } from "./state";
 import { StateID} from "./enums";
 
@@ -64,11 +64,17 @@ export abstract class Config {
     return new RegExp(`[${this.selectKeys}]`);
   }
 
-  /** Whethe enable the shuangpin ime. */
+  /**
+   * @deprecated
+   * Whethe enable the shuangpin ime. */
   enabelShuangpin = false;
   
   /** The shuangpin solution. */
   shuangpinSolution = 'pinyinjiajia';
+
+  /** The predict engine. */
+  predictEngine: PredictEngine = PredictEngine.BAIDU;
+
 
   /** Use vertical to show candidates. */
   enableVertical = false;

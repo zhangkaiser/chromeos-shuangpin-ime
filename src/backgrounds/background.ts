@@ -2,7 +2,7 @@ import { Controller } from "src/controller";
 import { IMessage } from "src/model/common";
 import { configFactoryInstance } from "src/model/configfactory";
 import { EventType, InputToolCode, MessageType, StateID } from "src/model/enums";
-import { IMessageDataOfUpdateState, OnlineState } from "src/model/state";
+import { IMessageDataOfUpdateState } from "src/model/state";
 import { enableDebug } from "src/utils/debug";
 import { loadDict } from "src/utils/transform";
 

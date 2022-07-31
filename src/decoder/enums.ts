@@ -10,9 +10,3 @@ export enum InputTool {
   PINYIN,
   WUBI,
 }
-
-export enum OnlineEngine {
-  BAIDU,
-  GOOGLE,
-  GOOGLE_CN
-}
