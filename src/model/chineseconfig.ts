@@ -12,7 +12,8 @@ const IMEState = {
   traditional: false,
   enableVertical: false,
   shuangpinSolution: 'pinyinjiajia_o',
-  predictEngine: 0
+  predictEngine: 0,
+  connectExtId: ""
 }
 
 const IMEStateKeys = Object.keys(IMEState);

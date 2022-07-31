@@ -1,9 +1,9 @@
 import { IMEResponse } from "./response";
 
-export default class OnlineDecoder implements IDecoder {
+export default class OnlineDecoder extends EventTarget implements IDecoder {
   
   constructor(engineID: string) {
-    
+    super();
   }
 
   decode(sourceToken: string, chooseId: number) {

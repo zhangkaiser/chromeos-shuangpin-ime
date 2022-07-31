@@ -14,7 +14,6 @@ import { IMEDecoder } from "src/decoder/imedecoder";
  * The model, which manages the state transfers and commits.
  */
 interface IModel {
-  
 
   /** Highlight string, Moves and Updates this.highlightIndex */
   updateHighlight(newIndex: number): void;
@@ -144,7 +143,12 @@ export class Model extends EventTarget implements IModel {
   setEngineID(engineID: string): void {
     this.engineID = engineID;
     if (process.env.IME) {
-      this._decoder = new IMEDecoder(engineID);
+      this._decoder = new IMEDecoder(engineID, this.currentConfig.connectExtID);
+      this._decoder.addEventListener(EventType.IMERESPONSE, () => {
+        let response = this._decoder?.response;
+        if (!response) return;
+        this.handleResponse(response);
+      });
     } else {
       if (process.env.JS) {
         this._decoder = isJS(engineID) 
@@ -159,6 +163,10 @@ export class Model extends EventTarget implements IModel {
           : isPinyin(engineID)
             ? new WASMDecoder(engineID)
             : new WASMDecoder(engineID, this.currentConfig.shuangpinSolution);
+      }
+      if (process.env.ONLINE) {
+        // TODO
+        this._decoder = new OnlineDecoder(engineID);
       }
       if (process.env.ALL) {
         if (isJS(engineID)) {
@@ -376,17 +384,21 @@ export class Model extends EventTarget implements IModel {
     this.clear();
   }
 
+  /** @todo */
   reactivate(engineID: string) {
     this.engineID = engineID;
     // It's from inactive and reactivate ime.
-    this.isFromInactive = true;
-    chrome.storage.local.get('stateCache',(data) => {
-      let stateCache = 'stateCache' in data ? data['stateCache'] : '';
-      this.stateCache = stateCache;
-    })
+    // this.isFromInactive = true;
+    // chrome.storage.local.get('stateCache',(data) => {
+    //   let stateCache = 'stateCache' in data ? data['stateCache'] : '';
+    //   this.stateCache = stateCache;
+    // })
   }
 
-  /** Resume state. */
+  /**
+   * @todo 
+   * Resume state. 
+   */
   resume() {
     this.isFromInactive = false;
     if (this.stateCache) {
@@ -445,8 +457,17 @@ export class Model extends EventTarget implements IModel {
     //   this.status = Status.SELECT;
     //   return ;
     // }
-    let imeResponse = this.decoder.decode(this.source, this.selectedCandID);
-    
+    let imeResponse: IIMEResponse | null;
+    if (process.env.IME) {
+      this.decoder.decode(this.source, this.selectedCandID);
+    } else {
+      imeResponse = this.decoder.decode(this.source, this.selectedCandID);
+      this.handleResponse(imeResponse);
+    }
+  }
+
+  handleResponse(imeResponse: IIMEResponse | null) {
+
     if (!imeResponse) {
       this.status = Status.FETCHED;
       if (this.currentConfig.autoHighlight || this._holdSelectStatus) {

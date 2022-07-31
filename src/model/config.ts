@@ -58,6 +58,8 @@ export abstract class Config {
   /** The keyboard layout. */
   layout = KeyboardLayouts.STANDARD;
 
+  connectExtID = "";
+
   /** The select keys. */
   selectKeys = '1234567890';
   get selectKeyReg() {

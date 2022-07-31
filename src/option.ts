@@ -1,15 +1,15 @@
 import { html, LitElement, TemplateResult } from  "lit";
 import { customElement, property } from "lit/decorators.js";
 
-import { OnlineEngine } from "./decoder/enums";
+import { PredictEngine } from "./model/enums";
 import type { IMessage } from "./model/common";
 import { MessageType, StateID } from "./model/enums";
-import { IIMEState } from "./model/state";
 import { solutions } from "./model/shuangpinSolutions";
 
 import "./components/virtualKeyboard";
 
 import { optionPageStyles } from "./view/pages";
+import { IIMEState, IIMEStateKey } from "./model/chineseconfig";
 
 const codeRegExp = /[?code=.]zh-(js|wasm)-(shuangpin|pinyin)/i
 
@@ -54,10 +54,10 @@ const solutionNames: Record<keyof typeof solutions, string> = {
   xiaohe: "aa"
 }
 
-const onlineEngineList: Record<OnlineEngine, string> = {
-  [OnlineEngine.BAIDU]: '百度(不支持中英文混合输入)',
-  [OnlineEngine.GOOGLE]: '谷歌全球(不支持中国大陆区域)',
-  [OnlineEngine.GOOGLE_CN]: '谷歌中国(支持中国大陆区域中英文混输)'
+const onlineEngineList: Record<PredictEngine, string> = {
+  [PredictEngine.BAIDU]: '百度(不支持中英文混合输入)',
+  [PredictEngine.GOOGLE]: '谷歌全球(不支持中国大陆区域)',
+  [PredictEngine.GOOGLE_CN]: '谷歌中国(支持中国大陆区域中英文混输)'
 }
 
 
@@ -95,10 +95,9 @@ class OptionPage extends LitElement {
   decoder = "pinyin";
 
   // Corresponding state key.
-  requireUpdateFields: Partial<Record<keyof IIMEState, boolean>> = {
+  requireUpdateFields: Partial<Record<IIMEStateKey, boolean>> = {
     shuangpinSolution: true,
-    enableOnline: true,
-    onlineEngine: true  
+    predictEngine: true,
   } 
   
   constructor() {
@@ -122,7 +121,7 @@ class OptionPage extends LitElement {
     })
   }
 
-  states?: IIMEState
+  states?: IIMEState;
 
   updateState(name: string, value: any) {
     chrome.runtime.sendMessage({

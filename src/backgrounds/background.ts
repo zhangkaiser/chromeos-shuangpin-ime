@@ -2,7 +2,6 @@ import { Controller } from "src/controller";
 import { IMessage } from "src/model/common";
 import { configFactoryInstance } from "src/model/configfactory";
 import { EventType, InputToolCode, MessageType, StateID } from "src/model/enums";
-import { IMessageDataOfUpdateState } from "src/model/state";
 import { enableDebug } from "src/utils/debug";
 import { loadDict } from "src/utils/transform";
 
@@ -21,9 +20,8 @@ export default class Background {
   configFactory = configFactoryInstance;
 
   constructor() {
-    // Sets up a listener which talks to the option page.
-    chrome.runtime.onMessage.addListener(this.processRequest.bind(this));
-    
+    // Register message listener.
+    this.#registerMessage();
     this.#init();
 
     this._controller.addEventListener(
@@ -37,6 +35,12 @@ export default class Background {
     chrome.storage.local.set({
       states
     })
+  }
+
+  #registerMessage() {
+    // Sets up a listener which talks to the option page.
+    chrome.runtime.onMessage.addListener(this.processRequest.bind(this));
+    chrome.runtime.onMessageExternal.addListener(this.processExternal.bind(this));
   }
 
   /** Initializes the background scripts. */
@@ -139,5 +143,20 @@ export default class Background {
     }
 
     return true;
+  }
+
+  processExternal(
+    msg: IMessage,
+    sender: chrome.runtime.MessageSender,
+    sendResponse: (responseData?: any) => void ) {
+    
+    switch (msg['type']) {
+      case MessageType.INSTALLED:
+        let { id } = sender;
+        id &&this._controller.updateState('connectExtID', id);
+        sendResponse(true);
+        break;
+      default:
+    }
   }
 }

@@ -25,8 +25,9 @@ interface IWASMDecoder {
 }
 
 /** Decoder interface. */
-interface IDecoder {
-  decode(sourceToken: string, chooseId: number): IIMEResponse | null,
+interface IDecoder extends EventTarget {
+  decode(sourceToken: string, chooseId: number): IIMEResponse | null;
+  response?: IIMEResponse;
   clear(): void;
 }
 

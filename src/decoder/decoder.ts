@@ -11,7 +11,7 @@ import { IMEResponse } from "./response";
  * The offline decoder can provide a list of candidates for given source
  * text.
  */
-export default class Decoder implements IDecoder {
+export default class Decoder extends EventTarget implements IDecoder {
   #dataLoader: DataLoader;
   #tokenDecoder: TokenDecoder; 
   #userDecoder?: UserDecoder | null;
@@ -21,7 +21,7 @@ export default class Decoder implements IDecoder {
     private inputTool: any, 
     opt_solution?: string[] | string,
     opt_enableUserDict?: boolean) {
-    
+    super();
     this.#dataLoader = new DataLoader(inputTool);
   
     /** The token decoder. */

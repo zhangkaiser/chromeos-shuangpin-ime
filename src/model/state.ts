@@ -20,8 +20,3 @@ export class State {
 export interface IShuangpinState {
 
 }
-
-export interface IMessageDataOfUpdateState {
-  state: string,
-  value: any
-}

@@ -1,7 +1,7 @@
+import { IIMEStateKey } from "./model/chineseconfig";
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, Key, KeyboardLayouts, Modifier, StateID, Status } from "./model/enums";
 import { Model } from "./model/model";
-import { IIMEState } from "./model/state";
 import { debugLog } from "./utils/debug";
 import { hans2Hant } from "./utils/transform";
 import { View } from "./view";
@@ -214,26 +214,26 @@ export class Controller extends EventTarget {
 
 
     // TODO `chrome.input.ime.sendKeyEvents` also too
-    if (this.model.isFromInactive && keyEvent.type == EventType.KEYUP) {
-      this.model.resume();
-      if (
-        keyEvent.key)
-      chrome.input.ime.deleteSurroundingText({
-        contextID: this._context.contextID,
-        engineID: this._configFactory.getInputTool(),
-        length: 1,
-        offset: -1,
-      });
+    // if (this.model.isFromInactive && keyEvent.type == EventType.KEYUP) {
+    //   this.model.resume();
+    //   if (
+    //     keyEvent.key)
+    //   chrome.input.ime.deleteSurroundingText({
+    //     contextID: this._context.contextID,
+    //     engineID: this._configFactory.getInputTool(),
+    //     length: 1,
+    //     offset: -1,
+    //   });
 
-      keyEvent.type = EventType.KEYDOWN;
-      chrome.input.ime.sendKeyEvents({
-        contextID: this._context.contextID,
-        keyData: [keyEvent]
-      })
+    //   keyEvent.type = EventType.KEYDOWN;
+    //   chrome.input.ime.sendKeyEvents({
+    //     contextID: this._context.contextID,
+    //     keyData: [keyEvent]
+    //   })
 
-      // this.processCharKey(keyEvent);
-      return true;
-    }
+    //   // this.processCharKey(keyEvent);
+    //   return true;
+    // }
 
     // ctrl + shift and from extensionId.
     if (
@@ -280,11 +280,13 @@ export class Controller extends EventTarget {
   }
 
   handleSurroundingText(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
-    if (!this.model.engineID) {
-      // Current state is reactivate from inactive.
-      this.model.reactivate(engineID)
-      this._lastKeyChar = surroundingInfo.text.slice(-1);
-      // this.model.setEngineID(engineID);
+    if (process.env.MV3) { 
+      if (!this.model.engineID) {
+        // Current state is reactivate from inactive.
+        this.model.reactivate(engineID)
+        this._lastKeyChar = surroundingInfo.text.slice(-1);
+        // this.model.setEngineID(engineID);
+      } 
     }
   }
 
@@ -663,9 +665,9 @@ export class Controller extends EventTarget {
   /**
    * Switch the input tool state.
    */
-  switchInputToolState(stateId: keyof IIMEState, engineID: string) {
+  switchInputToolState(stateId: IIMEStateKey, engineID: string) {
 
-    let { states } = this.model;
+    let states = this.model.states as any;
     if (typeof states[stateId] == 'boolean') {
       this.updateState(stateId, !states[stateId]);
     }

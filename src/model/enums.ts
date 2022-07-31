@@ -11,6 +11,7 @@ export enum EventType {
   CLOSING = 'close',
   OPENING = 'open',
   UPDATESTATE = 'updatestate',
+  IMERESPONSE = 'get_ime_response',
 }
 
 
@@ -100,7 +101,10 @@ export enum InputToolCode {
 
 export enum MessageType {
   UPDATE_STATE = 1,
-  GET_STATES
+  GET_STATES,
+  INSTALLED,
+  DECODE,
+  IMERESPONSE
 }
 
 export enum Decoders {

@@ -26,6 +26,12 @@ if (process.env.PRODUCTION) {
 }
 console.log("MODE", mode);
 
+let decoder = ["all"];
+if (process.env.DECODER_ENGINE) {
+  decoder = process.env.DECODER_ENGINE.split(',');
+}
+console.log("DECODER ENGINE", decoder);
+
 manifests = manifests.filter(name => name in manifestList);
 
 let webpackConfig = manifests.map((manifest) => {
@@ -41,12 +47,45 @@ let webpackConfig = manifests.map((manifest) => {
     "process.env.DECODER": false,
     "process.env.MAIN": false,
     "process.env.IME": false,
-    "ENVIRONMENT_IS_NODE": false
+    "process.env.MV3": false,
+    "ENVIRONMENT_IS_NODE": false,
+
+    // For decoder package.
+    "process.env.WASM": false,
+    "process.env.JS": false,
+    "process.env.ONLINE": false,
+    "process.env.ALL": false,
   };
+
+  if (decoder.indexOf("a[all") >= 0) {
+    defineObj["process.env.ALL"] = true;
+  } else {
+    decoder.forEach(name => {
+      switch(name) {
+        case "wasm":
+          defineObj["process.env.WASM"] = true;
+          break;
+        case "js":
+          defineObj["process.env.JS"] = true;
+          break;
+        case "online":
+          defineObj["process.env.ONLINE"] = true;
+          break;
+        default:
+      }
+    })
+  }
+
+  decoder.forEach((name) => {
+    if (name === 'all') {
+      defineObj["process.env.ALL"] = true;
+    }
+  })
 
   let copyDecoder = {from: "./libGooglePinyin/decoder.wasm", to: "."};
   switch(manifest) {
     case "v3":
+      defineObj['process.env.MV3'] = true;
     case "v2":
       defineObj['process.env.MAIN'] = true;
       copyPatterns.push(copyDecoder);
@@ -59,7 +98,6 @@ let webpackConfig = manifests.map((manifest) => {
       defineObj['process.env.IME'] = JSON.stringify(true);
     default:
       defineObj["process.env.MAIN"] = true;
-
 
   }
 

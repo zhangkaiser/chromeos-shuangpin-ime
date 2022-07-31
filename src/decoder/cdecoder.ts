@@ -5,7 +5,7 @@ import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
 import { IMEResponse } from "./response";
 import { TokenDecoder } from "./tokendecoder";
-export default class Decoder implements IDecoder {
+export default class Decoder extends EventTarget implements IDecoder {
     
   #decoder?: IWASMDecoder;
   #dataloader: DataLoader;
@@ -15,6 +15,7 @@ export default class Decoder implements IDecoder {
     solution?: string[] | string,
     enableUserDict?: boolean
   ) {
+    super();
     // TODO
     this.#dataloader = new DataLoader(inputTool);
     this.#tokenDecoder = new TokenDecoder(this.#dataloader, solution);
