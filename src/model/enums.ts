@@ -61,7 +61,7 @@ export enum StateID {
   SBC =  'sbc',
   PUNC = 'punc',
   TRADITIONAL = 'traditional',
-  ONLINE_DECODER = 'online'
+  PREDICTOR = 'predictor'
 }
 
 

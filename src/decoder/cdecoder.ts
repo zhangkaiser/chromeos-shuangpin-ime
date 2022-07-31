@@ -12,7 +12,7 @@ export default class Decoder implements IDecoder {
   #tokenDecoder: TokenDecoder; 
 
   constructor(inputTool: any, 
-    solution?: string[] | IShuangpinModel,
+    solution?: string[] | string,
     enableUserDict?: boolean
   ) {
     // TODO

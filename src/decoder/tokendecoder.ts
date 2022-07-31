@@ -3,6 +3,7 @@ import { binarySearch, defaultCompare } from "../utils/binarySearch";
 import { SolutionDataType } from "../utils/double-solutions";
 import { DataLoader } from "./dataloader";
 import type { IShuangpinModel } from "../model/customShuangpin";
+import { getShuangpinSolution } from "src/model/shuangpinSolutions";
 
 /**
  * The lattice node contains the index of each start end of all in-edges, and
@@ -83,7 +84,7 @@ export class TokenDecoder extends EventTarget {
   static readonly _INVALID_PATH_INIT_NUM = 100;
   constructor(
     private _dataLoader: DataLoader,
-    solution?: string[] | IShuangpinModel
+    solution?: string[] | string
   ) {
       super();
 
@@ -95,7 +96,7 @@ export class TokenDecoder extends EventTarget {
    * Initialize the token decoder
    * @TODO
    */
-  #init(solution?: string[] | IShuangpinModel) {
+  #init(solution?: string[] | string) {
     let { initialTokens, chosTokens: tokens } = this._dataLoader;
     // 这里可以设置分割用户输入字符的识别算法
     this._tokenReg = new RegExp(`^(${tokens}|${initialTokens})$`);
@@ -120,7 +121,7 @@ export class TokenDecoder extends EventTarget {
     if (solution && Array.isArray(solution)) {
       this.updateFuzzyPairs(solution);
     } else if (solution && this._dataLoader.shuangpinStatus) {
-      this.updateShuangpinSolution(solution);
+      this.updateShuangpinSolution(getShuangpinSolution(solution));
     }
       
     this.clear();

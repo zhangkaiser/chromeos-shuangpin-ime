@@ -3,6 +3,24 @@ import { Modifier, StateID } from "./enums";
 import { State } from "./state";
 
 
+
+const IMEState = {
+  lang: true,
+  punc: true,
+  sbc: false,
+  enableVertical: false,
+  enableTraditional: false,
+  shuangpinSolution: 'pinyinjiajia_o',
+  enableOnline: true,
+  onlineEngine: 0,
+  enablePredictor: true
+}
+
+const IMEStateKeys = Object.keys(IMEState);
+
+export type IIMEState = typeof IMEState;
+export type IIMEStateKey = keyof IIMEState;
+
 export default class ChineseConfig extends Config {
 
   states: Record<StateID, State>;
@@ -95,15 +113,15 @@ export default class ChineseConfig extends Config {
 		let langState = new State( '输入语言为中文', true, [Modifier.SHIFT] );
 		let sbcState = new State('字符宽度为全角', false, [' ', Modifier.SHIFT]);
 		let puncState = new State('标点符号宽度为全角', true, ['\\.', Modifier.CTRL]);
-    let traditionalState = new State('Chinese traditional output.', false, ['t', Modifier.SHIFT]);
-    let onlineDecoderState = new State('Enable Online decoder', true, ['d', Modifier.SHIFT]);
+    let traditionalState = new State('Chinese traditional output.', false, ['t', Modifier.ALT]);
+    let predictorState = new State("Enable predictor", true, ['p', Modifier.ALT]);
 
     this.states = {
       [StateID.LANG]: langState,
       [StateID.SBC]: sbcState,
       [StateID.PUNC]: puncState,
       [StateID.TRADITIONAL]: traditionalState,
-      [StateID.ONLINE_DECODER]: onlineDecoderState
+      [StateID.PREDICTOR]: predictorState
     }
 	}
 
@@ -153,4 +171,39 @@ export default class ChineseConfig extends Config {
 		return preTrans ? preTrans : c;
 	}
 
+  getStates() {
+    IMEStateKeys.forEach((name) => {
+      switch(name) {
+        case StateID.LANG:
+        case StateID.PUNC:
+        case StateID.SBC:
+        case StateID.TRADITIONAL:
+        case StateID.PREDICTOR:
+          (IMEState as any)[name] = this.states[name].value;
+          break;
+        default:
+          (IMEState as any)[name] = (this as any)[name];
+      }
+    });
+
+    return IMEState;
+  }
+  
+  setStates(states: Partial<IIMEState>) {
+    if (!states) return ;
+    let entries = Object.entries(states);
+    for (const [key, value] of entries) {
+      switch(key) {
+        case StateID.LANG:
+        case StateID.PUNC:
+        case StateID.SBC:
+        case StateID.TRADITIONAL:
+        case StateID.PREDICTOR:
+          this.states[key].value = value as boolean;
+          break;
+        default:
+          (this as any)[key] = value;
+      }
+    }
+  }
 }

@@ -7,7 +7,6 @@ import WASMDecoder from "../decoder/cdecoder";
 import { isJS, isPinyin } from "../utils/regexp";
 import { getShuangpinSolution } from "./shuangpinSolutions";
 
-import { IIMEState, State, getStates, setStates } from "./state";
 import { IMEDecoder } from "src/decoder/imedecoder";
 
 /**
@@ -124,12 +123,12 @@ export class Model extends EventTarget implements IModel {
   }
 
   /** The user local storage config. */
-  get states(): IIMEState {
-    return getStates(this.currentConfig);
+  get states() {
+    return this.currentConfig.getStates();
   }
 
-  setStates(states: Partial<IIMEState>) {
-    setStates(this.currentConfig, states);
+  setStates(states: object) {
+    return this.currentConfig.setStates(states);
   }
 
   /** The current page index. */
@@ -145,16 +144,32 @@ export class Model extends EventTarget implements IModel {
     if (process.env.IME) {
       this._decoder = new IMEDecoder(engineID);
     } else {
-      if (isJS(engineID)) {
-        this._decoder = isPinyin(engineID) 
-          ? new JSDecoder(engineID)
-          : new JSDecoder(engineID, getShuangpinSolution(this.currentConfig.shuangpinSolution));
-      } else {
-        this._decoder = isPinyin(engineID) 
-          ? new WASMDecoder(engineID)
-          : new WASMDecoder(engineID, getShuangpinSolution(this.currentConfig.shuangpinSolution));
+      if (process.env.JS) {
+        this._decoder = isJS(engineID) 
+          ? isPinyin(engineID) 
+            ? new JSDecoder(engineID)
+            : new JSDecoder(engineID, this.currentConfig.shuangpinSolution)
+          : undefined;
       }
-
+      if (process.env.WASM) {
+        this._decoder = isJS(engineID)
+          ? undefined
+          : isPinyin(engineID)
+            ? new WASMDecoder(engineID)
+            : new WASMDecoder(engineID, this.currentConfig.shuangpinSolution);
+      }
+      if (process.env.ALL) {
+        if (isJS(engineID)) {
+          this._decoder = isPinyin(engineID) 
+            ? new JSDecoder(engineID)
+            : new JSDecoder(engineID, this.currentConfig.shuangpinSolution);
+        } else {
+          this._decoder = isPinyin(engineID) 
+            ? new WASMDecoder(engineID)
+            : new WASMDecoder(engineID, this.currentConfig.shuangpinSolution);
+        }
+      }
+      
     }
   }
 
@@ -472,7 +487,18 @@ export class Model extends EventTarget implements IModel {
       this.enterSelectInternal();
     }
 
+    if ('enablePredictor' in this.states && (this.states as any)['enablePredictor']) {
+      this.predictor();
+    }
+
     this.notifyUpdates();
+  }
+
+  /** 
+   * Cloud prediction of candidate.
+   */
+  predictor() {
+    
   }
 
 

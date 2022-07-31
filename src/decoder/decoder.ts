@@ -30,7 +30,7 @@ export default class Decoder implements IDecoder {
 
   constructor(
     private inputTool: any, 
-    opt_solution?: string[] | IShuangpinModel,
+    opt_solution?: string[] | string,
     opt_enableUserDict?: boolean) {
     
     this.#dataLoader = new DataLoader(inputTool);

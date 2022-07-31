@@ -113,4 +113,13 @@ export abstract class Config {
   }
 
   setSolution(text: string) { }
+
+  
+  getStates() {
+    return {}
+  }
+
+  setStates(states: any) {
+
+  }
 }
