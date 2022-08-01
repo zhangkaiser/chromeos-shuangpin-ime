@@ -37,8 +37,14 @@ export default class DecoderBackground {
   #port?: chrome.runtime.Port;
 
   constructor() {
+    chrome.runtime.onInstalled.addListener(this.#onInstall.bind(this));
     chrome.runtime.onMessageExternal.addListener(this.#onMessage.bind(this));
     chrome.runtime.onConnectExternal.addListener(this.#onConnect.bind(this));
+  }
+
+  #onInstall() {
+    // Test
+    chrome.runtime.sendMessage("kddkhfjlcblbefodhpkjhghglidflbha", {type: 3})
   }
 
   /** @todo */
@@ -63,7 +69,12 @@ export default class DecoderBackground {
         let data = <IMesageDataOfDecode>msg.data;
         let response = this.#decoder.decode(data.source, data.chooseId);
         if (!response) return port.postMessage([]);
-        port.postMessage({...response});
+
+        let message:IMessage = {
+          type: MessageType.IMERESPONSE,
+          data: {...response}
+        }
+        port.postMessage(message);
         break;
       default:
         port.postMessage("Hello world!");
@@ -88,7 +99,7 @@ export default class DecoderBackground {
     let Decoder = decoders.get(decoderCode);
     if (!Decoder) port.postMessage(false);
 
-    this.#decoder = new Decoder(engineID);
+    this.#decoder = new Decoder(engineID, 'pinyinjiajia_o');
 
     this.#port.onMessage.addListener(this.processMessage.bind(this));
     this.#port.onDisconnect.addListener(this.processDisconnect.bind(this));

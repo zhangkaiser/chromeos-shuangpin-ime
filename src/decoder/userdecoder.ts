@@ -27,7 +27,6 @@ export default class UserDecoder {
     //   if (permantMapStr) {
     //     this._permantMap = JSON.parse(permantMapStr);
     //   }
-    //   console.log(permantMapStr);
     // } else {
     chrome.storage.sync.get(this.STORAGE_USER_DICT_KEY,(res) => {
       let permantMap = res[this.STORAGE_USER_DICT_KEY];

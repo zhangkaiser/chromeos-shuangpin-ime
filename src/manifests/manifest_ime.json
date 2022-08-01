@@ -1,5 +1,5 @@
 {
-  "name": "Google Pinyin",
+  "name": "IME",
   "version": "0.0.1",
   "description": "支持拼音加加,小鹤等解决方法.",
   "manifest_version": 3,
@@ -10,7 +10,9 @@
     "input",
     "unlimitedStorage",
     "background",
-    "storage",
+    "storage"
+  ],
+  "host_permissions": [
     "https://olime.baidu.com/py?*",
     "https://www.google.com/inputtools/request?*",
     "https://www.google.cn/inputtools/request?*"

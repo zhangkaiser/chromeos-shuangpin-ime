@@ -9,7 +9,7 @@ export class IMEDecoder extends EventTarget implements IDecoder {
 
   response?: IIMEResponse;
 
-  constructor(engineID: string, extId: string) {
+  constructor(public engineID: string, extId: string) {
     super();
     this.#port = chrome.runtime.connect(extId, {
       name: engineID
@@ -21,11 +21,15 @@ export class IMEDecoder extends EventTarget implements IDecoder {
   }
 
   decode(sourceToken: string, chooseId: number) {
-    
-    let message:IMesageDataOfDecode = {
+    let data:IMesageDataOfDecode = {
       source: sourceToken,
       chooseId
     }
+    let message:IMessage = {
+      type: MessageType.DECODE,
+      data
+    }
+
     this.#port.postMessage(message);
 
     return null;

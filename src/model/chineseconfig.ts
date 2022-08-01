@@ -185,7 +185,6 @@ export default class ChineseConfig extends Config {
           (IMEState as any)[name] = (this as any)[name];
       }
     });
-
     return IMEState;
   }
   
@@ -205,5 +204,9 @@ export default class ChineseConfig extends Config {
           (this as any)[key] = value;
       }
     }
+  }
+
+  transformView(text: string, source: string) {
+    return text.replace(/' /g, "'");
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "Google Pinyin",
+  "name": "Decoder",
   "version": "0.0.1",
   "description": "支持拼音加加,小鹤等解决方法.",
   "manifest_version": 3,
