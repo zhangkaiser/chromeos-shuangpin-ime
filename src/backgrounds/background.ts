@@ -53,8 +53,11 @@ export default class Background {
     })
 
     chrome.input.ime.onActivate.addListener((engineID) => {
-      this._controller.activate(engineID as InputToolCode);
-      this.#restoreState();
+      this.#restoreState().then((states) => {
+        let config = this.configFactory.getConfig(engineID as InputToolCode);
+        config.setStates(states);
+        this._controller.activate(engineID as InputToolCode);
+      });
     })
 
     chrome.input.ime.onDeactivated.addListener((engineID) => {
@@ -108,14 +111,16 @@ export default class Background {
    * Restore the state from cached.
    */
   #restoreState() {
-    chrome.storage.local.get('states', (res) => {
-      if (res && res['states']) {
-        this._controller.model.setStates(res["states"]);
-        if (res["states"].enableTraditional) {
-          // Early Loading Chinese Traditional dict.
-          loadDict();
+    return new Promise((resolve: (value: object) => void, reject) => {
+      chrome.storage.local.get('states', (res) => {
+        if (res && res['states']) {
+          if (res["states"].enableTraditional) {
+            // Early Loading Chinese Traditional dict.
+            loadDict();
+          }
         }
-      }
+        resolve(res && res["states"]);
+      });
     });
   }
 
@@ -128,7 +133,7 @@ export default class Background {
     sender: chrome.runtime.MessageSender, 
     sendResponse: (responseData?: any) => void ) {
 
-    this.configFactory.setInputTool(message.inputToolCode);
+    message.inputToolCode && this.configFactory.setInputTool(message.inputToolCode);
     switch (message['type']) {
       case MessageType.UPDATE_STATE:
         let data = message.data;
@@ -153,7 +158,7 @@ export default class Background {
     switch (msg['type']) {
       case MessageType.INSTALLED:
         let { id } = sender;
-        id &&this._controller.updateState('connectExtID', id);
+        id &&this._controller.updateState('connectExtId', id);
         sendResponse(true);
         break;
       default:
