@@ -143,7 +143,7 @@ export class Model extends EventTarget implements IModel {
   setEngineID(engineID: string): void {
     this.engineID = engineID;
     if (process.env.IME) {
-      this._decoder = new IMEDecoder(engineID, this.currentConfig.connectExtID);
+      this._decoder = new IMEDecoder(engineID, (this.states as any).connectExtId);
       this._decoder.addEventListener(EventType.IMERESPONSE, () => {
         let response = this._decoder?.response;
         if (!response) return;
@@ -190,7 +190,6 @@ export class Model extends EventTarget implements IModel {
 
 
   updateHighlight(newIndex: number) {
-    console.log('updateHighlight', newIndex);
     if (this.status != Status.SELECT || newIndex >= this.candidates.length) return ;
     if (newIndex < 0) newIndex = 0;
     
@@ -199,13 +198,11 @@ export class Model extends EventTarget implements IModel {
   }
 
   moveHighlight(step: number) {
-    console.log('moveHighlight', step);
     if (this.status != Status.SELECT) return;
     this.updateHighlight(this.highlightIndex + step);
   }
 
   movePage(step: number): void {
-    console.log('movePage', step);
     if (this.status != Status.SELECT) return;
 
     let { pageSize } = this.currentConfig;
@@ -289,7 +286,6 @@ export class Model extends EventTarget implements IModel {
     } else if (this.cursorPos > 0) {
       let segment = this.segments[this.cursorPos - 1];
       let revertConfig = this.currentConfig.revert(segment, this.rawSource);
-      console.log(segment, revertConfig)
       deletedChar = revertConfig.deletedChar;
       segment = revertConfig.segment;
       this.rawSource = revertConfig.source;
