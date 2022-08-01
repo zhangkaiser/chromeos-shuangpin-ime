@@ -96,17 +96,23 @@ export class View {
         this.model.commitPos, this.model.cursorPos).join('');
     let composing_text = segmentsBeforeCursor.join(' ') +
         this.model.source.slice(prefix.length);
-    let pos = composing_text.length;
     if (segmentsAfterCursor.length > 0) {
       composing_text += ' ' + segmentsAfterCursor.join(' ');
     }
     composing_text = this.currentConfig.transformView(
         composing_text, this.model.rawSource);
+    composing_text = composing_text.slice(-1) == "'" ? composing_text.slice(0, -1) : composing_text;
+    // composing_text = composing_text.replace(/'/g, "");
+    let pos = composing_text.length;
     try {
+      // TODO Running in Android application have will be focus issues.
+      // But use short(raw source) text is no problem.
       chrome.input.ime.setComposition({
         contextID: this._context.contextID,
         text: composing_text,
         cursor: pos
+      }, () => {
+        this.showCandidates();
       });
     } catch(e) {
       chrome.input.ime.setComposition({
@@ -115,7 +121,6 @@ export class View {
         cursor: pos
       });
     }
-    this.showCandidates();
   }
 
   /**

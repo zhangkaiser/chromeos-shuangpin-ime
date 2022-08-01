@@ -36,6 +36,8 @@ export class CandidateWindow {
   /** The page number. */
   protected pageIndex: number = 1;
 
+  showed = false;
+
   constructor(public engineID: string, public config: Config) {}
 
   #setWindow(prop: ICandidateWindowProperties) {
@@ -120,13 +122,16 @@ export class CandidateWindow {
         candidateID: currentCandID
       })
     }
+    if (this.showed) return;
     this.#setWindow(windowProps);
+    this.showed = true;
   }
 
   /** Hide the candidate window. */
   hide(contextID?: number) {
     this.#setWindow({visible: false});
     contextID && this.#clearComposition(contextID);
+    this.showed = false;
   }
 
   setCandidates(candidates: Candidate[]) {
