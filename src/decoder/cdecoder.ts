@@ -56,20 +56,16 @@ export default class Decoder extends EventTarget implements IDecoder {
       let tokens = tokenPath.tokens;
       targets = this.decoder.decode(tokens.join('\''), -1).split('|');
 
-      
+
     } else {
       // Pinyin decode.
       let pinyin = originalTokenList.join('');
-      targets = this.decoder.decode(pinyin, -1).split('|');
-      
+      targets = this.decoder.decode(pinyin, -1).split('|');  
     }
     for (let i = 0, l = targets.length; i < l; i++) {
       let target = targets[i];
       candidates.push(new Candidate(
-        sourceWord.length,
-        target,
-        0,
-        -1
+        target.length, target, 0, i
       ));
     }
     // Also return the token list.

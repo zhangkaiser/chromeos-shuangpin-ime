@@ -1,25 +1,7 @@
 import { Config } from "./config";
 import { Modifier, StateID } from "./enums";
-import { State } from "./state";
+import { IChineseState, State } from "./state";
 
-
-
-const IMEState = {
-  lang: true,
-  punc: true,
-  sbc: false,
-  predictor: true,
-  traditional: false,
-  enableVertical: false,
-  shuangpinSolution: 'pinyinjiajia_o',
-  predictEngine: 0,
-  connectExtId: ""
-}
-
-const IMEStateKeys = Object.keys(IMEState);
-
-export type IIMEState = typeof IMEState;
-export type IIMEStateKey = keyof IIMEState;
 
 export default class ChineseConfig extends Config {
 
@@ -172,38 +154,20 @@ export default class ChineseConfig extends Config {
 	}
 
   getStates() {
-    IMEStateKeys.forEach((name) => {
-      switch(name) {
-        case StateID.LANG:
-        case StateID.PUNC:
-        case StateID.SBC:
-        case StateID.TRADITIONAL:
-        case StateID.PREDICTOR:
-          (IMEState as any)[name] = this.states[name].value;
-          break;
-        default:
-          (IMEState as any)[name] = (this as any)[name];
-      }
-    });
-    return IMEState;
+    let states = super.getStates() as IChineseState;
+    Object.keys(this.states).forEach((stateId) => {
+      states[stateId as StateID] = this.states[stateId as StateID].value;
+    })
+    return states;
   }
   
-  setStates(states: Partial<IIMEState>) {
+  setStates(states: Partial<IChineseState>) {
     if (!states) return ;
-    let entries = Object.entries(states);
-    for (const [key, value] of entries) {
-      switch(key) {
-        case StateID.LANG:
-        case StateID.PUNC:
-        case StateID.SBC:
-        case StateID.TRADITIONAL:
-        case StateID.PREDICTOR:
-          this.states[key].value = value as boolean;
-          break;
-        default:
-          (this as any)[key] = value;
-      }
-    }
+    Object.keys(states).forEach((state) => {
+      if (!(state in this.states)) return ;
+      this.states[state as StateID] = (states as any)[state];
+    });
+    super.setStates(states);
   }
 
   transformView(text: string, source: string) {

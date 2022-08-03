@@ -5,38 +5,59 @@ import { IMEResponse } from "./response";
 export class IMEDecoder extends EventTarget implements IDecoder {
   
   static IME_RESPONSE_EVENT = new CustomEvent(EventType.IMERESPONSE);
-  #port: chrome.runtime.Port;
+  #port?: chrome.runtime.Port;
+
+  #onMessageCb: any;
+  #onDisconnectCb: any;
 
   response?: IIMEResponse;
 
-  constructor(public engineID: string, extId: string) {
+  constructor(public engineID: string, option: string | {extId: string, annotation: string}) {
     super();
-    this.#port = chrome.runtime.connect(extId, {
-      name: engineID
-    });
+    
+    let extId, annotation;
+    if (typeof option == 'string') {
+      extId = option
+    } else {
+      extId = option.extId;
+      annotation = option.annotation;
+    }
 
-    this.#port.onMessage.addListener(this.#onMessage.bind(this));
-    this.#port.onDisconnect.addListener(this.#onDisconnect.bind(this));
+    this.#onMessageCb = this.#onMessage.bind(this);
+    this.#onDisconnectCb = this.#onDisconnect.bind(this);
 
+    this.#connect(extId, annotation ? `${engineID}::${annotation}` : engineID);
+  }
+
+  #connect(extId: string, name: string) {
+    this.#port = chrome.runtime.connect(extId, { name });
+
+    this.#port.onMessage.addListener(this.#onMessageCb);
+    this.#port.onDisconnect.addListener(this.#onDisconnectCb);
   }
 
   decode(sourceToken: string, chooseId: number) {
-    let data:IMesageDataOfDecode = {
-      source: sourceToken,
-      chooseId
-    }
-    let message:IMessage = {
-      type: MessageType.DECODE,
-      data
-    }
 
-    this.#port.postMessage(message);
+    let data:IMesageDataOfDecode = { source: sourceToken, chooseId }
+    let message:IMessage = { type: MessageType.DECODE, data }
 
+    try {
+      console.log(message);
+      this.#port?.postMessage(message);
+    } catch(e) {
+      chrome.runtime.reload();
+    }
     return null;
   }
 
   clear() {
     this.response = undefined;
+  }
+
+  #end() {
+    this.#port?.disconnect();
+    this.#port = undefined;
+    this.clear();
   }
 
   #onMessage(msg: IMessage, port: chrome.runtime.Port) {
@@ -48,6 +69,6 @@ export class IMEDecoder extends EventTarget implements IDecoder {
   }
 
   #onDisconnect(port: chrome.runtime.Port) {
-    this.clear();
+    this.#end();
   }
 }

@@ -51,14 +51,13 @@ export abstract class Config {
   enableTraditional = false;
 
   /**
+   * @todo
    * Virtual Keyboard support. 
    * Whethe enable virtual keyboard. */
   enabledVirtualKeyboard = false;
 
   /** The keyboard layout. */
   layout = KeyboardLayouts.STANDARD;
-
-  connectExtId = "";
 
   /** The select keys. */
   selectKeys = '1234567890';
@@ -72,12 +71,12 @@ export abstract class Config {
   enabelShuangpin = false;
   
   /** The shuangpin solution. */
-  shuangpinSolution = 'pinyinjiajia';
+  shuangpinSolution = 'pinyinjiajia_o';
 
   /** The predict engine. */
   predictEngine: PredictEngine = PredictEngine.BAIDU;
 
-
+  
   /** Use vertical to show candidates. */
   enableVertical = false;
 
@@ -122,12 +121,9 @@ export abstract class Config {
 
   setSolution(text: string) { }
 
-  
   getStates() {
     return {}
   }
 
-  setStates(states: any) {
-
-  }
+  setStates(states: any) {}
 }

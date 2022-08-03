@@ -27,23 +27,31 @@ export class DataLoader {
   /** Shuangpin status. */
   shuangpinStatus: boolean = false;
   constructor(public inputToolCode: string) {
-    
-    if (isJS(inputToolCode)) {
-      let { sourceMap, chosTokens, initialTokens } = staticData();
-      this.sourceMap = sourceMap;
-      this.chosTokens = chosTokens;
-      this.initialTokens = initialTokens;
+    if (process.env.ALL) {
+      if (isJS(inputToolCode)) {
+        let { sourceMap, chosTokens, initialTokens } = staticData();
+        this.sourceMap = sourceMap;
+        this.chosTokens = chosTokens;
+        this.initialTokens = initialTokens;
 
-      this.targetMap = targetMap();
-      this.targetPositions = targetPositions();
-      this.targetSegments = targetSegments();
-      this.targetProbs = targetProbs();
-      this.sourceSegments = sourceSegments();
-    } else {
+        this.targetMap = targetMap();
+        this.targetPositions = targetPositions();
+        this.targetSegments = targetSegments();
+        this.targetProbs = targetProbs();
+        this.sourceSegments = sourceSegments();
+      } else {
+        let { chosTokens, initialTokens } = staticData();
+        this.chosTokens = chosTokens;
+        this.initialTokens = initialTokens;
+      }
+    }
+
+    if (process.env.WASM) {
       let { chosTokens, initialTokens } = staticData();
       this.chosTokens = chosTokens;
-      this.initialTokens = initialTokens;
+      this.initialTokens = initialTokens; 
     }
+
 
     this.shuangpinStatus = isPinyin(inputToolCode) ? false : true;
   }

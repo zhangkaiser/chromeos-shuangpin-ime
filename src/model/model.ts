@@ -128,7 +128,19 @@ export class Model extends EventTarget implements IModel {
     return this.currentConfig.getStates();
   }
 
-  setStates(states: object) {
+  setStates(states: any) {
+    if (process.env.IME) {
+      let observeField = ['shuangpinSolution', 'connectExtId'];
+      let changed = {}
+      observeField = observeField.filter(field => field in states);
+      if(observeField.length > 0 && this._decoder && this.engineID) {
+        this._decoder = new IMEDecoder(this.engineID, {
+          extId: states.connectExtId ?? (this.states as any).connectExtId,
+          // TODO 
+          annotation: isPinyin(this.engineID) ? "" : states.shuangpinSolution
+        });
+      }
+    }
     return this.currentConfig.setStates(states);
   }
 
@@ -143,7 +155,12 @@ export class Model extends EventTarget implements IModel {
   setEngineID(engineID: string): void {
     this.engineID = engineID;
     if (process.env.IME) {
-      this._decoder = new IMEDecoder(engineID, (this.states as any).connectExtId);
+      this._decoder = new IMEDecoder(engineID, {
+        extId: (this.states as any).connectExtId,
+        // TODO 
+        annotation: isPinyin(engineID) ? "" : (this.states as any).shuangpinSolution
+      });
+
       this._decoder.addEventListener(EventType.IMERESPONSE, () => {
         let response = this._decoder?.response;
         if (!response) return;

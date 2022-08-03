@@ -21,14 +21,23 @@ if (process.env.ALL) {
 }
 
 /** @todo */
-function getDecoderCode(engineID: string): [Decoders, string] {
-  let decoder = /wasm/.test(engineID) 
+function getDecoderCode(name: string): [Decoders, string, string] {
+  let decoder = /wasm/.test(name) 
     ? Decoders.WASM
-    : /js/.test(engineID)
+    : /js/.test(name)
       ? Decoders.JS
       : Decoders.ONLINE;
+    let config = name.split("::");
+    let engineID, annotation;
+    if (config.length == 2) {
+      engineID = config[0];
+      annotation = config[1];
+    } else {
+      engineID = config[0];
+      annotation = "";
+    }
 
-  return [decoder, engineID];
+  return [decoder, engineID, annotation];
 }
 
 export default class DecoderBackground {
@@ -94,12 +103,12 @@ export default class DecoderBackground {
 
     this.#port = port;
     // [Decoders, engineID]
-    let [decoderCode, engineID] = getDecoderCode(port.name);
+    let [decoderCode, engineID, annotation] = getDecoderCode(port.name);
     
     let Decoder = decoders.get(decoderCode);
     if (!Decoder) port.postMessage(false);
 
-    this.#decoder = new Decoder(engineID, 'pinyinjiajia_o');
+    this.#decoder = new Decoder(engineID, annotation);
 
     this.#port.onMessage.addListener(this.processMessage.bind(this));
     this.#port.onDisconnect.addListener(this.processDisconnect.bind(this));

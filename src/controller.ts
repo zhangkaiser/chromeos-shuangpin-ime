@@ -1,10 +1,11 @@
-import { IIMEStateKey } from "./model/chineseconfig";
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, Key, KeyboardLayouts, Modifier, StateID, Status } from "./model/enums";
 import { Model } from "./model/model";
 import { debugLog } from "./utils/debug";
 import { hans2Hant } from "./utils/transform";
 import { View } from "./view";
+
+import type { IGlobalState } from "./model/state";
 
 type ActionType = [
   EventType, 
@@ -170,6 +171,11 @@ export class Controller extends EventTarget {
       config.states[StateID.SBC].value = initSBC;
       config.states[StateID.PUNC].value = initPunc;
     }
+  }
+
+  updateGlobalState(key: keyof IGlobalState, value: any) {
+    this._configFactory.globalState[key] = value;
+    this.dispatchEvent(Controller.UPDATE_STATE_EVENT);
   }
 
   updateState(key: string, value: any) {
@@ -665,7 +671,7 @@ export class Controller extends EventTarget {
   /**
    * Switch the input tool state.
    */
-  switchInputToolState(stateId: IIMEStateKey, engineID: string) {
+  switchInputToolState(stateId: StateID, engineID: string) {
 
     let states = this.model.states as any;
     if (typeof states[stateId] == 'boolean') {

@@ -65,6 +65,14 @@ export enum StateID {
   PREDICTOR = 'predictor'
 }
 
+export enum PinyinStateID {
+  VERTICAL = "enableVertical",
+  PREDICT_ENGINE = "predictEngine"
+}
+
+export enum ShuangpinStateID {
+  SOLUTION = "shuangpinSolution"
+}
 
 /** The key for the transform result. */
 export enum TransID {
@@ -117,4 +125,8 @@ export enum PredictEngine {
   BAIDU,
   GOOGLE,
   GOOGLE_CN
+}
+
+export enum GlobalState {
+  remoteExtId = "connectExtId",
 }

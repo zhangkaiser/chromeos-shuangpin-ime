@@ -1,23 +1,21 @@
-import { debugLog } from "../utils/debug";
-import { solutions } from "../utils/double-solutions";
-import { hans2Hant } from "../utils/transform";
+import { ShuangpinStateID } from "./enums";
 import {PinyinConfig} from "./pinyinconfig";
+import { IShuangpinConfigState, IShuangpinState, IChineseState } from "./state";
 
-export class ShuangpinConfig extends PinyinConfig {
+export class ShuangpinConfig extends PinyinConfig implements IShuangpinConfigState {
 
-  
   initialReg = /^(zh|ch|sh|b|p|m|f|d|t|n|l|k|g|h|j|q|x|r|z|c|s|y|w|a|e|o)/;
 
   editorCharReg = /[a-z;]/;
 
   initialCharList = 'iuv'.split('');
 
+  shuangpinSolution = "pinyinjiajia_o";
+
   constructor() {
     super();
   }
-
-  solution = 'pinyinjiajia';
-
+  
   transform(
     /** The model raw source. */ context: string, 
     /** New char. */ c: string,
@@ -46,8 +44,29 @@ export class ShuangpinConfig extends PinyinConfig {
         segment: '',
         source: source.slice(0, -1)
       }
-    }
-    
+    } 
+  }
+
+  getStates() {
+    let states = super.getStates() as IShuangpinState;
+
+    states[ShuangpinStateID.SOLUTION] = this[ShuangpinStateID.SOLUTION];
+    return states;
+  }
+
+
+  setStates(states: Partial<IShuangpinState>): void {
+    Object.keys(states).forEach((stateId) => {
+      switch(stateId) {
+        case ShuangpinStateID.SOLUTION:
+          let state = states[stateId];
+          if (state) {
+            this[stateId] = state;
+          }
+        default:
+      }
+    });
+    super.setStates(states);
   }
 
   [Symbol.toStringTag]() {

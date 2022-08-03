@@ -6,6 +6,7 @@ import { Config } from "./config";
 import { InputToolCode } from "./enums";
 import { PinyinConfig } from "./pinyinconfig";
 import { ShuangpinConfig } from "./shuangpinconfig";
+import { IGlobalState } from "./state";
 
 /**
  * The input mothod config factory.
@@ -18,6 +19,11 @@ export default class ConfigFactory {
   private _map: Partial<Record<InputToolCode, Config>> = {};
   constructor() {
     this.#buildConfig();
+  }
+
+  /** The ime global state. */
+  globalState: IGlobalState = {
+    connectExtId: "",
   }
   /**
    * Sets the current input tool by the given input tool code.

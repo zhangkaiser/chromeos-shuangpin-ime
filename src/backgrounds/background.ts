@@ -1,7 +1,8 @@
 import { Controller } from "src/controller";
 import { IMessage } from "src/model/common";
 import { configFactoryInstance } from "src/model/configfactory";
-import { EventType, InputToolCode, MessageType, StateID } from "src/model/enums";
+import { EventType, GlobalState, InputToolCode, MessageType, StateID } from "src/model/enums";
+import { IIMEState, IInitedState } from "src/model/state";
 import { enableDebug } from "src/utils/debug";
 import { loadDict } from "src/utils/transform";
 
@@ -19,9 +20,12 @@ export default class Background {
   private _controller = new Controller();
   configFactory = configFactoryInstance;
 
+  #loadedPromise: Promise<IInitedState>; 
+
   constructor() {
     // Register message listener.
     this.#registerMessage();
+    this.#loadedPromise = this.#loadingState();
     this.#init();
 
     this._controller.addEventListener(
@@ -32,8 +36,11 @@ export default class Background {
 
   #updateStateToStorage() {
     let states = this._controller.model.states;
+    let globalState = this.configFactory.globalState;
+
     chrome.storage.local.set({
-      states
+      states,
+      globalState
     })
   }
 
@@ -46,16 +53,19 @@ export default class Background {
   /** Initializes the background scripts. */
   #init() {
     chrome.runtime.onInstalled.addListener((res) => {
-      if (res.reason === 'install') {
-        // The default input tool configure.
-        this.#updateStateToStorage();
-      }
+      // if (res.reason === 'install') {
+      //   // The default input tool configure.
+      //   this.#updateStateToStorage();
+      // }
     })
 
     chrome.input.ime.onActivate.addListener((engineID) => {
-      this.#restoreState().then((states) => {
+      this.#loadedPromise.then((res) => {
+
         let config = this.configFactory.getConfig(engineID as InputToolCode);
-        config.setStates(states);
+
+        res['states'] && config.setStates(res['states']);
+        
         this._controller.activate(engineID as InputToolCode);
       });
     })
@@ -108,18 +118,27 @@ export default class Background {
   }
 
   /**
+   * @todo May be multiple storage states with different configs.
+   * Loading state.
    * Restore the state from cached.
    */
-  #restoreState() {
-    return new Promise((resolve: (value: object) => void, reject) => {
-      chrome.storage.local.get('states', (res) => {
-        if (res && res['states']) {
-          if (res["states"].enableTraditional) {
+  #loadingState() {
+    return new Promise((resolve: (value: IInitedState) => void, reject) => {
+      chrome.storage.local.get(['states', 'globalState'], (res) => {
+        if (!res) resolve({});
+        if (res['states']) {
+          let states = res['states'] as IIMEState;
+          if (states.traditional) {
             // Early Loading Chinese Traditional dict.
             loadDict();
           }
         }
-        resolve(res && res["states"]);
+
+        if(res['globalState']) {
+          this.configFactory = res['globalState'];
+        }
+
+        resolve(res as IInitedState);
       });
     });
   }
@@ -158,7 +177,7 @@ export default class Background {
     switch (msg['type']) {
       case MessageType.INSTALLED:
         let { id } = sender;
-        id &&this._controller.updateState('connectExtId', id);
+        id && this._controller.updateGlobalState(GlobalState.remoteExtId, id);
         sendResponse(true);
         break;
       default:

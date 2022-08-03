@@ -31,27 +31,27 @@ const introList = [
     value: ['- / =', ', / .']
   },
   {
-    label: 'Shuang Pin solution',
+    label: '查看双拼解决方案',
     value: {
-      link: "#shuangpin-solution"
+      link: "#shuangpin-solution-list"
     }
   },
   {
-    label: "How to add shuangpin solution",
+    label: "如何自定义双拼解决方案",
     value: {
-      link: "#custom-shuangpin"
+      link: "#how-to-custom-shuangpin"
     }
   }
 ];
 
 const solutionNames: Record<keyof typeof solutions, string> = {
-  pinyinjiajia: "aa",
-  pinyinjiajia_o: "aa",
-  ziranma: "aa",
-  ziranma_o: "aa",
-  zhongwenzhixing_o: "aa",
-  xiaohe_o: "aa",
-  xiaohe: "aa"
+  pinyinjiajia: "拼音加加",
+  pinyinjiajia_o: "拼音加加[o键引导]",
+  ziranma: "自然码",
+  ziranma_o: "自然码[o键引导]",
+  zhongwenzhixing_o: "中文之星[o键引导]",
+  xiaohe_o: "小鹤双拼[o键引导]",
+  xiaohe: "小鹤双拼"
 }
 
 const onlineEngineList: Record<PredictEngine, string> = {
@@ -143,7 +143,7 @@ class OptionPage extends LitElement {
     return `zh-${this.compiler}-${this.decoder}`;
   }
   
-  @property({type: String}) shuangpinSolution = 'pinyinjiajia';
+  @property({type: String}) shuangpinSolution = 'pinyinjiajia_o';
   @property({type: Number}) onlineEngine = 0;
   @property({type: Boolean}) onlineStatus = true;
   @property({type: Boolean}) loaded = false;

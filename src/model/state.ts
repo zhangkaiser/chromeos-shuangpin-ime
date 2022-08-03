@@ -1,5 +1,5 @@
 import type { Config } from "./config";
-import { Key, Modifier, StateID } from "./enums";
+import { Key, Modifier, PinyinStateID, PredictEngine, ShuangpinStateID, StateID } from "./enums";
 
 export class State {
   constructor(
@@ -16,7 +16,25 @@ export class State {
 
 }
 
-/** Used to improve and perfect `inactivate` bug(used to improve and perfect 'inactivate' bug(version 3 for manifest))  */
-export interface IShuangpinState {
+export type IPinyinConfigState = Record<PinyinStateID, boolean | any>;
+export type IShuangpinConfigState = Record<ShuangpinStateID, any>;
 
+export type IChineseState = Record<StateID, boolean>;
+
+export interface IPinyinState extends IChineseState, IPinyinConfigState {
+
+}
+
+export interface IShuangpinState extends IPinyinState, IShuangpinConfigState {
+}
+
+export interface IGlobalState {
+  connectExtId: string
+}
+
+export type IIMEState = IPinyinState | IShuangpinState;
+
+export interface IInitedState {
+  states?: IIMEState,
+  globalState?: IGlobalState
 }
