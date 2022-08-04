@@ -130,18 +130,19 @@ export class Model extends EventTarget implements IModel {
 
   setStates(states: any) {
     if (process.env.IME) {
-      let observeField = ['shuangpinSolution', 'connectExtId'];
-      let changed = {}
+      let observeField = ['shuangpinSolution'];
       observeField = observeField.filter(field => field in states);
       if(observeField.length > 0 && this._decoder && this.engineID) {
-        this._decoder = new IMEDecoder(this.engineID, {
-          extId: states.connectExtId ?? (this.states as any).connectExtId,
-          // TODO 
-          annotation: isPinyin(this.engineID) ? "" : states.shuangpinSolution
-        });
+        this.setEngineID(this.engineID);
       }
     }
     return this.currentConfig.setStates(states);
+  }
+
+  #onIMEResponse() {
+    let response = this._decoder?.response;
+    if (!response) return;
+    this.handleResponse(response);
   }
 
   /** The current page index. */
@@ -156,16 +157,12 @@ export class Model extends EventTarget implements IModel {
     this.engineID = engineID;
     if (process.env.IME) {
       this._decoder = new IMEDecoder(engineID, {
-        extId: (this.states as any).connectExtId,
+        extId: this.configFactory.globalState.connectExtId,
         // TODO 
         annotation: isPinyin(engineID) ? "" : (this.states as any).shuangpinSolution
       });
 
-      this._decoder.addEventListener(EventType.IMERESPONSE, () => {
-        let response = this._decoder?.response;
-        if (!response) return;
-        this.handleResponse(response);
-      });
+      this._decoder.addEventListener(EventType.IMERESPONSE, this.#onIMEResponse.bind(this));
     } else {
       if (process.env.JS) {
         this._decoder = isJS(engineID) 

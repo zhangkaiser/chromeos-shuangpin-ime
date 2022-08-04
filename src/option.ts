@@ -9,7 +9,7 @@ import { solutions } from "./model/shuangpinSolutions";
 import "./components/virtualKeyboard";
 
 import { optionPageStyles } from "./view/pages";
-import { IIMEState, IIMEStateKey } from "./model/chineseconfig";
+import { IIMEState } from "./model/state";
 
 const codeRegExp = /[?code=.]zh-(js|wasm)-(shuangpin|pinyin)/i
 
@@ -95,7 +95,7 @@ class OptionPage extends LitElement {
   decoder = "pinyin";
 
   // Corresponding state key.
-  requireUpdateFields: Partial<Record<IIMEStateKey, boolean>> = {
+  requireUpdateFields = {
     shuangpinSolution: true,
     predictEngine: true,
   } 
@@ -117,6 +117,12 @@ class OptionPage extends LitElement {
     } as IMessage, (states) => {
       if (!states) throw Error("Load states error!");
       this.states = states;
+
+      Object.keys(this.requireUpdateFields).forEach((field) => {
+        if ((this.requireUpdateFields as any)[field]) {
+          (this as any)[field] = states[field];
+        }
+      })
       this.loaded = true;
     })
   }

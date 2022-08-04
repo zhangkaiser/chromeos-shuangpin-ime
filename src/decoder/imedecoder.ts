@@ -1,6 +1,5 @@
 import { IMesageDataOfDecode, IMessage } from "src/model/common";
 import { EventType, MessageType } from "src/model/enums";
-import { IMEResponse } from "./response";
 
 export class IMEDecoder extends EventTarget implements IDecoder {
   
@@ -42,7 +41,6 @@ export class IMEDecoder extends EventTarget implements IDecoder {
     let message:IMessage = { type: MessageType.DECODE, data }
 
     try {
-      console.log(message);
       this.#port?.postMessage(message);
     } catch(e) {
       chrome.runtime.reload();

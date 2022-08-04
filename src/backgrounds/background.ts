@@ -135,7 +135,7 @@ export default class Background {
         }
 
         if(res['globalState']) {
-          this.configFactory = res['globalState'];
+          this.configFactory.globalState = res['globalState'];
         }
 
         resolve(res as IInitedState);
