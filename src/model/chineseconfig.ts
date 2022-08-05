@@ -165,7 +165,7 @@ export default class ChineseConfig extends Config {
     if (!states) return ;
     Object.keys(states).forEach((state) => {
       if (!(state in this.states)) return ;
-      this.states[state as StateID] = (states as any)[state];
+      this.states[state as StateID].value = (states as any)[state];
     });
     super.setStates(states);
   }

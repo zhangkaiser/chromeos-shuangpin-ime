@@ -63,6 +63,7 @@ export class ShuangpinConfig extends PinyinConfig implements IShuangpinConfigSta
           if (state) {
             this[stateId] = state;
           }
+          break;
         default:
       }
     });

@@ -41,6 +41,7 @@ export class PinyinConfig extends ChineseConfig implements IPinyinConfigState {
         default:
       }
     })
+    super.setStates(states);
   }
 
   revert(segment: string, source: string) {
