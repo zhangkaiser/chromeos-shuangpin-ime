@@ -4,45 +4,53 @@ let HtmlWebpackPlugin = require("html-webpack-plugin");
 let webpack = require("webpack");
 const rimraf = require("rimraf");
 
+// Development configuration. 
+// Need to get after loaded `ui` extension.
+const DEV_UI_ID = "";
+
 let manifestList = {
-  v3: "Manifest v3", // Have bugs,
-  v2: "Manifest v2",
-  ime: "Input method engine",
-  decoder: "Input decoder"
+  v3: "Manifest v3", // Now, don't support production environment.
+  v2: "Manifest v2", // Old version, IME will be resident at runtime. 
+  ime: "Input method engine", // Only ui, require decoder.
+  decoder: "Input decoder" // Only decoder, require ui.
 }
 
-// default
+// Default pack `mv3`.
 let manifests = ["v3"];
+if (process.env.MANIFEST) manifests = process.env.MANIFEST.split(",");
+console.log('MANIFESTS', manifests);
 
-if (process.env.MANIFEST) {
-  manifests = process.env.MANIFEST.split(",");
-}
-console.log('MANIFESTS',manifests);
-
+// Default development environment.
 let mode = "development";
-
-if (process.env.PRODUCTION) {
-  mode = "production";
-}
+if (process.env.PRODUCTION) mode = "production";
 console.log("MODE", mode);
 
+// Default all decoder are packaged together.
 let decoder = ["all"];
-if (process.env.DECODER_ENGINE) {
-  decoder = process.env.DECODER_ENGINE.split(',');
-}
+if (process.env.DECODER_ENGINE) decoder = process.env.DECODER_ENGINE.split(',');
 console.log("DECODER ENGINE", decoder);
 
+// Generate corresponding webpack configuration by build name.
 manifests = manifests.filter(name => name in manifestList);
-
 let webpackConfig = manifests.map((manifest) => {
   let outputPath = "dist/" + manifest;
   rimraf(outputPath, (error) => null);
 
+  // List of files to be copied.
   let copyPatterns = [
-    {from: `./src/manifests/manifest_${manifest}.json`, to: "./manifest.json"},
+    {from: `./src/manifests/manifest_${manifest}.json`, to: "./manifest.json", transform(content) {
+      if (mode == 'development') {
+        let data = JSON.parse(content);
+        delete data['key'];
+        return JSON.stringify(data);
+      }
+      return content;
+    }},
     {from: "./src/asset", to: "."},
   ]
 
+  // webpack.DefinePlugin parameter.
+  // Global constants configured at compile time.
   let defineObj = {
     "process.env.DECODER": false,
     "process.env.MAIN": false,
@@ -55,9 +63,11 @@ let webpackConfig = manifests.map((manifest) => {
     "process.env.JS": false,
     "process.env.ONLINE": false,
     "process.env.ALL": false,
+    "process.env.IMEUIID": mode === "development" 
+      ? DEV_UI_ID 
+      : "enmcjlgogceppnhfkaimbjlcmcnmihbo"
   };
-
-  if (decoder.indexOf("a[all") >= 0) {
+  if (decoder.indexOf("all") >= 0) {
     defineObj["process.env.ALL"] = true;
   } else {
     decoder.forEach(name => {
@@ -75,14 +85,7 @@ let webpackConfig = manifests.map((manifest) => {
       }
     })
   }
-
-  decoder.forEach((name) => {
-    if (name === 'all') {
-      defineObj["process.env.ALL"] = true;
-    }
-  })
-
-  let copyDecoder = {from: "./libGooglePinyin/decoder.wasm", to: "."};
+  let copyDecoder = { from: "./libGooglePinyin/decoder.wasm", to: "." };
   switch(manifest) {
     case "v3":
       defineObj['process.env.MV3'] = true;
@@ -101,6 +104,7 @@ let webpackConfig = manifests.map((manifest) => {
 
   }
 
+  // Webpack Configuration.
   return {
     entry: {
       background: "./src/background.ts",
@@ -128,7 +132,6 @@ let webpackConfig = manifests.map((manifest) => {
         fs: false,
         worker_threads: false,
         crypto: false,
-        
       }
     },
     plugins: [

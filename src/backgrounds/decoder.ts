@@ -52,8 +52,7 @@ export default class DecoderBackground {
   }
 
   #onInstall() {
-    // Test
-    chrome.runtime.sendMessage("kddkhfjlcblbefodhpkjhghglidflbha", {type: 3})
+    chrome.runtime.sendMessage(process.env.IMEUIID as string, {type: 3})
   }
 
   /** @todo */
