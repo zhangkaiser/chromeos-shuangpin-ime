@@ -96,6 +96,9 @@ export default class Predictor {
 
   /** @todo */
   async decode(source: string, raw: string) {
+    if (raw.length < 3) {
+      return null;
+    }
     // TODO(error!)
     // Abort the last request.
     if (this._timeout || (this._lastRequest && !this._lastRequest.signal.aborted)) {
