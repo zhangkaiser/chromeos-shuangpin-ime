@@ -43,7 +43,8 @@ export class IMEDecoder extends EventTarget implements IDecoder {
     try {
       this.#port?.postMessage(message);
     } catch(e) {
-      chrome.runtime.reload();
+      console.error(e);
+      // chrome.runtime.reload();
     }
     return null;
   }

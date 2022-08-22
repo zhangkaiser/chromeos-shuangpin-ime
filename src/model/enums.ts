@@ -109,10 +109,12 @@ export enum InputToolCode {
 
 export enum MessageType {
   UPDATE_STATE = 1,
-  GET_STATES,
   INSTALLED,
   DECODE,
-  IMERESPONSE
+  IMERESPONSE,
+  GET_STATES = "get_states",
+  GET_CONFIG = "get_config",
+  IME_REFRESH = "refresh"
 }
 
 export enum Decoders {

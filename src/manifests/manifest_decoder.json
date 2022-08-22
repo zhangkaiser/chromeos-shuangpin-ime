@@ -1,7 +1,7 @@
 {
-  "name": "Decoder",
+  "name": "IME Decoder(background)",
   "version": "0.0.1",
-  "description": "支持拼音加加,小鹤等解决方法.",
+  "description": "中文双拼／拼音后台解析器（需与其他扩展一起使用）",
   "manifest_version": 3,
   "background": {
     "service_worker": "background.js"
@@ -20,6 +20,7 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval' 'wasm-eval'; object-src 'self'"
   },
+  "incognoti": "split",
   "update_url": "https://clients2.google.com/service/update2/crx",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs3Bh5ybwavtT+VDMtNslbgYkR1wvtQwWr/QleRNW76DpWBjfmAuaDbIb0RLta8z8vqv7JwIF/+SC8ce70ZQvrS7iScjiw83mqbGYqh5LmCkFLic6MZo1u/ewYZDa89iS+jF5NHVKg8rQVCTUh9xC8Lqk20JI/5IK8VgIeJegpgUChgzgdE2J9YZ2SQeEOkNclgPDxA7bTXmmapm0x5vCpe/UyjX+Lh8Q20haduf1ajrqSL+XvOiXqWfbkWLKo2EzYrMDUsUjDxxf/t0MfvqRk7cmSvRJdSuRXBfVV2/I6XSIyIYUIKcg6TGM9uYV85XebIVK5PymDvt0tF2sCW/eRQIDAQAB"
 }

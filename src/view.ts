@@ -85,7 +85,7 @@ export class View {
    * @todo
    * To refresh the editor.
    */
-  refresh() {
+  refresh(vkPort?: chrome.runtime.Port) {
     if (!this._context) return;
 
     let segments = this.model.segments;
@@ -107,6 +107,17 @@ export class View {
     try {
       // TODO Running in Android application have will be focus issues.
       // But use short(raw source) text is no problem.
+      if (vkPort) {
+        vkPort.postMessage({
+          type: 'refresh',
+          data: {
+            text: composing_text,
+            cursor: pos,
+            candidates: this.model.candidates.map((candidate) => Object.create(candidate))
+          }
+        })
+        return;
+      }
       chrome.input.ime.setComposition({
         contextID: this._context.contextID,
         text: composing_text,

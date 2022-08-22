@@ -74,21 +74,22 @@ export class CandidateWindow {
 
     let { candidates } = candidatesParams;
 
-    if (this.config.enabledVirtualKeyboard) {
-      // TODO Need to verify is right?
-      windowProps.windowPosition = "composition";
-      windowProps.currentCandidateIndex = currentCandID;
-      windowProps.totalCandidates = this.candidates.length;
+    // if (this.config.enabledVirtualKeyboard) {
+    //   // TODO Need to verify is right?
+    //   windowProps.windowPosition = "composition";
+    //   windowProps.currentCandidateIndex = currentCandID;
+    //   windowProps.totalCandidates = this.candidates.length;
       
-      this.getCandidates((candidate, label) => {
-        candidates.push({
-          candidate: candidate.target,
-          label: '' + label,
-          id: candidate.candID
-        });
-      }, true);
+    //   this.getCandidates((candidate, label) => {
+    //     candidates.push({
+    //       candidate: candidate.target,
+    //       label: '' + label,
+    //       id: candidate.candID
+    //     });
+    //   }, true);
 
-    } else if (this.config.enableVertical) {
+    // } else 
+    if ((this.config.getStates() as any).vertical) {
       // Show candidates vertically.
       windowProps.vertical = true;
       windowProps.pageSize = this.config.pageSize;

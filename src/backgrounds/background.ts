@@ -25,6 +25,7 @@ export default class Background {
   constructor() {
     // Register message listener.
     this.#registerMessage();
+    this.#registerConnect();
     this.#loadedPromise = this.#loadingState();
     this.#init();
 
@@ -48,6 +49,10 @@ export default class Background {
     // Sets up a listener which talks to the option page.
     chrome.runtime.onMessage.addListener(this.processRequest.bind(this));
     chrome.runtime.onMessageExternal.addListener(this.processExternal.bind(this));
+  }
+
+  #registerConnect() {
+    chrome.runtime.onConnectExternal.addListener(this.processConnect.bind(this));
   }
 
   /** Initializes the background scripts. */
@@ -180,7 +185,25 @@ export default class Background {
         id && this._controller.updateGlobalState(GlobalState.remoteExtId, id);
         sendResponse(true);
         break;
+      case MessageType.GET_CONFIG:
+        return sendResponse({
+          "id": "pinyin-zh-CN.compact.qwerty",
+          "language": "zh",
+          "name": "Chinese"
+        })
+      case MessageType.GET_STATES:
+        return sendResponse(this.configFactory.getCurrentConfig().getStates());
       default:
     }
+  }
+
+  /** @todo */
+  processConnectMessage(msg: IMessage, port: chrome.runtime.Port) {
+
+  }
+
+  processConnect(port: chrome.runtime.Port) {
+    this._controller.vkPort = port;
+    port.onMessage.addListener(this.processConnectMessage.bind(this));
   }
 }
