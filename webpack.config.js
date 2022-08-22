@@ -6,7 +6,7 @@ const rimraf = require("rimraf");
 
 // Development configuration. 
 // Need to get after loaded `ui` extension.
-const DEV_UI_ID = "";
+const DEV_UI_ID = "enmcjlgogceppnhfkaimbjlcmcnmihbo";
 
 let manifestList = {
   v3: "Manifest v3", // Now, don't support production environment.
@@ -63,9 +63,9 @@ let webpackConfig = manifests.map((manifest) => {
     "process.env.JS": false,
     "process.env.ONLINE": false,
     "process.env.ALL": false,
-    "process.env.IMEUIID": mode === "development" 
+    "process.env.IMEUIID": JSON.stringify(mode === "development" 
       ? DEV_UI_ID 
-      : "enmcjlgogceppnhfkaimbjlcmcnmihbo"
+      : "enmcjlgogceppnhfkaimbjlcmcnmihbo")
   };
   if (decoder.indexOf("all") >= 0) {
     defineObj["process.env.ALL"] = true;

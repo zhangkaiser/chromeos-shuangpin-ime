@@ -56,7 +56,13 @@ export class CandidateWindow {
   }
 
   #clearComposition(contextID: number) {
-    chrome.input.ime.clearComposition({contextID});
+    try {
+      chrome.input.ime.clearComposition({contextID});
+    } catch(e) {
+      chrome.input.ime.clearComposition({
+        contextID: -1
+      })
+    }
   }
 
   /**
@@ -64,9 +70,10 @@ export class CandidateWindow {
    * Show the candidate window. 
    * */
   show(contextID: number, /** TODO */currentCandID?: number) {
-    if (!this.candidates.length) return this.hide(contextID);
+    // if (!this.candidates.length) return this.hide(contextID);
     let windowProps: ICandidateWindowProperties = { 
-      visible: true, cursorVisible: true // TODO 
+      visible: true,
+      cursorVisible: true, // TODO 
     }
     let candidatesParams: chrome.input.ime.CandidatesParameters = {
       contextID, candidates: []
