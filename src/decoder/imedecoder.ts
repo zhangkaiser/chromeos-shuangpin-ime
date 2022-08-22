@@ -3,13 +3,11 @@ import { EventType, MessageType } from "src/model/enums";
 
 export class IMEDecoder extends EventTarget implements IDecoder {
   
-  static IME_RESPONSE_EVENT = new CustomEvent(EventType.IMERESPONSE);
   #port?: chrome.runtime.Port;
 
   #onMessageCb: any;
   #onDisconnectCb: any;
 
-  response?: IIMEResponse;
 
   constructor(public engineID: string, option: string | {extId: string, annotation: string}) {
     super();
@@ -43,13 +41,13 @@ export class IMEDecoder extends EventTarget implements IDecoder {
     try {
       this.#port?.postMessage(message);
     } catch(e) {
-      chrome.runtime.reload();
+      console.error(e);
+      // chrome.runtime.reload();
     }
     return null;
   }
 
   clear() {
-    this.response = undefined;
   }
 
   #end() {
@@ -59,10 +57,13 @@ export class IMEDecoder extends EventTarget implements IDecoder {
   }
 
   #onMessage(msg: IMessage, port: chrome.runtime.Port) {
+    console.log(msg);
     switch(msg['type']) {
       case MessageType.IMERESPONSE:
-        this.response = <IIMEResponse>msg.data;
-        this.dispatchEvent(IMEDecoder.IME_RESPONSE_EVENT);
+        this.dispatchEvent(new CustomEvent(EventType.IMERESPONSE, {
+          detail: msg.data
+        }));
+        break;
     }
   }
 

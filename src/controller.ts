@@ -30,6 +30,9 @@ export class Controller extends EventTarget {
   /** The view. */
   view = new View(this.model);
 
+  /** Keyboard UI Port */
+  vkPort?: chrome.runtime.Port;
+
   _context?: any;
   
   /** The key action table. */
@@ -519,7 +522,7 @@ export class Controller extends EventTarget {
   * @protected
   */
   handleModelUpdatedEvent() {
-    this.view.refresh();
+    this.view.refresh(this.vkPort);
   }
 
 

@@ -1,5 +1,5 @@
 {
-  "name": "IME",
+  "name": "双拼",
   "version": "0.0.1",
   "description": "支持拼音加加,小鹤等解决方法.",
   "manifest_version": 3,
@@ -37,7 +37,7 @@
         "options_page": "option.html?code=zh-wasm-shuangpin"
       }
   ],
-  "options_page": "option.html",
+  "options_page": "option.html?code=zh-wasm-shuangpin",
   "update_url": "https://clients2.google.com/service/update2/crx",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmyU7mbxwNd4ERp8NxLIdDQPilBwmkW0WXfFEyry2Y0Wd1uCGnQeD19Hv2zvla3CuSXLkXj7Oblg2OcTB700B2wEydXU9oyG7U9bEV06DLyfxI85xDJbJXGL0Z16Vjc6gpBM9dZdfUpXFMDCrTQyBy2mPKv7NnkG9H9QGRynN7CNas01TUFbj8yLJQEPBFRGh8gFFTVNbiWXUtaPljyH2cWx07kU2HT/IgVuCUoWC+NGbUezIathCkCTRM21F+4k6dqu691nCpp+D8RMSlF3kMUld2gD0gHN3i3OvI2obNwDCidmJo/aUFaZpnUJADq2A5gC610Xi/+Qa14q5LdWzfwIDAQAB"
 }

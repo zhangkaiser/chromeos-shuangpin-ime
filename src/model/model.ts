@@ -139,10 +139,9 @@ export class Model extends EventTarget implements IModel {
     return this.currentConfig.setStates(states);
   }
 
-  #onIMEResponse() {
-    let response = this._decoder?.response;
-    if (!response) return;
-    this.handleResponse(response);
+  #onIMEResponse(e: any) {
+    if (!e.detail) return;
+    this.handleResponse(e.detail);
   }
 
   /** The current page index. */

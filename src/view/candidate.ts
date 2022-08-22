@@ -56,7 +56,13 @@ export class CandidateWindow {
   }
 
   #clearComposition(contextID: number) {
-    chrome.input.ime.clearComposition({contextID});
+    try {
+      chrome.input.ime.clearComposition({contextID});
+    } catch(e) {
+      chrome.input.ime.clearComposition({
+        contextID: -1
+      })
+    }
   }
 
   /**
@@ -64,9 +70,10 @@ export class CandidateWindow {
    * Show the candidate window. 
    * */
   show(contextID: number, /** TODO */currentCandID?: number) {
-    if (!this.candidates.length) return this.hide(contextID);
+    // if (!this.candidates.length) return this.hide(contextID);
     let windowProps: ICandidateWindowProperties = { 
-      visible: true, cursorVisible: true // TODO 
+      visible: true,
+      cursorVisible: true, // TODO 
     }
     let candidatesParams: chrome.input.ime.CandidatesParameters = {
       contextID, candidates: []
@@ -74,21 +81,22 @@ export class CandidateWindow {
 
     let { candidates } = candidatesParams;
 
-    if (this.config.enabledVirtualKeyboard) {
-      // TODO Need to verify is right?
-      windowProps.windowPosition = "composition";
-      windowProps.currentCandidateIndex = currentCandID;
-      windowProps.totalCandidates = this.candidates.length;
+    // if (this.config.enabledVirtualKeyboard) {
+    //   // TODO Need to verify is right?
+    //   windowProps.windowPosition = "composition";
+    //   windowProps.currentCandidateIndex = currentCandID;
+    //   windowProps.totalCandidates = this.candidates.length;
       
-      this.getCandidates((candidate, label) => {
-        candidates.push({
-          candidate: candidate.target,
-          label: '' + label,
-          id: candidate.candID
-        });
-      }, true);
+    //   this.getCandidates((candidate, label) => {
+    //     candidates.push({
+    //       candidate: candidate.target,
+    //       label: '' + label,
+    //       id: candidate.candID
+    //     });
+    //   }, true);
 
-    } else if (this.config.enableVertical) {
+    // } else 
+    if ((this.config.getStates() as any).vertical) {
       // Show candidates vertically.
       windowProps.vertical = true;
       windowProps.pageSize = this.config.pageSize;
