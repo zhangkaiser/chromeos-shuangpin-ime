@@ -114,7 +114,10 @@ export enum MessageType {
   IMERESPONSE = 4,
   GET_STATES = "get_states",
   GET_CONFIG = "get_config",
-  IME_REFRESH = "refresh"
+  IME_REFRESH = "refresh",
+  CLEAR = "clear",
+  VISIBILITY = "visibility",
+  TOGGLE_LANGUAGE_STATE = "lang_state"
 }
 
 export enum Decoders {

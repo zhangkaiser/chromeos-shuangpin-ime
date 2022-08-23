@@ -33,6 +33,9 @@ export class Controller extends EventTarget {
   /** Keyboard UI Port */
   vkPort?: chrome.runtime.Port;
 
+  /** Virtual keyboard visibility. */
+  visibility: boolean = false;
+
   _context?: any;
   
   /** The key action table. */
@@ -522,7 +525,7 @@ export class Controller extends EventTarget {
   * @protected
   */
   handleModelUpdatedEvent() {
-    this.view.refresh(this.vkPort);
+    this.view.refresh(this.visibility ? this.vkPort : undefined);
   }
 
 

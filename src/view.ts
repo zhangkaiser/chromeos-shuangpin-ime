@@ -76,10 +76,10 @@ export class View {
   /**
    * To hide the editor.
    */
-   hide() {
+  hide() {
     this.window?.hide(this._context?.contextID);
-    chrome.input.ime.hideInputView();
   }
+
 
   /**
    * @todo
@@ -113,7 +113,9 @@ export class View {
           data: {
             text: composing_text,
             cursor: pos,
-            candidates: this.model.candidates.map((candidate) => Object.create(candidate))
+            candidates: this.model.candidates.map((candidate) => ({
+             target: candidate.target
+            }))
           }
         })
         return;

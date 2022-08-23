@@ -369,6 +369,7 @@ export class Model extends EventTarget implements IModel {
     this.fetchCandidates();
   }
 
+  /** @todo clear's & abort's method, unclear using purpose. */
   clear() {
     if (this.status != Status.INIT) {
       this.dispatchEvent(Model.CLOSING_EVENT);

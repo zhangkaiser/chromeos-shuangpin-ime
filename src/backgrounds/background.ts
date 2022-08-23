@@ -199,7 +199,15 @@ export default class Background {
 
   /** @todo */
   processConnectMessage(msg: IMessage, port: chrome.runtime.Port) {
-
+    switch(msg['type']) {
+      case MessageType.CLEAR:
+        return this._controller.model.clear();
+      case MessageType.TOGGLE_LANGUAGE_STATE:
+        let { value } = msg['data'] || true;
+        return this._controller.updateState('lang', value);
+      case MessageType.VISIBILITY:
+        return this._controller.visibility = msg['data'].value;
+    }
   }
 
   processConnect(port: chrome.runtime.Port) {
