@@ -2,8 +2,7 @@ let path = require("path");
 let CopyWebpackPlugin = require("copy-webpack-plugin");
 let HtmlWebpackPlugin = require("html-webpack-plugin");
 let webpack = require("webpack");
-const rimraf = require("rimraf");
-
+let rimraf = require("rimraf");
 // Development configuration. 
 // Need to get after loaded `ui` extension.
 const DEV_UI_ID = "enmcjlgogceppnhfkaimbjlcmcnmihbo";
@@ -30,11 +29,16 @@ let decoder = ["all"];
 if (process.env.DECODER_ENGINE) decoder = process.env.DECODER_ENGINE.split(',');
 console.log("DECODER ENGINE", decoder);
 
+// Old version support. < chrome version 103.
+let old = false;
+if (process.env.DECODER_OLD) old = true;
+console.log("OLD SUPPORT", old);
+
 // Generate corresponding webpack configuration by build name.
 manifests = manifests.filter(name => name in manifestList);
 let webpackConfig = manifests.map((manifest) => {
   let outputPath = "dist/" + manifest;
-  rimraf(outputPath, (error) => null);
+  rimraf(outputPath, console.error);
 
   // List of files to be copied.
   let copyPatterns = [
@@ -42,6 +46,15 @@ let webpackConfig = manifests.map((manifest) => {
       if (mode == 'development') {
         let data = JSON.parse(content);
         delete data['key'];
+        return JSON.stringify(data);
+      }
+
+      if (old && manifest == 'decoder') {
+        let data = JSON.parse(content);
+        data['maximum_chrome_version'] = "103";
+        data["minimum_chrome_version"] = "45";
+        data["content_security_policy"]["extension_page"] = "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'";
+        delete["content_security_policy"]["extension_pages"];
         return JSON.stringify(data);
       }
       return content;
@@ -54,7 +67,7 @@ let webpackConfig = manifests.map((manifest) => {
   let defineObj = {
     "process.env.DECODER": false,
     "process.env.MAIN": false,
-    "process.env.IME": false,
+    "process.env.IME": JSON.stringify(false),
     "process.env.MV3": false,
     "ENVIRONMENT_IS_NODE": false,
 
@@ -98,7 +111,7 @@ let webpackConfig = manifests.map((manifest) => {
       copyPatterns.push(copyDecoder);
       break;
     case "ime":
-      defineObj['process.env.IME'] = JSON.stringify(true);
+      defineObj["process.env.IME"] = JSON.stringify(true);
     default:
       defineObj["process.env.MAIN"] = true;
 

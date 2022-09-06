@@ -1,7 +1,6 @@
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, Key, KeyboardLayouts, Modifier, StateID, Status } from "./model/enums";
 import { Model } from "./model/model";
-import { debugLog } from "./utils/debug";
 import { hans2Hant } from "./utils/transform";
 import { View } from "./view";
 
@@ -94,7 +93,7 @@ export class Controller extends EventTarget {
   register(context: any) {
     this._context = context;
     this.view.setContext(context);
-    this.model.clear();
+    this.model.clear(true);
   }
 
   /**
@@ -102,7 +101,6 @@ export class Controller extends EventTarget {
    * Unregister the context.
    */
   unregister(contextID: number) {
-
     this._context = null;
     this.view.setContext(null);
     this.model.clear();

@@ -99,8 +99,7 @@ export default class Predictor {
     if (raw.length < 3) {
       return null;
     }
-    // TODO(error!)
-    // Abort the last request.
+    
     if (this._timeout || (this._lastRequest && !this._lastRequest.signal.aborted)) {
       this.clear();
     }

@@ -57,7 +57,6 @@ export class IMEDecoder extends EventTarget implements IDecoder {
   }
 
   #onMessage(msg: IMessage, port: chrome.runtime.Port) {
-    console.log(msg);
     switch(msg['type']) {
       case MessageType.IMERESPONSE:
         this.dispatchEvent(new CustomEvent(EventType.IMERESPONSE, {

@@ -154,6 +154,12 @@ export class Model extends EventTarget implements IModel {
 
   setEngineID(engineID: string): void {
     this.engineID = engineID;
+  }
+
+  reload() {
+    let engineID = this.engineID;
+    if (!engineID) return console.error("No engineID");
+    
     if (process.env.IME) {
       this._decoder = new IMEDecoder(engineID, {
         extId: this.configFactory.globalState.connectExtId,
@@ -227,6 +233,7 @@ export class Model extends EventTarget implements IModel {
     if (this.source.length + text.length > this.currentConfig.maxInputLen) {
       this.selectCandidate(undefined, '');
     }
+
     this.rawSource += key;
     this.source += text;
     this.highlightIndex = -1;
@@ -369,8 +376,7 @@ export class Model extends EventTarget implements IModel {
     this.fetchCandidates();
   }
 
-  /** @todo clear's & abort's method, unclear using purpose. */
-  clear() {
+  clear(registraion: boolean = false) {
     if (this.status != Status.INIT) {
       this.dispatchEvent(Model.CLOSING_EVENT);
     }
@@ -385,13 +391,14 @@ export class Model extends EventTarget implements IModel {
     this.candidates = [];
     this.status = Status.INIT;
     this._holdSelectStatus = false;
-    // this.stateCache = '';
-    // this.isFromInactive = false;
     this.selectedCandID = -1;
+
+    if (registraion) this.reload();
   }
 
   abort() {
     this.clear();
+
   }
 
   /** @todo */

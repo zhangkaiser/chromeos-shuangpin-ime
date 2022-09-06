@@ -101,23 +101,23 @@ export class CandidateWindow {
       windowProps.vertical = true;
       windowProps.pageSize = this.config.pageSize;
 
-      this.getCandidates((candidate, label) => {
+      this.getCandidates((candidate, label, id) => {
         candidates.push({
           candidate: candidate.target,
-          label: '' + label,
-          id: candidate.candID
+          label,
+          id
         });
       });
     } else {
       // Default.
       windowProps.pageSize = this.config.pageSize;
 
-      this.getCandidates((candidate, label) => {
+      this.getCandidates((candidate, label, id) => {
         candidates.push({
           annotation: `${label} ${candidate.target}`,
           candidate: candidate.target,
-          label: '' + label,
-          id: candidate.candID
+          label,
+          id
         })
       })
     }
@@ -146,7 +146,7 @@ export class CandidateWindow {
     this.candidates = candidates;
   }
 
-  getCandidates(cb: (candidate: Candidate, label: number, id: number) => void, all: boolean = false) {
+  getCandidates(cb: (candidate: Candidate, label: string, id: number) => void, all: boolean = false) {
     let from, to;
     let candsNum = this.candidates.length;
     if (all) {
@@ -165,7 +165,7 @@ export class CandidateWindow {
     for (let i = from; i < to; i++) {
       let candidate = this.candidates[i];
       if (!candidate) break;
-      cb(candidate, index++, i);
+      cb(candidate, "" + (index++), i);
     }    
   }
 
