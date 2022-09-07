@@ -133,7 +133,7 @@ export class Controller extends EventTarget {
   }
 
   /**
-   * @todo
+   * @deprecated
    * Enables/Disables user dictionary for a given input tool.
    */
    setUserDictEnabled(

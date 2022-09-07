@@ -26,9 +26,25 @@ interface IWASMDecoder {
 
 /** Decoder interface. */
 interface IDecoder extends EventTarget {
-  decode(sourceToken: string, chooseId: number): IIMEResponse | null;
+  
+  /** Transliterations for the source word.  */
+  decode(sourceWord: string, chooseId: number): IIMEResponse | null;
+  
+  /** @deprecated IME decoder response data. */
   response?: IIMEResponse;
+  
+  /** Clear the decoder */
   clear(): void;
+
+  /** Adds user selected candidates */
+  addUserCommits(source: string, target: string);
+
+  /** Enables/Disables the user dictionary. */
+  enableUserDict(enable: boolean);
+
+  /** Enables/Disables the traditional Chinese. */
+  enableTraditional(enable: boolean);
+  
 }
 
 /** WASM Module interface */

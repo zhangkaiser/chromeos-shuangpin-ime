@@ -8,7 +8,7 @@ import OnlineDecoder from "src/decoder/onlinedecoder";
 import Predictor from "src/decoder/predictor";
 
 import { isJS, isPinyin } from "../utils/regexp";
-import { IMEDecoder } from "src/decoder/imedecoder";
+import { IMEDecoderProxy as IMEDecoder } from "src/decoder/imedecoderproxy";
 
 /**
  * The model, which manages the state transfers and commits.
@@ -366,6 +366,7 @@ export class Model extends EventTarget implements IModel {
     );
     
     if (this.commitPos == this.segments.length || commit != undefined) {
+      this._decoder?.addUserCommits(this.tokens.join(''), this.segments.join(''));
       this.notifyUpdates(true);
       return this.clear();
     }

@@ -151,5 +151,7 @@ export default class Decoder extends EventTarget implements IDecoder {
     }
   }
 
+  enableTraditional() {}
+
   
 }

@@ -112,12 +112,14 @@ export enum MessageType {
   INSTALLED,
   DECODE,
   IMERESPONSE = 4,
+  ADD_USER_COMMITS,
+  ENABLE_USER_DICT,
   GET_STATES = "get_states",
   GET_CONFIG = "get_config",
   IME_REFRESH = "refresh",
   CLEAR = "clear",
   VISIBILITY = "visibility",
-  TOGGLE_LANGUAGE_STATE = "lang_state"
+  TOGGLE_LANGUAGE_STATE = "lang_state",
 }
 
 export enum Decoders {

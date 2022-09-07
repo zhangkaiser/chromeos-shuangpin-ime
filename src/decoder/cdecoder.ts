@@ -76,5 +76,8 @@ export default class Decoder extends EventTarget implements IDecoder {
     this.#tokenDecoder.clear();
     this.decoder?.clear();
   }
-
+  
+  addUserCommits(source: string, target: string) {}
+  enableUserDict(eanble: boolean) {}
+  enableTraditional(enable: boolean) {}
 }

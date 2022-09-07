@@ -37,4 +37,9 @@ export default class OnlineDecoder extends EventTarget implements IDecoder {
   clear() {
 
   }
+
+
+  addUserCommits(source: string, target: string) {}
+  enableUserDict(eanble: boolean) {}
+  enableTraditional(enable: boolean) {}
 }

@@ -1,9 +1,12 @@
 import { IMesageDataOfDecode, IMessage } from "src/model/common";
 import { EventType, MessageType } from "src/model/enums";
+import { InputTool } from "./enums";
+import UserDecoder from "./userdecoder";
 
-export class IMEDecoder extends EventTarget implements IDecoder {
+export class IMEDecoderProxy extends EventTarget implements IDecoder {
   
   #port?: chrome.runtime.Port;
+  #userDecoder?: UserDecoder;
 
   #onMessageCb: any;
   #onDisconnectCb: any;
@@ -11,6 +14,16 @@ export class IMEDecoder extends EventTarget implements IDecoder {
 
   constructor(public engineID: string, option: string | {extId: string, annotation: string}) {
     super();
+    
+    let {extId, annotation} = this.#handleOption(option);
+    
+    this.#onMessageCb = this.#onMessage.bind(this);
+    this.#onDisconnectCb = this.#onDisconnect.bind(this);
+
+    this.#connect(extId, annotation ? `${engineID}::${annotation}` : engineID);
+  }
+
+  #handleOption(option: string | {extId: string, annotation: string}) {
     
     let extId, annotation;
     if (typeof option == 'string') {
@@ -20,10 +33,7 @@ export class IMEDecoder extends EventTarget implements IDecoder {
       annotation = option.annotation;
     }
 
-    this.#onMessageCb = this.#onMessage.bind(this);
-    this.#onDisconnectCb = this.#onDisconnect.bind(this);
-
-    this.#connect(extId, annotation ? `${engineID}::${annotation}` : engineID);
+    return {extId, annotation};
   }
 
   #connect(extId: string, name: string) {
@@ -48,6 +58,21 @@ export class IMEDecoder extends EventTarget implements IDecoder {
   }
 
   clear() {
+
+  }
+
+  addUserCommits(source: string, target: string) {
+    try {
+      this.#port?.postMessage({
+        type: MessageType.ADD_USER_COMMITS,
+        data: {
+          source,
+          target
+        }
+      });
+    } catch(e) {
+      console.error(e);
+    }
   }
 
   #end() {
@@ -66,7 +91,23 @@ export class IMEDecoder extends EventTarget implements IDecoder {
     }
   }
 
+  enableUserDict(enable: boolean) {
+    this.#port?.postMessage({
+      type: MessageType.ENABLE_USER_DICT,
+      data: {
+        value: enable
+      }
+    })
+  }
+
+  enableTraditional(enable: boolean) {
+    
+  }
+
+
   #onDisconnect(port: chrome.runtime.Port) {
     this.#end();
   }
+
+
 }
