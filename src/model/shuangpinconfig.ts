@@ -15,18 +15,6 @@ export class ShuangpinConfig extends PinyinConfig implements IShuangpinConfigSta
   constructor() {
     super();
   }
-  
-  transform(
-    /** The model raw source. */ context: string, 
-    /** New char. */ c: string,
-    /** @deprecated */ rawSource: string = "") {
-    
-    return c;
-  }
-
-  getTransform(spelling: string) {
-    return spelling;
-  }
 
   /** @todo */
   revert(segment: string, source: string) {

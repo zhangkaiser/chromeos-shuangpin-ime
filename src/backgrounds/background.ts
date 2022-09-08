@@ -131,13 +131,13 @@ export default class Background {
     return new Promise((resolve: (value: IInitedState) => void, reject) => {
       chrome.storage.local.get(['states', 'globalState'], (res) => {
         if (!res) resolve({});
-        if (res['states']) {
-          let states = res['states'] as IIMEState;
-          if (states.traditional) {
-            // Early Loading Chinese Traditional dict.
-            loadDict();
-          }
-        }
+        // if (res['states']) {
+        //   let states = res['states'] as IIMEState;
+        //   if (states.traditional) {
+        //     // Early Loading Chinese Traditional dict.
+        //     loadDict();
+        //   }
+        // }
 
         if(res['globalState']) {
           this.configFactory.globalState = res['globalState'];

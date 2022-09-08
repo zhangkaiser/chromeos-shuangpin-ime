@@ -4,7 +4,7 @@ import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
 import { MLDecoder } from "./mldecoder";
 import { TokenDecoder } from "./tokendecoder";
-import UserDecoder from "./userdecoder";
+import { UserDecoder } from "./userdecoder";
 import { IMEResponse } from "./response";
 
 /**
@@ -14,6 +14,7 @@ import { IMEResponse } from "./response";
 export default class Decoder extends EventTarget implements IDecoder {
   #dataLoader: DataLoader;
   #tokenDecoder: TokenDecoder; 
+  /** @deprecated */
   #userDecoder?: UserDecoder | null;
   #mlDecoder: MLDecoder;
 
@@ -31,9 +32,9 @@ export default class Decoder extends EventTarget implements IDecoder {
     this.#mlDecoder = new MLDecoder(this.inputTool, this.#dataLoader);
 
     /** The user dictionary decoder. */
-    this.#userDecoder = opt_enableUserDict
-      ? new UserDecoder(this.inputTool)
-      : null;
+    // this.#userDecoder = opt_enableUserDict
+    //   ? new UserDecoder()
+    //   : null;
 
     /** Add clear event listener. */
     this.#tokenDecoder.addEventListener('clear', this.clear.bind(this));
@@ -144,7 +145,7 @@ export default class Decoder extends EventTarget implements IDecoder {
    */
   enableUserDict(enable: boolean) {
     if (enable && !this.#userDecoder) {
-      this.#userDecoder = new UserDecoder(this.inputTool);
+      this.#userDecoder = new UserDecoder();
     }
     if (!enable) {
       this.#userDecoder = null;

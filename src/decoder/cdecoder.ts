@@ -1,22 +1,22 @@
 
 import Module from "../../libGooglePinyin/decoder.js";
-import { IShuangpinModel } from "../model/customShuangpin";
 import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
 import { IMEResponse } from "./response";
 import { TokenDecoder } from "./tokendecoder";
+
 export default class Decoder extends EventTarget implements IDecoder {
-    
+  
   #decoder?: IWASMDecoder;
   #dataloader: DataLoader;
-  #tokenDecoder: TokenDecoder; 
+  #tokenDecoder: TokenDecoder;
 
-  constructor(inputTool: any, 
+  constructor(public inputTool: any, 
     solution?: string[] | string,
     enableUserDict?: boolean
   ) {
     super();
-    // TODO
+
     this.#dataloader = new DataLoader(inputTool);
     this.#tokenDecoder = new TokenDecoder(this.#dataloader, solution);
     
@@ -64,11 +64,12 @@ export default class Decoder extends EventTarget implements IDecoder {
     }
     for (let i = 0, l = targets.length; i < l; i++) {
       let target = targets[i];
+      if (!target) continue;
       candidates.push(new Candidate(
         target.length, target, 0, i
       ));
     }
-    // Also return the token list.
+
     return new IMEResponse(originalTokenList, candidates);
   }
 
@@ -77,7 +78,5 @@ export default class Decoder extends EventTarget implements IDecoder {
     this.decoder?.clear();
   }
   
-  addUserCommits(source: string, target: string) {}
-  enableUserDict(eanble: boolean) {}
-  enableTraditional(enable: boolean) {}
+  
 }

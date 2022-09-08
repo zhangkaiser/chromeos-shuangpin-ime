@@ -164,7 +164,7 @@ export class Controller extends EventTarget {
   }
 
   /**
-   * @todo
+   * @deprecated
    * Sets the inital language, sbc and puncutation modes.
    */
   setInputToolStates(
@@ -210,6 +210,7 @@ export class Controller extends EventTarget {
       this._keyActionTable = this.getKeyActionTable();
     }
   }
+
 
   /**
    * @todo
@@ -535,14 +536,12 @@ export class Controller extends EventTarget {
   */
   handleCommitEvent() {
     if (this._context) {
-      let segments = this.model.segments.join('');
-      if (this.currentConfig.enableTraditional) {
-        segments = hans2Hant(segments);
-      }
+      let text = this.model.segments.join('');
+      text = this.currentConfig.tranformCommit(text);
 
       chrome.input.ime.commitText({
         'contextID': this._context.contextID,
-        'text': segments
+        text
       });
     }
   }

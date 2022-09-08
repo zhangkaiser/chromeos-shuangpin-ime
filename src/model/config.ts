@@ -106,9 +106,10 @@ export abstract class Config {
     return text;
   }
 
-  /** Return the translated word. */
-  getTransform(c: string): string | string[] {
-    return c;
+  /** Return the translated target. */
+  tranformCommit(text: string) {
+    
+    return text;
   }
 
   revert(segment: string, source: string) {

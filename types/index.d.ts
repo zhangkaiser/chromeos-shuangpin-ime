@@ -37,13 +37,13 @@ interface IDecoder extends EventTarget {
   clear(): void;
 
   /** Adds user selected candidates */
-  addUserCommits(source: string, target: string);
+  addUserCommits?(source: string, target: string);
 
   /** Enables/Disables the user dictionary. */
-  enableUserDict(enable: boolean);
+  enableUserDict?(enable: boolean);
 
   /** Enables/Disables the traditional Chinese. */
-  enableTraditional(enable: boolean);
+  enableTraditional?(enable: boolean);
   
 }
 

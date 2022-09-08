@@ -9,6 +9,7 @@ import Predictor from "src/decoder/predictor";
 
 import { isJS, isPinyin } from "../utils/regexp";
 import { IMEDecoderProxy as IMEDecoder } from "src/decoder/imedecoderproxy";
+import { IMEOptionalHandler } from "src/model/imehandler";
 
 /**
  * The model, which manages the state transfers and commits.
@@ -118,6 +119,8 @@ export class Model extends EventTarget implements IModel {
   
   stateCache: any = '';  
 
+  imeHandler = new IMEOptionalHandler();
+
   /** The current global configure. */
   get currentConfig() {
     return this.configFactory.getCurrentConfig()!;
@@ -132,10 +135,11 @@ export class Model extends EventTarget implements IModel {
     if (process.env.IME) {
       let observeField = ['shuangpinSolution'];
       observeField = observeField.filter(field => field in states);
-      if(observeField.length > 0 && this._decoder && this.engineID) {
-        this.setEngineID(this.engineID);
+      if (observeField.length > 0 && this._decoder && this.engineID) {
+        this.reload();
       }
     }
+    
     return this.currentConfig.setStates(states);
   }
 
@@ -154,6 +158,7 @@ export class Model extends EventTarget implements IModel {
 
   setEngineID(engineID: string): void {
     this.engineID = engineID;
+    this.imeHandler.enableUserDict(true);
   }
 
   reload() {
@@ -366,7 +371,7 @@ export class Model extends EventTarget implements IModel {
     );
     
     if (this.commitPos == this.segments.length || commit != undefined) {
-      this._decoder?.addUserCommits(this.tokens.join(''), this.segments.join(''));
+      this.imeHandler.addUserCommits(this.tokens.join(''), this.segments.join(''));
       this.notifyUpdates(true);
       return this.clear();
     }

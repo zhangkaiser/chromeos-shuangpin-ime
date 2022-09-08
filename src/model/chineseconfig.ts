@@ -1,6 +1,7 @@
 import { Config } from "./config";
 import { Modifier, StateID } from "./enums";
 import { IChineseState, State } from "./state";
+import { Translator } from "./translator";
 
 
 export default class ChineseConfig extends Config {
@@ -153,6 +154,10 @@ export default class ChineseConfig extends Config {
 		return preTrans ? preTrans : c;
 	}
 
+  tranformCommit(text: string) {
+    return Translator.transform(text);
+  }
+
   getStates() {
     let states = super.getStates() as IChineseState;
     Object.keys(this.states).forEach((stateId) => {
@@ -166,8 +171,18 @@ export default class ChineseConfig extends Config {
     Object.keys(states).forEach((state) => {
       if (!(state in this.states)) return ;
       this.states[state as StateID].value = (states as any)[state];
+      this.#stateSwitchedAction(state as StateID);
     });
     super.setStates(states);
+  }
+
+  #stateSwitchedAction(state: StateID) {
+    
+    switch(state) {
+      case StateID.PREDICTOR:
+        Translator.enableTraditional(this.states[state].value);
+        break;
+    }
   }
 
   transformView(text: string, source: string) {
