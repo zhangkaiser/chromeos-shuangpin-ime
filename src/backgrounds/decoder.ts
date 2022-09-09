@@ -1,5 +1,5 @@
 import WASMDecoder from "src/decoder/cdecoder";
-import JSDecoder from "src/decoder/decoder";
+// import JSDecoder from "src/decoder/decoder";
 import OnlineDecoder from "src/decoder/onlinedecoder";
 import { IMesageDataOfDecode, IMessage } from "src/model/common";
 import { Decoders, MessageType } from "src/model/enums";
@@ -10,13 +10,10 @@ const decoders = new Map();
 // Tree-shaking support.
 if (process.env.WASM) { decoders.set(Decoders.WASM, WASMDecoder) }
 
-if (process.env.JS) { decoders.set(Decoders.JS, JSDecoder) }
-
 if (process.env.ONLINE) { decoders.set(Decoders.ONLINE, OnlineDecoder) }
 
 if (process.env.ALL) {
   decoders.set(Decoders.WASM, WASMDecoder);
-  decoders.set(Decoders.JS, JSDecoder);
   decoders.set(Decoders.ONLINE, OnlineDecoder);
 }
 

@@ -2,7 +2,7 @@
 import { EventType, InputToolCode, StateID, Status } from "./enums";
 import { Candidate } from "./candidate";
 import { configFactoryInstance } from "./configfactory";
-import JSDecoder from "../decoder/decoder";
+// import JSDecoder from "../decoder/decoder";
 import WASMDecoder from "../decoder/cdecoder";
 import OnlineDecoder from "src/decoder/onlinedecoder";
 import Predictor from "src/decoder/predictor";
@@ -174,13 +174,6 @@ export class Model extends EventTarget implements IModel {
 
       this._decoder.addEventListener(EventType.IMERESPONSE, this.#onIMEResponse.bind(this));
     } else {
-      if (process.env.JS) {
-        this._decoder = isJS(engineID) 
-          ? isPinyin(engineID) 
-            ? new JSDecoder(engineID)
-            : new JSDecoder(engineID, this.currentConfig.shuangpinSolution)
-          : undefined;
-      }
       if (process.env.WASM) {
         this._decoder = isJS(engineID)
           ? undefined
@@ -193,15 +186,9 @@ export class Model extends EventTarget implements IModel {
         this._decoder = new OnlineDecoder(engineID);
       }
       if (process.env.ALL) {
-        if (isJS(engineID)) {
-          this._decoder = isPinyin(engineID) 
-            ? new JSDecoder(engineID)
-            : new JSDecoder(engineID, this.currentConfig.shuangpinSolution);
-        } else {
           this._decoder = isPinyin(engineID) 
             ? new WASMDecoder(engineID)
             : new WASMDecoder(engineID, this.currentConfig.shuangpinSolution);
-        }
       } 
     }
 

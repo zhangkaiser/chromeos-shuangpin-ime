@@ -7,6 +7,7 @@ import { UserDecoder } from "./userdecoder";
 import { IMEResponse } from "./response";
 
 /**
+ * @deprecated JS decoder was deprecated.
  * The offline decoder can provide a list of candidates for given source
  * text.
  */
