@@ -43,20 +43,17 @@ let webpackConfig = manifests.map((manifest) => {
   // List of files to be copied.
   let copyPatterns = [
     {from: `./src/manifests/manifest_${manifest}.json`, to: "./manifest.json", transform(content) {
+      let data = JSON.parse(content);
       if (mode == 'development') {
-        let data = JSON.parse(content);
         delete data['key'];
-        return JSON.stringify(data);
       }
 
       if (old && manifest == 'decoder') {
-        let data = JSON.parse(content);
         data["minimum_chrome_version"] = "45";
-        data["content_security_policy"]["extension_page"] = "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'";
+        data["content_security_policy"]["extension_page"] = data["content_security_policy"]["extension_pages"];
         delete data["content_security_policy"]["extension_pages"];
-        return JSON.stringify(data);
       }
-      return content;
+      return JSON.stringify(data);
     }},
     {from: "./src/asset", to: "."},
   ]

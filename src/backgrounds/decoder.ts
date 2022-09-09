@@ -17,19 +17,16 @@ if (process.env.ALL) {
   decoders.set(Decoders.ONLINE, OnlineDecoder);
 }
 
-function getDecoderCode(name: string): [Decoders, string, string] {
-  let decoder = /wasm/.test(name) 
-    ? Decoders.WASM
-    : /js/.test(name)
-      ? Decoders.JS
-      : Decoders.ONLINE;
-    let config = name.split("::");
+function getDecoderCode(code: string): [Decoders, string, string] {
+  let decoder = /wasm/.test(code) ? Decoders.WASM : Decoders.ONLINE;
+    let info = code.split("::");
     let engineID, annotation;
-    if (config.length == 2) {
-      engineID = config[0];
-      annotation = config[1];
+
+    if (info.length == 2) {
+      engineID = info[0];
+      annotation = info[1];
     } else {
-      engineID = config[0];
+      engineID = info[0];
       annotation = "";
     }
 
