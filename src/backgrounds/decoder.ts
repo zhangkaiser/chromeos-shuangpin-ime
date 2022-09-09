@@ -20,7 +20,6 @@ if (process.env.ALL) {
   decoders.set(Decoders.ONLINE, OnlineDecoder);
 }
 
-/** @todo */
 function getDecoderCode(name: string): [Decoders, string, string] {
   let decoder = /wasm/.test(name) 
     ? Decoders.WASM

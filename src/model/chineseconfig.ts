@@ -179,7 +179,7 @@ export default class ChineseConfig extends Config {
   #stateSwitchedAction(state: StateID) {
     
     switch(state) {
-      case StateID.PREDICTOR:
+      case StateID.TRADITIONAL:
         Translator.enableTraditional(this.states[state].value);
         break;
     }

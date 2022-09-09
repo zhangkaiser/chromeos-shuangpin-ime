@@ -1,12 +1,9 @@
 import { IMesageDataOfDecode, IMessage } from "src/model/common";
 import { EventType, MessageType } from "src/model/enums";
-import { InputTool } from "./enums";
-import UserDecoder from "./userdecoder";
 
 export class IMEDecoderProxy extends EventTarget implements IDecoder {
   
   #port?: chrome.runtime.Port;
-  #userDecoder?: UserDecoder;
 
   #onMessageCb: any;
   #onDisconnectCb: any;
@@ -89,19 +86,6 @@ export class IMEDecoderProxy extends EventTarget implements IDecoder {
         }));
         break;
     }
-  }
-
-  enableUserDict(enable: boolean) {
-    this.#port?.postMessage({
-      type: MessageType.ENABLE_USER_DICT,
-      data: {
-        value: enable
-      }
-    })
-  }
-
-  enableTraditional(enable: boolean) {
-    
   }
 
 

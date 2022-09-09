@@ -112,7 +112,6 @@ export default class Background {
   
     // TODO
     chrome.input.ime.onInputContextUpdate.addListener((context) => {
-
     });
 
     // TODO (important!)It can reactivate the IME form inactivate state.

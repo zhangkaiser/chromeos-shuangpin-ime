@@ -32,10 +32,10 @@ export class View {
   }
 
   /** Updates the menu items. */
-  updateInputTool() {
+  updateInputTool(hidden: boolean = false) {
     this._inputToolCode = this.configFactory.getInputTool();
     this.window = new CandidateWindow(this._inputToolCode, this.currentConfig);
-    this.updateMenuItems();
+    if (!hidden) this.updateMenuItems();
   }
 
   /**
@@ -58,6 +58,7 @@ export class View {
         visible: true
       });
     }
+    console.log(this._context);
 
     if (!stateId) { // Add.
       chrome.input.ime.setMenuItems(menuItemParameters);

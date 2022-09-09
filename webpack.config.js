@@ -51,10 +51,9 @@ let webpackConfig = manifests.map((manifest) => {
 
       if (old && manifest == 'decoder') {
         let data = JSON.parse(content);
-        data['maximum_chrome_version'] = "103";
         data["minimum_chrome_version"] = "45";
         data["content_security_policy"]["extension_page"] = "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'";
-        delete["content_security_policy"]["extension_pages"];
+        delete data["content_security_policy"]["extension_pages"];
         return JSON.stringify(data);
       }
       return content;

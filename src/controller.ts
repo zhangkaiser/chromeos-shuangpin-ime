@@ -82,7 +82,7 @@ export class Controller extends EventTarget {
   deactivate(engineID: string) {
     this._configFactory.clearInputTool();
     this.model.reset();
-    this.view.updateInputTool();
+    this.view.updateInputTool(true);
     this._keyActionTable = undefined;
     this._shortcutTable = undefined;
   }

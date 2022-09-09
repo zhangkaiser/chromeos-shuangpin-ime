@@ -503,6 +503,7 @@ export class Model extends EventTarget implements IModel {
     }
     
     this.candidates = [];
+    this.imeHandler.handleIMEResponse(imeResponse);
     let { candidates, tokens } = imeResponse;
 
     let committedSegments = this.segments.slice(0, this.commitPos);

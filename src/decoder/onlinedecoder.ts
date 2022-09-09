@@ -18,7 +18,7 @@ export default class OnlineDecoder extends EventTarget implements IDecoder {
       try {
         chrome.runtime.sendMessage(googleInputExtID, data, resolve);
       } catch(e) { 
-        reject(e); 
+        reject(e);
       }
     })
   }
@@ -37,9 +37,4 @@ export default class OnlineDecoder extends EventTarget implements IDecoder {
   clear() {
 
   }
-
-
-  addUserCommits(source: string, target: string) {}
-  enableUserDict(eanble: boolean) {}
-  enableTraditional(enable: boolean) {}
 }

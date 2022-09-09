@@ -11,9 +11,6 @@ export class IMEOptionalHandler extends EventTarget {
   
   #userDecoder?: UserDecoder;
 
-  /**
-   * Traditional Chinese tranform should be after selectCandidate().
-   */
   handleIMEResponse(imeResponse: IMEResponse) {
 
     // Adds the candidate from user dictionary at the first position.

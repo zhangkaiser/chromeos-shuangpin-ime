@@ -1,5 +1,4 @@
 
-import { InputToolCode } from "../model/enums";
 import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
 import { MLDecoder } from "./mldecoder";
@@ -139,20 +138,5 @@ export default class Decoder extends EventTarget implements IDecoder {
   updateFuzzyPairs(fuzzyPairs: string[]) {
     this.#tokenDecoder.updateFuzzyPairs(fuzzyPairs);
   }
-
-  /**
-   * Enables/Disables the user dictionary.
-   */
-  enableUserDict(enable: boolean) {
-    if (enable && !this.#userDecoder) {
-      this.#userDecoder = new UserDecoder();
-    }
-    if (!enable) {
-      this.#userDecoder = null;
-    }
-  }
-
-  enableTraditional() {}
-
   
 }
