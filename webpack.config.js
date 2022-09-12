@@ -3,6 +3,16 @@ let CopyWebpackPlugin = require("copy-webpack-plugin");
 let HtmlWebpackPlugin = require("html-webpack-plugin");
 let webpack = require("webpack");
 let rimraf = require("rimraf");
+let versions = require("./version.json");
+let fs = require("fs");
+
+function versionInc(version) {  
+  let arr = version.split(".");
+  arr[2] =  (+arr[2]) + 1;
+  return arr.join(".");
+}
+
+
 // Development configuration. 
 // Need to get after loaded `ui` extension.
 const DEV_UI_ID = "enmcjlgogceppnhfkaimbjlcmcnmihbo";
@@ -29,10 +39,13 @@ let decoder = ["all"];
 if (process.env.DECODER_ENGINE) decoder = process.env.DECODER_ENGINE.split(',');
 console.log("DECODER ENGINE", decoder);
 
-// Old version support. < chrome version 103.
-let old = false;
-if (process.env.DECODER_OLD) old = true;
-console.log("OLD SUPPORT", old);
+if (mode === "production") {
+  for (let name in versions) {
+    versions[name] = versionInc(versions[name]);
+  }
+  console.log(versions);
+  fs.writeFile('./version.json', JSON.stringify(versions), console.log);
+}
 
 // Generate corresponding webpack configuration by build name.
 manifests = manifests.filter(name => name in manifestList);
@@ -44,14 +57,9 @@ let webpackConfig = manifests.map((manifest) => {
   let copyPatterns = [
     {from: `./src/manifests/manifest_${manifest}.json`, to: "./manifest.json", transform(content) {
       let data = JSON.parse(content);
-      if (mode == 'development') {
+      if (mode == 'production') {
         delete data['key'];
-      }
-
-      if (old && manifest == 'decoder') {
-        data["minimum_chrome_version"] = "45";
-        data["content_security_policy"]["extension_page"] = data["content_security_policy"]["extension_pages"];
-        delete data["content_security_policy"]["extension_pages"];
+        data['version'] = versions[manifest];
       }
       return JSON.stringify(data);
     }},

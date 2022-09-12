@@ -1,23 +1,12 @@
 {
-  "name": "IME Decoder(background)",
+  "name": "IME Decoder(background) new",
   "version": "0.0.1",
   "description": "中文双拼／拼音后台解析器（需与其他扩展一起使用）",
   "manifest_version": 3,
   "background": {
     "service_worker": "background.js"
   },
-  "minimum_chrome_version": "103",
-  "permissions": [
-    "unlimitedStorage",
-    "background",
-    "storage"
-  ],
-  "host_permissions": [
-    "https://olime.baidu.com/py?*",
-    "https://www.google.com/inputtools/request?*",
-    "https://www.google.cn/inputtools/request?*"
-  ],
-  "options_page": "option.html",
+  "minimum_chrome_version": "102",
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
