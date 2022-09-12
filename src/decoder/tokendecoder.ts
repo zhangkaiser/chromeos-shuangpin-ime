@@ -550,28 +550,21 @@ export class TokenDecoder extends EventTarget {
     let lastToken  = tokenList.pop();
     let separatorList = new Array(tokenList.length).fill(true);
     
-    if (lastToken && lastToken.length == 1) {
-      let findIndex;
-      if((findIndex = this.#shengmuKey.indexOf(lastToken)) > -1) {
-        tokenList.push(this.#shengmu[findIndex]);
-        separatorList.push(false);
-      } else {
-        // TODO
-        tokenList.push(lastToken);
+    if (lastToken && lastToken.length == 1) { // sheng mu parse.
+      let shengmuIndex = this.#shengmuKey.indexOf(lastToken);
+      if(shengmuIndex > -1) { // found in the shengmu list.
+        tokenList.push(this.#shengmu[shengmuIndex]);
         separatorList.push(false);
       }
-    } else if (lastToken) {
+    } else if (lastToken) { // yin jie parse.
       let firstCh = lastToken[0];
       let lastCh = lastToken.slice(-1);
       if (this.#yinjieInitials.indexOf(firstCh) > -1) {
-        let findIndex = this.#yinjieKey.indexOf(lastToken);
-        if (findIndex > -1) {
-          tokenList.push(this.#yinjie[findIndex]);
+        // found in the yinjie initial list.
+        let yinjieIndex = this.#yinjieKey.indexOf(lastToken);
+        if (yinjieIndex > -1) {
+          tokenList.push(this.#yinjie[yinjieIndex]);
           separatorList.push(true);
-        } else {
-          // todo
-          tokenList.push(lastToken);
-          separatorList.push(false);
         }
       } else {
         let shengmu = lastToken.slice(0, -1);
@@ -585,22 +578,13 @@ export class TokenDecoder extends EventTarget {
           if (spellingList.length == 1) {
             tokenList.push(spellingList[0]);
             separatorList.push(true);
-          } else {
-            // todo
-
-            tokenList.push(lastToken);
-            separatorList.push(false);
           }
-        } else {
-          // todo
-        tokenList.push(lastToken);
-        separatorList.push(false);
         }
-
       }
       
     } else {
-      // TODO
+      tokenList.push(lastToken ?? "");
+      separatorList.push(false);
     }
     
     return new TokenPath(tokenList, separatorList);
