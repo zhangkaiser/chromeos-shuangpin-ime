@@ -555,6 +555,9 @@ export class TokenDecoder extends EventTarget {
       if(shengmuIndex > -1) { // found in the shengmu list.
         tokenList.push(this.#shengmu[shengmuIndex]);
         separatorList.push(false);
+      } else {
+        tokenList.push(lastToken);
+        separatorList.push(false);
       }
     } else if (lastToken) { // yin jie parse.
       let firstCh = lastToken[0];
@@ -565,7 +568,11 @@ export class TokenDecoder extends EventTarget {
         if (yinjieIndex > -1) {
           tokenList.push(this.#yinjie[yinjieIndex]);
           separatorList.push(true);
+        } else {
+          tokenList.push(lastToken);
+          separatorList.push(false);
         }
+
       } else {
         let shengmu = lastToken.slice(0, -1);
 
@@ -579,12 +586,14 @@ export class TokenDecoder extends EventTarget {
             tokenList.push(spellingList[0]);
             separatorList.push(true);
           }
+        } else {
+          tokenList.push(lastToken);
+          separatorList.push(false);
         }
       }
       
     } else {
-      tokenList.push(lastToken ?? "");
-      separatorList.push(false);
+      // TODO
     }
     
     return new TokenPath(tokenList, separatorList);
