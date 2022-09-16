@@ -27,6 +27,7 @@
     "@types/chrome": "^0.0.157",
     "@types/mocha": "^9.1.1",
     "@types/node": "^18.6.1",
+    "@types/vscode": "^1.71.0",
     "@types/webpack": "^5.28.0",
     "@typescript-eslint/parser": "^4.31.2",
     "chai": "^4.3.4",

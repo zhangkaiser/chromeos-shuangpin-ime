@@ -89,7 +89,7 @@ const baseList = [
  * @todo so messy!
  */
 @customElement('option-page')
-class OptionPage extends LitElement {
+export class OptionPage extends LitElement {
   
   compiler = "js";
   decoder = "pinyin";
