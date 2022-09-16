@@ -102,10 +102,9 @@
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
   "include": [
-    "./src",
-    "./test",
-    "./build",
-    "./types"
+    "./src/popup.ts",
+    "src",
+    "types"
 ],
   "exclude": [
     "node_modules",

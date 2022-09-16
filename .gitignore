@@ -3,7 +3,6 @@ node_modules
 dist
 private
 test
-.vscode
 *.o
 CMakeFiles
 libGooglePinyin/Makefile
@@ -12,3 +11,5 @@ libGooglePinyin/cmake_install.cmake
 libGooglePinyin/test*
 
 src/model/model.old.ts
+vscode
+!vscode/.vscode/*

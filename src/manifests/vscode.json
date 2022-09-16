@@ -8,21 +8,237 @@
   "displayName": "vscode-ime",
   "description": "IME",
   "main": "./extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "extension.helloWorld",
-        "title": "Hello World"
-      }
-    ]
-  },
-  "activationEvents": [
-    "onCommand:extension.helloWorld"
-  ],
   "author": {
     "name": "Kaiser Zh"
   },
   "categories": [
     "Other"
-  ]
+  ],
+  "activationEvents": [
+    "onCommand:vscode-ime.toggle"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-ime.toggle",
+        "title": "Toggle Google Pinyin"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "vscode-ime.toggle",
+        "key": "shift"
+      },
+      {
+        "command": "vscode-ime.select.source.commit",
+        "key": "enter",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.candidate.commit",
+        "key": "space",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.pageup",
+        "key": "=",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.pageup",
+        "key": ".",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.pagedown",
+        "key": "-",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.pagedown",
+        "key": ",",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.1",
+        "key": "1",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.2",
+        "key": "2",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.3",
+        "key": "3",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.4",
+        "key": "4",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.5",
+        "key": "5",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.6",
+        "key": "6",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.7",
+        "key": "7",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.8",
+        "key": "8",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.9",
+        "key": "9",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.select.key.0",
+        "key": "0",
+        "when": "vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyA",
+        "key": "a",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyB",
+        "key": "b",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyC",
+        "key": "c",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyD",
+        "key": "d",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyE",
+        "key": "e",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyF",
+        "key": "f",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyG",
+        "key": "g",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyH",
+        "key": "h",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyI",
+        "key": "i",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyJ",
+        "key": "j",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyK",
+        "key": "k",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyL",
+        "key": "l",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyM",
+        "key": "m",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyN",
+        "key": "n",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyO",
+        "key": "o",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyP",
+        "key": "p",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyQ",
+        "key": "q",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyR",
+        "key": "r",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyS",
+        "key": "s",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyT",
+        "key": "t",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyU",
+        "key": "u",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyV",
+        "key": "v",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyW",
+        "key": "w",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyX",
+        "key": "x",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyY",
+        "key": "y",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      },
+      {
+        "command": "vscode-ime.editor.keyZ",
+        "key": "z",
+        "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
+      }
+    ]
+  }
 }
