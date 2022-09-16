@@ -1,0 +1,28 @@
+{
+  "name": "vscode-ime",
+  "version": "0.0.1",
+  "publisher": "kaiserzh",
+  "engines": {
+    "vscode": "^1.0.0"
+  },
+  "displayName": "vscode-ime",
+  "description": "IME",
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onCommand:extension.helloWorld"
+  ],
+  "author": {
+    "name": "Kaiser Zh"
+  },
+  "categories": [
+    "Other"
+  ]
+}
