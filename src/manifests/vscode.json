@@ -27,7 +27,7 @@
     "keybindings": [
       {
         "command": "vscode-ime.toggle",
-        "key": "shift"
+        "key": "ctrl+space"
       },
       {
         "command": "vscode-ime.select.source.commit",

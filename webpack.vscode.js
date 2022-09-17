@@ -28,7 +28,8 @@ module.exports = {
     }
   },
   externals: {
-    vscode: "commonjs vscode"
+    vscode: "vscode",
+    "./libGooglePinyin/Decoder.js": "./decoder.js"
   },
   // experiments: {
   //   outputModule: true
@@ -36,7 +37,9 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        {from: "./src/manifests/vscode.json", to: "./package.json"}
+        {from: "./src/manifests/vscode.json", to: "./package.json"},
+        {from: "./libGooglePinyin/decoder.wasm", to: "./decoder.wasm"},
+        {from: "./libGooglePinyin/decoder.js", to: "./decoder.js"}
       ]
     })
   ]

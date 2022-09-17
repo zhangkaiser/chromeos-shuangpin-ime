@@ -13,6 +13,7 @@
     "debug:googlepinyin": "cd googlepinyin/googlepinyin && npm run node:wasm",
     "decoder": "cd libGooglePinyin && emcc -pthread -sDYNAMIC_EXECUTION=0 -lembind --embed-file dict libGooglePinyin.a decoder.cpp",
     "prebuild:googlepinyin": "npm run decoder -- -o decoder.js",
+    "vscode": "webpack --config webpack.vscode.js",
     "test:googlepinyin": "npm run decoder -- -o test.html && cd libGooglePinyin && localhost"
   },
   "keywords": [

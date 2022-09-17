@@ -57,6 +57,12 @@ declare module "../../libGooglePinyin/decoder.js" {
   export default Module; 
 }
 
+declare module "decoder" {
+  export default {
+    Module: any
+  }
+}
+
 interface Window {
   Module: Module
 }

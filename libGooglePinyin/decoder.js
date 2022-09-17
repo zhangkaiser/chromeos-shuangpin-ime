@@ -7656,9 +7656,9 @@ if (Module['preInit']) {
   } 
 }
 
-run();
-
-export default Module;
+module.exports = {
+  Module
+}
 
 
 
