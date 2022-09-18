@@ -247,6 +247,36 @@
           "type": "string",
           "description": "IME Engine ID Name",
           "default": "zh-wasm-shuangpin"
+        },
+        "vscode-ime.chineseConfig.state.sbc": {
+          "type": "boolean",
+          "description": "Enable sbc char output",
+          "default": false
+        },
+        "vscode-ime.chineseConfig.state.punc": {
+          "type": "boolean",
+          "description": "Enable puncatuation char output.",
+          "default": true
+        },
+        "vscode-ime.chineseConfig.state.traditional": {
+          "type": "boolean",
+          "description": "Enable Chinese Traditional output",
+          "default": false
+        },
+        "vscode-ime.chineseConfig.state.predictor": {
+          "type": "boolean",
+          "description": "Enable Online Predictor",
+          "default": true
+        },
+        "vscode-ime.pinyinConfig.state.predictEngine": {
+          "type": "number",
+          "description": "Online Predctor engine.",
+          "default": 1
+        },
+        "vscode-ime.shuangpinConfig.state.solution": {
+          "type": "string",
+          "description": "Shuang Pin solution",
+          "default": "pinyinjiajia_o"
         }
       }
     }

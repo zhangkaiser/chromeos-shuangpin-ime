@@ -58,8 +58,7 @@ export class View {
         visible: true
       });
     }
-    console.log(this._context);
-
+    
     if (!stateId) { // Add.
       chrome.input.ime.setMenuItems(menuItemParameters);
     } else {  // Update.
