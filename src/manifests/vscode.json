@@ -239,6 +239,16 @@
         "key": "z",
         "when": "editorTextFocus && vscode-ime.init && !vscode-ime.selecting"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "vscode ime",
+      "properties": {
+        "vscode-ime.engine.id": {
+          "type": "string",
+          "description": "IME Engine ID Name",
+          "default": "zh-wasm-shuangpin"
+        }
+      }
+    }
   }
 }
