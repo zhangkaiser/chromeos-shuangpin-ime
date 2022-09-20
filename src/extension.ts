@@ -3,15 +3,15 @@
  */
 
 import * as vscode from "vscode";
+import "src/imeadapterforvscode";
 import { Controller } from "src/controller";
 import { VscodeConfig } from "./model/vsconfig";
 import { InputToolCode } from "./model/enums";
 
 const IMECommands = {
   TOGGLE: "vscode-ime.toggle",
-
-
 }
+
 
 type IMECommandKey =  keyof typeof IMECommands;
 

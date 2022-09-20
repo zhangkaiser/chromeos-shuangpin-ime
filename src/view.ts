@@ -19,7 +19,7 @@ export class View {
   /** The ui window. */
   window?: CandidateWindow;
 
-  constructor(protected model: Model) { }
+  constructor(public model: Model) { }
 
   /** Get the current config from config factory. */
   get currentConfig() {

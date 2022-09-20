@@ -14,6 +14,7 @@ type ConfigurationSection =
   | "vscode-ime.shuangpinConfig.state.solution"
 
 export class VscodeConfig {
+  // TODO May be error.
   configuration = vscode.workspace.getConfiguration();
 
   getConfig<T>(section: ConfigurationSection, defaultValue: T) {
@@ -38,3 +39,5 @@ export class VscodeConfig {
   }
 
 }
+
+export const vscodeConfigFactory = new VscodeConfig;

@@ -1,8 +1,91 @@
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
+const extMark = "vscode-ime";
+const extEditName = "vscode ime";
+
+const letters =  "abcdefghijklmnopqrstuvwxyz";
+const punctuations = "`-=[]\\;',./";
+const numbers = "1234567890";
+const specials = ['enter', 'space', 'backspace']; 
+
+const whenCauseMap = {
+  enabled: `editorTextFocus && ${extMark}.enabled`,
+  englishPunc: `editorTextFocurs && ${extMark}.enabled && !${extMark}.state.punc`
+}
+
+// format = [id, type, default, markdownDescription, ...otherArgs:{name: value}],
+const configProperties = [
+  [`${extMark}.engine.id`, "string", "zh-wasm-shuangpin", "IME EngineID Name", 
+    {
+      enum: ["zh-wasm-shuangpin", "zh-wasm-pinyin"],
+      enumDescriptions: [
+        "Chinese shuangpin IME",
+        "Chinese pinyin IME"
+      ]
+    }
+  ],
+  // [`${extMark}.chineseConfig.state.sbc`, ]
+]
+
+function registerKeybindings(data) {
+  data['contributes']['keybindings'] = [
+    ...letters.split("").map((letter) => ({ // KeyA-Z.
+      command: `${extMark}.key${letter.toUpperCase()}`,
+      key: letter,
+      when: whenCauseMap.enabled 
+    })),
+
+    ...punctuations.split("").map((punc) => ({
+      command: `${extMark}.punctuation.${punc}`,
+      key: punc,
+      when: whenCauseMap.punc
+    })),
+    ...(punctuations + numbers).split("").map((punc) => ({
+      command: `${extMark}.punctuation.shift${punc}`,
+      key: `shift+${punc}`,
+      when: whenCauseMap.punc
+    })),
+
+    ...numbers.split("").map((num) => ({
+      command: `${extMark}.Number${num}`,
+      key: "" + num,
+      when: whenCauseMap.enabled
+    })),
+
+    ...specials.map((spec) => ({
+      command: `${extMark}.special.${spec}`,
+      key: spec,
+      when: whenCauseMap.enabled
+    })),
+
+    ...data['contributes']['keybindings']
+  ]
+}
+
+function registerConfiguration(data) {
+
+  let configuration = data['contributes']['configuration'];
+  
+  configuration = {
+    title: extEditName,
+    properties: {
+      ...Object.fromEntries(configProperties.map((prop) => ([
+        prop[0],
+        {
+          type: prop[1],
+          default: prop[2],
+          markdownDescription: prop[3],
+          ...prop[4] ?? {}
+        }
+      ]))),
+      ...configuration['properties']
+    } 
+  }
+}
+
 module.exports = {
-  entry: "./src/extension.ts",
+  entry: "./src/test.ts",
   output: {
     path: path.resolve(process.cwd(), "vscode"),
     // clean: true,
@@ -37,7 +120,20 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        {from: "./src/manifests/vscode.json", to: "./package.json"},
+        {
+          from: "./src/manifests/vscode.json", 
+          to: "./package.json", 
+          transform(context) {
+            let data = JSON.parse(context);
+            
+            registerKeybindings(data);
+            registerConfiguration(data);
+
+            return JSON.stringify(data);
+
+          }
+
+        },
         {from: "./libGooglePinyin/decoder.wasm", to: "./decoder.wasm"},
         {from: "./libGooglePinyin/decoder.js", to: "./decoder.js"}
       ]
