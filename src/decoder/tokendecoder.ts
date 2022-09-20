@@ -268,7 +268,7 @@ export class TokenDecoder extends EventTarget {
 
     // If the current string does not contain the source, it means text
     //  has be modified, the clears the all decoder.
-    this.dispatchEvent(new CustomEvent('clear'))
+    this.dispatchEvent(new Event('clear'))
     return this.getTokens(source);
   }
 

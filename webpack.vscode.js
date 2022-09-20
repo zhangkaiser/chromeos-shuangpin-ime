@@ -37,24 +37,24 @@ function registerKeybindings(data) {
     })),
 
     ...punctuations.split("").map((punc) => ({
-      command: `${extMark}.punctuation.${punc}`,
+      command: `${extMark}.key${punc}`,
       key: punc,
       when: whenCauseMap.punc
     })),
     ...(punctuations + numbers).split("").map((punc) => ({
-      command: `${extMark}.punctuation.shift${punc}`,
+      command: `${extMark}.shift${punc}`,
       key: `shift+${punc}`,
       when: whenCauseMap.punc
     })),
 
     ...numbers.split("").map((num) => ({
-      command: `${extMark}.Number${num}`,
+      command: `${extMark}.key${num}`,
       key: "" + num,
       when: whenCauseMap.enabled
     })),
 
     ...specials.map((spec) => ({
-      command: `${extMark}.special.${spec}`,
+      command: `${extMark}.special${spec}`,
       key: spec,
       when: whenCauseMap.enabled
     })),
@@ -85,7 +85,7 @@ function registerConfiguration(data) {
 }
 
 module.exports = {
-  entry: "./src/test.ts",
+  entry: "./src/extension.ts",
   output: {
     path: path.resolve(process.cwd(), "vscode"),
     // clean: true,

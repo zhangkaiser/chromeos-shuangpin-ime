@@ -72,10 +72,10 @@ interface IModel {
 export class Model extends EventTarget implements IModel {
   static DEFAULT_CANDIDATE_RANGE = 1000;
 
-  static OPENING_EVENT = new CustomEvent(EventType.OPENING);
-  static COMMIT_EVENT = new CustomEvent(EventType.COMMIT);
-  static MODELUPDATE_EVENT = new CustomEvent(EventType.MODELUPDATED);
-  static CLOSING_EVENT = new CustomEvent(EventType.CLOSING);
+  static OPENING_EVENT = new Event(EventType.OPENING);
+  static COMMIT_EVENT = new Event(EventType.COMMIT);
+  static MODELUPDATE_EVENT = new Event(EventType.MODELUPDATED);
+  static CLOSING_EVENT = new Event(EventType.CLOSING);
 
   protected _decoder?: IDecoder | undefined;
   protected _predictor?: Predictor;

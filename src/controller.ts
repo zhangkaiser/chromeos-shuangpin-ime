@@ -22,7 +22,7 @@ type ActionType = [
  */
 export class Controller extends EventTarget {
 
-  static UPDATE_STATE_EVENT = new CustomEvent(EventType.UPDATESTATE);
+  static UPDATE_STATE_EVENT = new Event(EventType.UPDATESTATE);
   /** The model. */
   model = new Model();
 

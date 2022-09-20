@@ -6,16 +6,38 @@ import * as vscode from "vscode";
 import "src/imeadapterforvscode";
 import { Controller } from "src/controller";
 import { VscodeConfig } from "./model/vsconfig";
-import { InputToolCode } from "./model/enums";
+import { EventType, InputToolCode, Key } from "./model/enums";
 
 const IMECommands = {
   TOGGLE: "vscode-ime.toggle",
+  SINGLE_KEY: "vscode-ime.key",
+  SHIFT_WITH_KEY: "vscode-ime.shift",
+  SPECIAL_KEY: "vscode-ime.special"
 }
 
 
 type IMECommandKey =  keyof typeof IMECommands;
 
 const registerCommand = vscode.commands.registerCommand;
+
+
+const letters =  "abcdefghijklmnopqrstuvwxyz";
+const punctuations = "`-=[]\\;',./";
+const numbers = "1234567890";
+const specials = ['enter', 'space', 'backspace']; 
+const relativeSpecial =  [Key.ENTER, Key.SPACE, Key.BACKSPACE];
+
+
+function mockDownKey(key: string, shiftKey: boolean = false): chrome.input.ime.KeyboardEvent {
+  return {
+    type: EventType.KEYDOWN,
+    key,
+    code: key,
+    ctrlKey: false,
+    altKey: false,
+    shiftKey
+  }
+}
 
 class IMEAdapter {
   
@@ -40,7 +62,7 @@ class IMEAdapter {
   }
 
   #init() {
-    // 
+    // Register commands.
     for (let key in IMECommands) {
       let commandKey =  key as IMECommandKey;
       switch(commandKey) {
@@ -48,6 +70,32 @@ class IMEAdapter {
           this.subscriptions.push(registerCommand(
             IMECommands[commandKey], this.toggle.bind(this)
           ));
+          break;
+        case "SINGLE_KEY":
+          let singleKeys = letters + punctuations + numbers;
+          singleKeys.split("").forEach((key) => {
+            this.subscriptions.push(registerCommand(
+              IMECommands[commandKey] + key.toUpperCase(),
+              this.keyEvent.bind(this, mockDownKey(key))
+            ))
+          });
+          break;
+        case "SHIFT_WITH_KEY":
+          let shiftKeys = punctuations + numbers;
+          shiftKeys.split("").forEach((key) => {
+            this.subscriptions.push(registerCommand(
+              IMECommands[commandKey] + key,
+              this.keyEvent.bind(this, mockDownKey(key, true))
+            ))
+          });
+          break;
+        case "SPECIAL_KEY":
+          specials.forEach((key, index) => {
+            this.subscriptions.push(registerCommand(
+              IMECommands[commandKey] + key,
+              this.keyEvent.bind(this, mockDownKey(relativeSpecial[index]))
+            ))
+          })
           break;
       }
     }
@@ -58,6 +106,8 @@ class IMEAdapter {
 
     // TODO need to support vscode state.
     if (this.enabled) {
+      console.log("activate");
+      // vscode.commands.executeCommand("setContext", "vscode-ime.enabled", true);
       this.controller.activate(this.engineID as InputToolCode);
     } else {
       this.controller.deactivate(this.engineID);
@@ -67,18 +117,19 @@ class IMEAdapter {
   focus() {
     
   }
+  
+  requestId = 0;
+  keyEvent(keyEvent: chrome.input.ime.KeyboardEvent) {
+    this.requestId++;
+    // console.log(keyEvent);
+    this.controller.handleEvent(this.engineID as InputToolCode, keyEvent, this.requestId);
+  }
 }
 
 export function activate(context: vscode.ExtensionContext) {
 
   let ime = new IMEAdapter(context);
-  
 
-  const disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
-    vscode.window.showInformationMessage("Hello World from testing.");
-  });
-
-  context.subscriptions.push(disposable);
 }
 
 export function deactivate() {
