@@ -103,14 +103,24 @@ class IMEAdapter {
 
   toggle() {
     this.enabled = !this.enabled;
+    let inputContext: chrome.input.ime.InputContext =  {
+      contextID: 1,
+      autoComplete: false,
+      autoCorrect: true,
+      spellCheck: false,
+      type: "search"
+    }
 
     // TODO need to support vscode state.
     if (this.enabled) {
       console.log("activate");
       // vscode.commands.executeCommand("setContext", "vscode-ime.enabled", true);
       this.controller.activate(this.engineID as InputToolCode);
+      
+      this.controller.register(inputContext);
     } else {
       this.controller.deactivate(this.engineID);
+      this.controller.unregister(1);
     }
   }
 
