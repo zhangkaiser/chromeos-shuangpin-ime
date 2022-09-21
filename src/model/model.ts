@@ -277,7 +277,7 @@ export class Model extends EventTarget implements IModel {
     this.source = this.source + ch;
     this.highlightIndex = -1;
     // Event
-    this.dispatchEvent(new CustomEvent(EventType.MODELUPDATED));
+    this.dispatchEvent(new Event(EventType.MODELUPDATED));
     this._holdSelectStatus = true;
     this.fetchCandidates();
   }

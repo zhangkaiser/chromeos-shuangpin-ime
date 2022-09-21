@@ -3,10 +3,12 @@
  */
 
 import * as vscode from "vscode";
-import "src/imeadapterforvscode";
+import { adapter } from "src/imeadapterforvscode";
 import { Controller } from "src/controller";
 import { VscodeConfig } from "./model/vsconfig";
 import { EventType, InputToolCode, Key } from "./model/enums";
+
+adapter();
 
 const IMECommands = {
   TOGGLE: "vscode-ime.toggle",
