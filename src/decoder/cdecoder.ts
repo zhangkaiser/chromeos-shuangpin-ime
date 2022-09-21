@@ -50,9 +50,7 @@ export default class Decoder extends EventTarget implements IDecoder {
   
   /** @todo selectedCandID argument is not used. */
   decode(sourceWord: string, selectedCandID: number) {
-    console.log("decode", sourceWord);
     if (!this.decoder) return null;
-    console.log("decoder", true);
     let { shuangpinStatus } = this.#dataloader;
 
     let tokenPath;

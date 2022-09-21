@@ -10,7 +10,7 @@ let statusBarDisposable: vscode.Disposable;
 View.prototype.updateInputTool = function(hidden) {
   if (hidden) {
     vscode.commands.executeCommand("setContext", "vscode-ime.enabled", false);
-    statusBarDisposable.dispose();
+    vscode.Disposable.from(statusBarDisposable).dispose();
   } else {
     vscode.commands.executeCommand("setContext", "vscode-ime.enabled", true);
   }
@@ -22,35 +22,13 @@ View.prototype.updateMenuItems = function(stateId) {
 }
 
 View.prototype.refresh = function() {
-  let segments = this.model.segments;
-  let rawSource = this.model.rawSource;
-  let candidates = this.model.candidates;
-
+  
   // if (rawSource.length === 1) {
   //   vscode.commands.executeCommand("editor.action.triggerSuggest");
   // }
 
   // Show candidate
-  vscode.languages.registerCompletionItemProvider("*", {
-    provideCompletionItems: (document, position, token) => {
-      let items = [];
-      items.push(
-        new vscode.CompletionItem(rawSource, vscode.CompletionItemKind.Text)
-      );
-
-      candidates.forEach((candidate, index) => {
-        let item = new vscode.CompletionItem(candidate.target, vscode.CompletionItemKind.Enum);
-        item.sortText = "" + index;
-        items.push(item);
-      });
-
-      return new vscode.CompletionList(items);
-
-    },
-    resolveCompletionItem() {
-      return null;
-    }
-  });
+  
 }
 
 function getActiveEditor() {

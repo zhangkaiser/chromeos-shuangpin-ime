@@ -104,6 +104,38 @@ class IMEAdapter {
 
     // Vscode event.
     vscode.window.onDidChangeTextEditorSelection(this.focus.bind(this));
+    
+    // COMMIT;
+    this.controller.model.addEventListener(EventType.COMMIT, this.insertText.bind(this));
+    this.controller.model.addEventListener(EventType.MODELUPDATED, this.show.bind(this));
+  }
+
+  insertText() {
+    console.log('IMEAdapter.insertText');
+  }
+
+  completionList: Promise<any> = Promise.resolve([]);
+
+  show() {
+    console.log("IMEAdapter.show");
+    let segments = this.controller.model.segments;
+    let rawSource = this.controller.model.rawSource;
+    let candidates = this.controller.model.candidates;
+
+    let items = [];
+    items.push(
+      new vscode.CompletionItem(rawSource, vscode.CompletionItemKind.Text)
+    );
+
+    for (let i = 0; i < 5; i++) {
+      let candidate = candidates[i];
+      console.log(candidate);
+      let item = new vscode.CompletionItem(candidate.target, vscode.CompletionItemKind.Enum);
+      item.sortText = "" + i;
+      items.push(item);
+    }
+
+    this.completionList = Promise.resolve(new vscode.CompletionList(items));
   }
 
   toggle() {
@@ -142,6 +174,32 @@ class IMEAdapter {
 export function activate(context: vscode.ExtensionContext) {
 
   let ime = new IMEAdapter(context);
+  vscode.languages.registerCompletionItemProvider(
+    "*", 
+    {
+      provideCompletionItems: (document, position, token) => {
+        let items = [];
+        // items.push(
+        //   new vscode.CompletionItem(rawSource, vscode.CompletionItemKind.Text)
+        // );
+
+        // for (let i = 0; i < 5; i++) {
+
+        // }
+        // candidates.forEach((candidate, index) => {
+        //   let item = new vscode.CompletionItem(candidate.target, vscode.CompletionItemKind.Enum);
+        //   item.sortText = "" + index;
+        //   items.push(item);
+        // });
+
+        // return new vscode.CompletionList(items);
+        return ime.completionList;
+
+      },
+      resolveCompletionItem() {
+        return null;
+      }
+  });
 
 }
 
