@@ -7656,9 +7656,7 @@ if (Module['preInit']) {
   } 
 }
 
-module.exports = {
-  Module
-}
+module.exports = Module;
 
 
 

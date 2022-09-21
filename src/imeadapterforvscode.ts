@@ -5,10 +5,12 @@ import { VscodeConfig, vscodeConfigFactory } from "./model/vsconfig";
 import { Controller } from "./controller";
 import { EventType, Status } from "./model/enums";
 
+let statusBarDisposable: vscode.Disposable;
+
 View.prototype.updateInputTool = function(hidden) {
-  console.log("hello");
   if (hidden) {
     vscode.commands.executeCommand("setContext", "vscode-ime.enabled", false);
+    statusBarDisposable.dispose();
   } else {
     vscode.commands.executeCommand("setContext", "vscode-ime.enabled", true);
   }
@@ -16,30 +18,37 @@ View.prototype.updateInputTool = function(hidden) {
 }
 
 View.prototype.updateMenuItems = function(stateId) {
-  vscode.window.setStatusBarMessage(`(${vscodeConfigFactory.getEngineID()}) ime`);
+  statusBarDisposable = vscode.window.setStatusBarMessage(`${vscodeConfigFactory.getEngineID()}`);
 }
 
 View.prototype.refresh = function() {
   let segments = this.model.segments;
   let rawSource = this.model.rawSource;
-  if (rawSource.length === 1) {
-    vscode.commands.executeCommand("editor.action.triggerSuggest");
-  }
+  let candidates = this.model.candidates;
+
+  // if (rawSource.length === 1) {
+  //   vscode.commands.executeCommand("editor.action.triggerSuggest");
+  // }
 
   // Show candidate
   vscode.languages.registerCompletionItemProvider("*", {
     provideCompletionItems: (document, position, token) => {
       let items = [];
-      
-      for (let i = 0; i < 5; i++) {
-        let item = new vscode.CompletionItem(`1 ${segments.join()}`, vscode.CompletionItemKind.Text);
-        item.insertText = segments.join();
-        item.sortText = "" + i;
-        item.detail = "Hello Test";
-        items.push(item);
-      }
+      items.push(
+        new vscode.CompletionItem(rawSource, vscode.CompletionItemKind.Text)
+      );
 
-      return new vscode.CompletionList(items, true);
+      candidates.forEach((candidate, index) => {
+        let item = new vscode.CompletionItem(candidate.target, vscode.CompletionItemKind.Enum);
+        item.sortText = "" + index;
+        items.push(item);
+      });
+
+      return new vscode.CompletionList(items);
+
+    },
+    resolveCompletionItem() {
+      return null;
     }
   });
 }
@@ -71,7 +80,6 @@ global.chrome = {
     ime: {}
   }
 } as any;
-
 
 chrome.storage.sync.get = function(keys?: string | string[] | { [key: string]: any } | null): any {
   console.log('storage.sync.get', arguments);

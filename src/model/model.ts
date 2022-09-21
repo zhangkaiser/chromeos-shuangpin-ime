@@ -1,4 +1,4 @@
-
+import * as vscode from "vscode";
 import { EventType, InputToolCode, StateID, Status } from "./enums";
 import { Candidate } from "./candidate";
 import { configFactoryInstance } from "./configfactory";
@@ -82,7 +82,20 @@ export class Model extends EventTarget implements IModel {
 
   configFactory = configFactoryInstance;
   /** Current model status. */
-  status = Status.INIT;
+  _status = Status.INIT;
+
+  get status() {
+    return this._status;
+  }
+
+  set status(value: Status) {
+    if (value != Status.INIT) {
+      vscode.commands.executeCommand("setContext", "vscode-ime.inited", true);
+    } else {
+      vscode.commands.executeCommand("setContext", "vscode-ime.inited", false);
+    }
+    this._status = value;
+  }
   /** Uncoverted source. */
   source: string = "";
   /** Current candidates. */
@@ -192,7 +205,7 @@ export class Model extends EventTarget implements IModel {
       } 
     }
 
-    this._predictor = new Predictor();
+    // this._predictor = new Predictor();
   }
 
   get decoder() {
@@ -397,12 +410,6 @@ export class Model extends EventTarget implements IModel {
   /** @todo */
   reactivate(engineID: string) {
     this.engineID = engineID;
-    // It's from inactive and reactivate ime.
-    // this.isFromInactive = true;
-    // chrome.storage.local.get('stateCache',(data) => {
-    //   let stateCache = 'stateCache' in data ? data['stateCache'] : '';
-    //   this.stateCache = stateCache;
-    // })
   }
 
   /**
@@ -429,19 +436,6 @@ export class Model extends EventTarget implements IModel {
   }
 
   notifyUpdates(commit = false) {
-    chrome.storage.local.set({
-      stateCache: {
-        rawSource: this.rawSource,
-        source: this.source,
-        cursorPos: this.cursorPos,
-        commitPos: this.commitPos,
-        segments: this.segments,
-        highlightIndex: this.highlightIndex,
-        candidates: this.candidates,
-        status: this.status,
-        _holdSelectStatus: this._holdSelectStatus,
-      }
-    });
     if (commit) {
       this.dispatchEvent(Model.COMMIT_EVENT);
       this.clear();

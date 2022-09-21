@@ -5,11 +5,21 @@ import { DataLoader } from "./dataloader";
 import { IMEResponse } from "./response";
 import { TokenDecoder } from "./tokendecoder";
 
+export function runWasm() {
+  return new Promise((resolve, reject) => {
+    Module['onRuntimeInitialized'] = resolve;
+    Module['run']();
+  });
+}
+
 export default class Decoder extends EventTarget implements IDecoder {
   
   #decoder?: IWASMDecoder;
   #dataloader: DataLoader;
   #tokenDecoder: TokenDecoder;
+
+  initPromise: Promise<any>;
+  inited = false;
 
   constructor(public inputTool: any, 
     solution?: string[] | string,
@@ -20,23 +30,29 @@ export default class Decoder extends EventTarget implements IDecoder {
     this.#dataloader = new DataLoader(inputTool);
     this.#tokenDecoder = new TokenDecoder(this.#dataloader, solution);
     this.#tokenDecoder.addEventListener('clear', this.clear.bind(this));
+    this.initPromise = runWasm();
     
-    try {
-      this.#decoder = new Module["Decoder"]();
-    } catch(e) {}
+    this.initPromise.then(() => {
+      this.#decoder = new Module['Decoder']();
+      this.inited = true;
+    })
   }
 
   get decoder() {
-    try {
-      this.#decoder = this.#decoder 
-        ?? (Module["Decoder"] ? new Module["Decoder"]() : undefined);        
-    } catch(e) { }
-    return this.#decoder;
+    if (this.inited && this.#decoder) {
+      return this.#decoder;
+    } else if (Module['Decoder']) {
+      return this.#decoder = new Module['Decoder'](); 
+    } else {
+      return null;
+    }
   }
   
   /** @todo selectedCandID argument is not used. */
   decode(sourceWord: string, selectedCandID: number) {
+    console.log("decode", sourceWord);
     if (!this.decoder) return null;
+    console.log("decoder", true);
     let { shuangpinStatus } = this.#dataloader;
 
     let tokenPath;

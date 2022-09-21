@@ -1,5 +1,6 @@
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const webpack = require("webpack");
 
 const extMark = "vscode-ime";
 const extEditName = "vscode ime";
@@ -11,7 +12,8 @@ const specials = ['enter', 'space', 'backspace'];
 
 const whenCauseMap = {
   enabled: `editorTextFocus && ${extMark}.enabled`,
-  englishPunc: `editorTextFocurs && ${extMark}.enabled && !${extMark}.state.punc`
+  englishPunc: `editorTextFocus && ${extMark}.enabled && !${extMark}.state.punc`,
+  inited: `editorTextFocus && ${extMark}.enabled && ${extMark}.inited`
 }
 
 // format = [id, type, default, markdownDescription, ...otherArgs:{name: value}],
@@ -56,7 +58,7 @@ function registerKeybindings(data) {
     ...specials.map((spec) => ({
       command: `${extMark}.special${spec}`,
       key: spec,
-      when: whenCauseMap.enabled
+      when: whenCauseMap.inited
     })),
 
     ...data['contributes']['keybindings']
@@ -137,6 +139,9 @@ module.exports = {
         {from: "./libGooglePinyin/decoder.wasm", to: "./decoder.wasm"},
         {from: "./libGooglePinyin/decoder.js", to: "./decoder.js"}
       ]
+    }),
+    new webpack.DefinePlugin({
+      "process.env.ALL": true
     })
   ]
 }
