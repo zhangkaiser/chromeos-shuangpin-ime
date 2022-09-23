@@ -5,12 +5,12 @@ import { VscodeConfig, vscodeConfigFactory } from "./model/vsconfig";
 import { Controller } from "./controller";
 import { EventType, Status } from "./model/enums";
 
-let statusBarDisposable: vscode.Disposable;
+
+let statusBarDisposable = "";
 
 View.prototype.updateInputTool = function(hidden) {
   if (hidden) {
     vscode.commands.executeCommand("setContext", "vscode-ime.enabled", false);
-    vscode.Disposable.from(statusBarDisposable).dispose();
   } else {
     vscode.commands.executeCommand("setContext", "vscode-ime.enabled", true);
   }
@@ -18,7 +18,11 @@ View.prototype.updateInputTool = function(hidden) {
 }
 
 View.prototype.updateMenuItems = function(stateId) {
-  statusBarDisposable = vscode.window.setStatusBarMessage(`${vscodeConfigFactory.getEngineID()}`);
+  if (statusBarDisposable) {
+    vscode.Disposable.from(statusBarDisposable as any).dispose();
+    statusBarDisposable = "";
+  }
+  statusBarDisposable = vscode.window.setStatusBarMessage(`${vscodeConfigFactory.getEngineID()}`) as any;
 }
 
 View.prototype.refresh = function() {

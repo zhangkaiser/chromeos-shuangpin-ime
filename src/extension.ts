@@ -5,8 +5,9 @@
 import * as vscode from "vscode";
 import { adapter } from "src/imeadapterforvscode";
 import { Controller } from "src/controller";
-import { VscodeConfig } from "./model/vsconfig";
-import { EventType, InputToolCode, Key } from "./model/enums";
+import { VscodeConfig } from "src/model/vsconfig";
+import { EventType, InputToolCode, Key } from "src/model/enums";
+import { configFactoryInstance } from "src/model/configfactory";
 
 adapter();
 
@@ -52,6 +53,8 @@ class IMEAdapter {
 
   enabled = false;
 
+  configFactory = configFactoryInstance;
+
   constructor(readonly context: vscode.ExtensionContext) {
     
     this.globalState = this.vsConfig.getGlobalState();
@@ -74,7 +77,8 @@ class IMEAdapter {
           ));
           break;
         case "SINGLE_KEY":
-          let singleKeys = letters + punctuations + numbers;
+          // let singleKeys = letters + punctuations + numbers;
+          let singleKeys = punctuations + numbers;
           singleKeys.split("").forEach((key) => {
             this.subscriptions.push(registerCommand(
               IMECommands[commandKey] + key.toUpperCase(),
@@ -103,7 +107,7 @@ class IMEAdapter {
     }
 
     // Vscode event.
-    vscode.window.onDidChangeTextEditorSelection(this.focus.bind(this));
+    // vscode.window.onDidChangeTextEditorSelection(this.focus.bind(this));
     
     // COMMIT;
     this.controller.model.addEventListener(EventType.COMMIT, this.insertText.bind(this));
@@ -114,12 +118,15 @@ class IMEAdapter {
     console.log('IMEAdapter.insertText');
   }
 
-  completionList: Promise<any> = Promise.resolve([]);
+  completionList?: Promise<any>;
+  rawSource = "";
 
   show() {
-    console.log("IMEAdapter.show");
     let segments = this.controller.model.segments;
     let rawSource = this.controller.model.rawSource;
+    console.log(this.rawSource, rawSource)
+    if (this.rawSource == rawSource) return ;
+    this.rawSource = rawSource;
     let candidates = this.controller.model.candidates;
 
     let items = [];
@@ -127,15 +134,16 @@ class IMEAdapter {
       new vscode.CompletionItem(rawSource, vscode.CompletionItemKind.Text)
     );
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < candidates.length; i++) {
       let candidate = candidates[i];
-      console.log(candidate);
+      console.log("show", candidate.target);
       let item = new vscode.CompletionItem(candidate.target, vscode.CompletionItemKind.Enum);
       item.sortText = "" + i;
       items.push(item);
     }
 
-    this.completionList = Promise.resolve(new vscode.CompletionList(items));
+    this.completionList = Promise.resolve(new vscode.CompletionList(items, true));
+    // vscode.commands.executeCommand("editor.action.triggerSuggest");
   }
 
   toggle() {
@@ -166,33 +174,46 @@ class IMEAdapter {
   requestId = 0;
   keyEvent(keyEvent: chrome.input.ime.KeyboardEvent) {
     this.requestId++;
-    // console.log(keyEvent);
     this.controller.handleEvent(this.engineID as InputToolCode, keyEvent, this.requestId);
+  }
+
+
+  handleSurroundingText(text: string) {
+    let rawSource = this.controller.model.rawSource;
+    if (rawSource.length >= 0 && rawSource != text) {
+      let lastKey = text.slice(-1);
+      let currentConfig = this.configFactory.getCurrentConfig();
+      if (currentConfig.editorCharReg.test(lastKey)) {
+        this.keyEvent(mockDownKey(lastKey));
+      } else {
+        this.controller.unregister(1);
+      }
+    } else {
+      this.controller.unregister(1);
+    }
   }
 }
 
 export function activate(context: vscode.ExtensionContext) {
 
   let ime = new IMEAdapter(context);
+  
   vscode.languages.registerCompletionItemProvider(
     "*", 
     {
-      provideCompletionItems: (document, position, token) => {
-        let items = [];
-        // items.push(
-        //   new vscode.CompletionItem(rawSource, vscode.CompletionItemKind.Text)
-        // );
+      provideCompletionItems: (selector, position, token, context) => {
+        let wordRange = selector.getWordRangeAtPosition(position);
+        if (!wordRange) return;
+        let text = selector.getText(wordRange);
+        ime.handleSurroundingText(text);
 
-        // for (let i = 0; i < 5; i++) {
+        selector.getWordRangeAtPosition(position);
 
-        // }
-        // candidates.forEach((candidate, index) => {
-        //   let item = new vscode.CompletionItem(candidate.target, vscode.CompletionItemKind.Enum);
-        //   item.sortText = "" + index;
-        //   items.push(item);
-        // });
 
-        // return new vscode.CompletionList(items);
+        // item.insertText = text + item.label;
+        // item.label = item.insertText;
+        
+        // TODO
         return ime.completionList;
 
       },
@@ -200,7 +221,6 @@ export function activate(context: vscode.ExtensionContext) {
         return null;
       }
   });
-
 }
 
 export function deactivate() {

@@ -32,11 +32,11 @@ const configProperties = [
 
 function registerKeybindings(data) {
   data['contributes']['keybindings'] = [
-    ...letters.split("").map((letter) => ({ // KeyA-Z.
-      command: `${extMark}.key${letter.toUpperCase()}`,
-      key: letter,
-      when: whenCauseMap.enabled 
-    })),
+    // ...letters.split("").map((letter) => ({ // KeyA-Z.
+    //   command: `${extMark}.key${letter.toUpperCase()}`,
+    //   key: letter,
+    //   when: whenCauseMap.enabled 
+    // })),
 
     ...punctuations.split("").map((punc) => ({
       command: `${extMark}.key${punc}`,
@@ -52,7 +52,7 @@ function registerKeybindings(data) {
     ...numbers.split("").map((num) => ({
       command: `${extMark}.key${num}`,
       key: "" + num,
-      when: whenCauseMap.enabled
+      when: whenCauseMap.inited
     })),
 
     ...specials.map((spec) => ({
