@@ -8,6 +8,8 @@ import { EventType, Status } from "./model/enums";
 
 let statusBarDisposable = "";
 
+
+
 View.prototype.updateInputTool = function(hidden) {
   if (hidden) {
     vscode.commands.executeCommand("setContext", "vscode-ime.enabled", false);
@@ -21,8 +23,10 @@ View.prototype.updateMenuItems = function(stateId) {
   if (statusBarDisposable) {
     vscode.Disposable.from(statusBarDisposable as any).dispose();
     statusBarDisposable = "";
+  } else {
+    statusBarDisposable = vscode.window.setStatusBarMessage(`${vscodeConfigFactory.getEngineID()}`) as any;
+
   }
-  statusBarDisposable = vscode.window.setStatusBarMessage(`${vscodeConfigFactory.getEngineID()}`) as any;
 }
 
 View.prototype.refresh = function() {
@@ -70,7 +74,12 @@ chrome.storage.sync.set = function():any { console.log('storage.sync.set', argum
 
 chrome.input.ime = {
   commitText(parameters: chrome.input.ime.CommitTextParameters) {
-    console.log('commitText', parameters);
+    let { activeTextEditor } = vscode.window;
+    if (!activeTextEditor) return ;
+    let location = activeTextEditor.selection.anchor;
+    activeTextEditor.edit((editBuilder) => {
+      editBuilder.insert(location, parameters.text);
+    });
   },
   setMenuItems(parameters: chrome.input.ime.ImeParameters, callback?: (() => void) | undefined) {
     console.log('setMenuItems', parameters);

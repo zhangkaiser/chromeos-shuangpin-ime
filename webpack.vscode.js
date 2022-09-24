@@ -12,7 +12,7 @@ const specials = ['enter', 'space', 'backspace'];
 
 const whenCauseMap = {
   enabled: `editorTextFocus && ${extMark}.enabled`,
-  englishPunc: `editorTextFocus && ${extMark}.enabled && !${extMark}.state.punc`,
+  punc: `editorTextFocus && ${extMark}.enabled && ${extMark}.state.punc`,
   inited: `editorTextFocus && ${extMark}.enabled && ${extMark}.inited`
 }
 
