@@ -245,7 +245,7 @@ export class Model extends EventTarget implements IModel {
     if (this.status == Status.INIT) {
       this.dispatchEvent(Model.OPENING_EVENT);
     }
-    this.dispatchEvent(Model.MODELUPDATE_EVENT);
+    // this.dispatchEvent(Model.MODELUPDATE_EVENT);
     if (this.status == Status.SELECT) {
       this._holdSelectStatus = true;
     }

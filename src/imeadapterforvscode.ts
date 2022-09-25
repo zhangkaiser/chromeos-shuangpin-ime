@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { VscodeConfig, vscodeConfigFactory } from "./model/vsconfig";
 import { Controller } from "./controller";
 import { EventType, Status } from "./model/enums";
+import { Model } from "./model/model";
 
 
 let statusBarDisposable = "";
@@ -29,8 +30,10 @@ View.prototype.updateMenuItems = function(stateId) {
   }
 }
 
+let rawSource = "";
+
 View.prototype.refresh = function() {
-  
+  rawSource = this.model.rawSource;
   // if (rawSource.length === 1) {
   //   vscode.commands.executeCommand("editor.action.triggerSuggest");
   // }
@@ -74,11 +77,21 @@ chrome.storage.sync.set = function():any { console.log('storage.sync.set', argum
 
 chrome.input.ime = {
   commitText(parameters: chrome.input.ime.CommitTextParameters) {
+    console.log("commitText", parameters.text);
     let { activeTextEditor } = vscode.window;
+    
     if (!activeTextEditor) return ;
     let location = activeTextEditor.selection.anchor;
+    
+    // let range = activeTextEditor.document.getWordRangeAtPosition(location, new RegExp(rawSource));
+    let range = new vscode.Range(
+      new vscode.Position(location.line, location.character - rawSource.length), 
+      new vscode.Position(location.line, location.character)
+    );
     activeTextEditor.edit((editBuilder) => {
-      editBuilder.insert(location, parameters.text);
+      range && editBuilder.replace(range, parameters.text);
+      // editBuilder.insert(location, parameters.text);
+      // editBuilder.insert(location, );
     });
   },
   setMenuItems(parameters: chrome.input.ime.ImeParameters, callback?: (() => void) | undefined) {

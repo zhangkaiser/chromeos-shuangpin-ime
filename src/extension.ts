@@ -22,8 +22,8 @@ type IMECommandKey =  keyof typeof IMECommands;
 const letters =  "abcdefghijklmnopqrstuvwxyz";
 const punctuations = "`-=[]\\;',./";
 const numbers = "1234567890";
-const specials = ['enter', 'space', 'backspace']; 
-const relativeSpecial =  [Key.ENTER, Key.SPACE, Key.BACKSPACE];
+const specials = ['enter', 'space', 'backspace', 'escape']; 
+const relativeSpecial =  [Key.ENTER, Key.SPACE, Key.BACKSPACE, Key.ESC];
 
 const registerCommand = vscode.commands.registerCommand;
 
@@ -101,7 +101,7 @@ class IMEAdapter extends EventTarget {
   }
 
   get subscriptions() {
-    return this.context!.subscriptions;
+    return this.context.subscriptions;
   }
 
   addVscodeListeners() {
@@ -188,20 +188,20 @@ class IMEAdapter extends EventTarget {
   }
 
   showingCandidates = "";
+  time = 0;
 
   handleShowCandidates() {
-
+    this.time++;
+    console.log(this.time, this.model._holdSelectStatus);
     let { candidates } = this.model;
     let { pageSize } = this.configFactory.getCurrentConfig();
     let items = [];
     if (!candidates.length) return ; // Hidden.
-    let candidateLog = ""; 
     
     for (let i = 0; i < pageSize; i++) {
       let candidate = candidates[i];
 
       if (!candidate) break;
-      candidateLog += candidate.target;
 
       let item = new vscode.CompletionItem(candidate.target, vscode.CompletionItemKind.Enum);
       item.sortText = "" + (i+1);
@@ -211,8 +211,6 @@ class IMEAdapter extends EventTarget {
       items.push(item);
     }
 
-    if (this.showingCandidates == candidateLog) return;
-    this.showingCandidates = candidateLog;
 
     this.completionList = new vscode.CompletionList(items, true);
     this.dispatchEvent(new Event("completion"));
@@ -221,6 +219,7 @@ class IMEAdapter extends EventTarget {
   getCompletionList(): Promise<vscode.CompletionList | []> {
     return new Promise((resolve, reject) => {
       this.addEventListener("completion", () => {
+        console.log("returnTime.end", this.returnTime);
         resolve(this.completionList ?? []);
       }, {
         once: true
@@ -228,13 +227,14 @@ class IMEAdapter extends EventTarget {
     })
   }
 
+  returnTime = 0;
   registerCompletionProvider() {
     let completionProvider = vscode.languages.registerCompletionItemProvider(
       "*",
       {
         provideCompletionItems: (document, position, token, context) => {
-          console.log('trigger');
-          return [];
+          this.returnTime++
+          console.log("returnTime.start", this.returnTime);
           let wordRangePosition = document.getWordRangeAtPosition(position);
           if (!wordRangePosition) return;
           let text = document.getText(wordRangePosition);
