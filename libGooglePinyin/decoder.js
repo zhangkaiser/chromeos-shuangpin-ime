@@ -7649,17 +7649,18 @@ function procExit(code) {
   quit_(code, new ExitStatus(code));
 }
 
-if (Module['preInit']) {
-  if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
-  while (Module['preInit'].length > 0) {
-    Module['preInit'].pop()();
-  } 
+
+export function startRun() {
+  if (Module['preInit']) {
+    if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
+    while (Module['preInit'].length > 0) {
+      Module['preInit'].pop()();
+    } 
+  }
+
+  run();
 }
 
-run();
-
 export default Module;
-
-
 
 

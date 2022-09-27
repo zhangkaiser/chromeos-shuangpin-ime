@@ -223,29 +223,6 @@ export class Controller extends EventTarget {
       return false;
     }
 
-
-    // TODO `chrome.input.ime.sendKeyEvents` also too
-    // if (this.model.isFromInactive && keyEvent.type == EventType.KEYUP) {
-    //   this.model.resume();
-    //   if (
-    //     keyEvent.key)
-    //   chrome.input.ime.deleteSurroundingText({
-    //     contextID: this._context.contextID,
-    //     engineID: this._configFactory.getInputTool(),
-    //     length: 1,
-    //     offset: -1,
-    //   });
-
-    //   keyEvent.type = EventType.KEYDOWN;
-    //   chrome.input.ime.sendKeyEvents({
-    //     contextID: this._context.contextID,
-    //     keyData: [keyEvent]
-    //   })
-
-    //   // this.processCharKey(keyEvent);
-    //   return true;
-    // }
-
     // ctrl + shift and from extensionId.
     if (
       keyEvent.extensionId
@@ -290,6 +267,7 @@ export class Controller extends EventTarget {
     return false;
   }
 
+  /** @todo Surrounding text handler.  */
   handleSurroundingText(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
     if (process.env.MV3) { 
       if (!this.model.engineID) {

@@ -12,3 +12,5 @@ libGooglePinyin/cmake_install.cmake
 libGooglePinyin/test*
 
 src/model/model.old.ts
+
+vscode

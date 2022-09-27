@@ -19,7 +19,7 @@ export class View {
   /** The ui window. */
   window?: CandidateWindow;
 
-  constructor(protected model: Model) { }
+  constructor(public model: Model) { }
 
   /** Get the current config from config factory. */
   get currentConfig() {
@@ -58,8 +58,7 @@ export class View {
         visible: true
       });
     }
-    console.log(this._context);
-
+    
     if (!stateId) { // Add.
       chrome.input.ime.setMenuItems(menuItemParameters);
     } else {  // Update.

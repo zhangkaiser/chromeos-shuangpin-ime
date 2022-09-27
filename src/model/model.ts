@@ -1,4 +1,3 @@
-
 import { EventType, InputToolCode, StateID, Status } from "./enums";
 import { Candidate } from "./candidate";
 import { configFactoryInstance } from "./configfactory";
@@ -394,19 +393,13 @@ export class Model extends EventTarget implements IModel {
 
   }
 
-  /** @todo */
+  /** @deprecated */
   reactivate(engineID: string) {
     this.engineID = engineID;
-    // It's from inactive and reactivate ime.
-    // this.isFromInactive = true;
-    // chrome.storage.local.get('stateCache',(data) => {
-    //   let stateCache = 'stateCache' in data ? data['stateCache'] : '';
-    //   this.stateCache = stateCache;
-    // })
   }
 
   /**
-   * @todo 
+   * @deprecated
    * Resume state. 
    */
   resume() {
@@ -429,19 +422,6 @@ export class Model extends EventTarget implements IModel {
   }
 
   notifyUpdates(commit = false) {
-    chrome.storage.local.set({
-      stateCache: {
-        rawSource: this.rawSource,
-        source: this.source,
-        cursorPos: this.cursorPos,
-        commitPos: this.commitPos,
-        segments: this.segments,
-        highlightIndex: this.highlightIndex,
-        candidates: this.candidates,
-        status: this.status,
-        _holdSelectStatus: this._holdSelectStatus,
-      }
-    });
     if (commit) {
       this.dispatchEvent(Model.COMMIT_EVENT);
       this.clear();
@@ -528,6 +508,7 @@ export class Model extends EventTarget implements IModel {
   }
 
   /** 
+   * @todo There was a problem: triggered after commit text due to delay.
    * Cloud prediction of candidate.
    */
   async predictor() {
@@ -537,6 +518,8 @@ export class Model extends EventTarget implements IModel {
     this._predictor.setEngine((this.states as any).predictEngine);
 
     let rawSource = this.rawSource;
+
+    // TODO need to support pinyin.
     if (this.commitPos) {
       let segment = this.segments.slice(0, this.commitPos).join('');
       rawSource = rawSource.slice(segment.length * 2);
@@ -545,6 +528,7 @@ export class Model extends EventTarget implements IModel {
     let predict = await this._predictor.decode(this.source, rawSource);
     if (!predict) return;
     if (!this.candidates.length || this.candidates[0].target == predict.target) return;
+    // if (!this.rawSource ||this.commitPos ? rawSource != )
 
     let { pageSize } = this.currentConfig;
     let swapped = false;
