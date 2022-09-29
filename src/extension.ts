@@ -188,11 +188,8 @@ class IMEAdapter extends EventTarget {
   }
 
   showingCandidates = "";
-  time = 0;
 
   handleShowCandidates() {
-    this.time++;
-    console.log(this.time, this.model._holdSelectStatus);
     let { candidates } = this.model;
     let { pageSize } = this.configFactory.getCurrentConfig();
     let items = [];
@@ -219,7 +216,6 @@ class IMEAdapter extends EventTarget {
   getCompletionList(): Promise<vscode.CompletionList | []> {
     return new Promise((resolve, reject) => {
       this.addEventListener("completion", () => {
-        console.log("returnTime.end", this.returnTime);
         resolve(this.completionList ?? []);
       }, {
         once: true
@@ -227,18 +223,14 @@ class IMEAdapter extends EventTarget {
     })
   }
 
-  returnTime = 0;
   registerCompletionProvider() {
     let completionProvider = vscode.languages.registerCompletionItemProvider(
       "*",
       {
         provideCompletionItems: (document, position, token, context) => {
-          this.returnTime++
-          console.log("returnTime.start", this.returnTime);
           let wordRangePosition = document.getWordRangeAtPosition(position);
           if (!wordRangePosition) return;
           let text = document.getText(wordRangePosition);
-          console.log('text', text);
           let promise = this.getCompletionList();
           this.handleSurroundingText(text);
           return promise;
@@ -248,17 +240,45 @@ class IMEAdapter extends EventTarget {
         }
     });
   }
+
+  registerPredictionProvider() {
+    vscode.languages.registerCompletionItemProvider(
+      "*",
+      {
+        provideCompletionItems: () => {
+          
+          let promise: Promise<vscode.CompletionList<vscode.CompletionItem> | vscode.CompletionItem[]> = new Promise((resolve) => {
+            setTimeout(() => {
+              let item = new vscode.CompletionItem("test", vscode.CompletionItemKind.Text);
+              item.sortText = "" + 6;
+              item.insertText = "test";
+              item.label = 6 + " " + "test";
+              item.filterText = this.currentText;
+              resolve([
+                item
+              ])
+            }, 1000);
+          });
+          console.log("prediction");
+          return promise;
+        },
+        resolveCompletionItem() {
+          return null;
+        }
+      }
+    )
+  }
 }
 
 
 adapter();
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("activate");
   const ime = new IMEAdapter(context);
 
   // Trigger letters key event.
   ime.registerCompletionProvider();
+  ime.registerPredictionProvider();
 }
 
 export function deactivate() {
