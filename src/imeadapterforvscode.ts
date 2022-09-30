@@ -93,6 +93,7 @@ chrome.input.ime = {
       // editBuilder.insert(location, parameters.text);
       // editBuilder.insert(location, );
     });
+    vscode.commands.executeCommand("hideSuggestWidget");
   },
   setMenuItems(parameters: chrome.input.ime.ImeParameters, callback?: (() => void) | undefined) {
     console.log('setMenuItems', parameters);

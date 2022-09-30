@@ -38,22 +38,22 @@ function registerKeybindings(data) {
     //   when: whenCauseMap.enabled 
     // })),
 
-    ...punctuations.split("").map((punc) => ({
-      command: `${extMark}.key${punc}`,
-      key: punc,
-      when: whenCauseMap.punc
-    })),
+    // ...punctuations.split("").map((punc) => ({
+    //   command: `${extMark}.key${punc}`,
+    //   key: punc,
+    //   when: whenCauseMap.punc
+    // })),
     ...(punctuations + numbers).split("").map((punc) => ({
       command: `${extMark}.shift${punc}`,
       key: `shift+${punc}`,
       when: whenCauseMap.punc
     })),
 
-    ...numbers.split("").map((num) => ({
-      command: `${extMark}.key${num}`,
-      key: "" + num,
-      when: whenCauseMap.inited
-    })),
+    // ...numbers.split("").map((num) => ({
+    //   command: `${extMark}.key${num}`,
+    //   key: "" + num,
+    //   when: whenCauseMap.inited
+    // })),
 
     ...specials.map((spec) => ({
       command: `${extMark}.special${spec}`,
