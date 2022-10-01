@@ -43,11 +43,11 @@ function registerKeybindings(data) {
     //   key: punc,
     //   when: whenCauseMap.punc
     // })),
-    ...(punctuations + numbers).split("").map((punc) => ({
-      command: `${extMark}.shift${punc}`,
-      key: `shift+${punc}`,
-      when: whenCauseMap.punc
-    })),
+    // ...(punctuations + numbers).split("").map((punc) => ({
+    //   command: `${extMark}.shift${punc}`,
+    //   key: `shift+${punc}`,
+    //   when: whenCauseMap.punc
+    // })),
 
     // ...numbers.split("").map((num) => ({
     //   command: `${extMark}.key${num}`,
