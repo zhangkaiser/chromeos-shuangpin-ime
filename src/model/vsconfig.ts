@@ -15,7 +15,9 @@ type ConfigurationSection =
 
 export class VscodeConfig {
   // TODO May be error.
-  configuration = vscode.workspace.getConfiguration();
+  get configuration() {
+    return vscode.workspace.getConfiguration();
+  }
 
   getConfig<T>(section: ConfigurationSection, defaultValue: T) {
     return this.configuration.get(section, defaultValue);

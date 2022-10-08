@@ -58,19 +58,15 @@ export default class ConfigFactory {
   /** Build configs. */
   #buildConfig() {
     [
-      InputToolCode.JS_PINYIN,
-      InputToolCode.JS_SHUANGPIN,
       InputToolCode.WASM_PINYIN,
       InputToolCode.WASM_SHUANGPIN
     ].forEach((inputToolCode) => {
       switch (inputToolCode) {
-        case InputToolCode.JS_SHUANGPIN:
         case InputToolCode.WASM_SHUANGPIN:
   
           return this._map[inputToolCode] = new ShuangpinConfig();
   
         case InputToolCode.WASM_PINYIN:
-        case InputToolCode.JS_PINYIN:
         default:
           return this._map[inputToolCode] = new PinyinConfig();
       }

@@ -15,6 +15,7 @@ import { View } from "src/view";
 
 const IMECommands = {
   TOGGLE: "vscode-ime.toggle",
+  COMMIT: "vscode-ime.commit",
   SINGLE_KEY: "vscode-ime.key",
   SHIFT_WITH_KEY: "vscode-ime.shift",
   SPECIAL_KEY: "vscode-ime.special"
@@ -35,13 +36,28 @@ const StateID = {
   inited: "vscode-ime.inited"
 }
 
+function getLastChar(document: vscode.TextDocument,position: vscode.Position) {
+  return document.getText(
+    new vscode.Range(
+      new vscode.Position(position.line, position.character - 1),
+      position
+    ),
+  );
+}
+
 export class IMEBackground extends EventTarget {
-  static CompletionEvent = new Event("completion");
-  static kTriggerCharacters = (letters + numbers + punctuations + shiftPunctuations).split("");
+
+  static completionEvent = new Event("completion");
+  static kTriggerCharacters = (letters + numbers).split("");
+  static kPuncCharacters = (punctuations + shiftPunctuations + " ").split("");
+  static kProviderSelector = [
+    { scheme: "file", language: "*" }, 
+    { scheme: "untitled", language: "*"}
+  ];
 
   vsConfig = new VscodeConfig();
-  globalState:Record<string, any> = this.vsConfig.getGlobalState;
-  configFactory = configFactoryInstance;
+
+  imeConfigFactory = configFactoryInstance;
 
   /** IME EngineID (input tool code). */ 
   engineID: string = this.vsConfig.getEngineID();
@@ -57,8 +73,10 @@ export class IMEBackground extends EventTarget {
   currentProviderPos?: vscode.Position;
   currentTriggeredText = "";
 
+  currentText = "";
+
   #statusBarDisposable?: vscode.Disposable;
-  #completionDisposable?: vscode.Disposable;
+  disposables: vscode.Disposable[] = [];
 
   get subscriptions() {
     return this.context.subscriptions;
@@ -89,13 +107,8 @@ export class IMEBackground extends EventTarget {
     
     // Register commands.
     this.#registerVscodeCommands();
-    // Add vscode event listeners.
-    this.#addVscodeListeners();
     // COMMIT;
-    this.#addIMEListeners();
-
-    this.#registerCompletionProvider();
-    
+    this.#addIMEListeners();    
   }
 
   updateStatus(hidden: boolean) {
@@ -110,9 +123,7 @@ export class IMEBackground extends EventTarget {
 
   _updateEnabled(boolean: boolean) {
     vscode.commands.executeCommand(
-      "setContext",
-      StateID.enabled,
-      boolean
+      "setContext", StateID.enabled, boolean
     );
   }
 
@@ -137,6 +148,8 @@ export class IMEBackground extends EventTarget {
 
     // vscode-ime.toggle
     this._registerAndPushCommand(IMECommands.TOGGLE, this.toggle.bind(this));
+    // vscode-ime.commit
+    this._registerAndPushCommand(IMECommands.COMMIT, this.commitText.bind(this));
 
     // single keys
     // TODO Needed or not.
@@ -166,8 +179,23 @@ export class IMEBackground extends EventTarget {
     });
   }
 
-  #addVscodeListeners() {
-    // vscode.window.onDidChangeTextEditorSelection();
+  #addVscodeChangeTextSelectionListeners() {
+    // TODO
+    //this
+    return vscode.window.onDidChangeTextEditorSelection(() => {
+      if (this.model.status !== 0) return ;
+      vscode.commands.executeCommand("editor.action.triggerSuggest");
+
+      // let editor = vscode.window.activeTextEditor;
+      // if (!editor) return;
+
+      // let lastKey = getLastChar(editor.document, editor.selection.active);
+      // if (!this.imeConfigFactory.getCurrentConfig().editorCharReg.test(lastKey)) return ;
+      // if (this.currentProviderPos) {
+      //   let lastSuggest = this.currentProviderPos.character;
+
+      // }
+    });
   }
 
   #addIMEListeners() {
@@ -176,7 +204,8 @@ export class IMEBackground extends EventTarget {
   }
 
   commitText() {
-
+    this.currentProviderPos = undefined;
+    this.imeFocus();
   }
 
   completionList?: vscode.CompletionList;
@@ -194,10 +223,22 @@ export class IMEBackground extends EventTarget {
 
   imeActivate() {
     this.controller.activate(this.engineID as InputToolCode);
+    this.updateIMEConfig();
+    // Add vscode event listeners.
+    this.disposables.push(this.#addVscodeChangeTextSelectionListeners());
+    
+    this.disposables.push(this.#registerCompletionProvider());
+    
+    this.disposables.push(this.#registerPuncCompletionProvider());
   }
 
   imeDeactivate() {
     this.imeBlur();
+
+    while(this.disposables.length > 0) {
+      let disposable = this.disposables.pop();
+      disposable?.dispose();
+    }
     this.controller.deactivate(this.engineID);
   }
 
@@ -217,6 +258,13 @@ export class IMEBackground extends EventTarget {
     this.currentTriggeredText = "";
     this.controller.unregister(1);
   }
+
+  updateIMEConfig(config?: Record<string, any>) {
+    config = config ?? this.vsConfig.getGlobalState();
+    for (let name in config) {
+      this.controller.updateState(name, config[name]);
+    }
+  }
   
   emitKeyEvent(keyEvent: chrome.input.ime.KeyboardEvent) {
     this.requestId++;
@@ -224,7 +272,7 @@ export class IMEBackground extends EventTarget {
   }
 
   get allowedRegExps() {
-    let currentConfig = this.configFactory.getCurrentConfig();
+    let currentConfig = this.imeConfigFactory.getCurrentConfig();
     return [
       currentConfig.editorCharReg, 
       currentConfig.selectKeyReg, 
@@ -239,18 +287,16 @@ export class IMEBackground extends EventTarget {
     return IMEBackground.kTriggerCharacters.indexOf(char) >= 0;
   }
 
-  currentText = "";
-
   handleSurroundingText(text: string) {
     this.currentText = text;
-  
+    
     let lastKey = text.slice(-1);
 
     if (this.isIMEConfigKey(lastKey)) {
-      let rawSource = this.controller.model.rawSource;
-      if (!this.controller._context) {
+      if (text.length == 1 || !this.controller._context) {
         this.imeFocus();
       }
+      let rawSource = this.controller.model.rawSource;
 
       if (rawSource.length == 0) {
         this.startPosition = this.currentProviderPos;
@@ -266,7 +312,7 @@ export class IMEBackground extends EventTarget {
 
     } else {
       this.imeBlur();
-      this.dispatchEvent(IMEBackground.CompletionEvent);
+      this.dispatchEvent(IMEBackground.completionEvent);
     }
 
     // if (rawSource.length >= 0 && rawSource != text) {
@@ -281,11 +327,9 @@ export class IMEBackground extends EventTarget {
     // }
   }
 
-  showingCandidates = "";
-  
   handleShowCandidates() {
     let { candidates } = this.model;
-    let { pageSize } = this.configFactory.getCurrentConfig();
+    let { pageSize } = this.imeConfigFactory.getCurrentConfig();
     let items = [];
     if (!candidates.length) return ; // Hidden.
     for (let i = 0; i < pageSize; i++) {
@@ -295,15 +339,16 @@ export class IMEBackground extends EventTarget {
 
       let item = new vscode.CompletionItem(candidate.target, vscode.CompletionItemKind.Enum);
       item.sortText = "" + (i+1);
-      item.insertText = candidate.target;
+      item.insertText = "" + candidate.target;
       item.label = (i + 1) + " " + candidate.target;
       item.filterText = this.currentText;
+      item.command = { title: "commit", command: IMECommands.COMMIT }
+      // item.commitCharacters = [(i + 1).toString()];
       items.push(item);
     }
 
-
     this.completionList = new vscode.CompletionList(items, true);
-    this.dispatchEvent(IMEBackground.CompletionEvent);
+    this.dispatchEvent(IMEBackground.completionEvent);
   }
 
   #addCompletionListener(): Promise<vscode.CompletionList | []> {
@@ -320,16 +365,24 @@ export class IMEBackground extends EventTarget {
   }
 
   #registerCompletionProvider() {
-    this.#completionDisposable = vscode.languages.registerCompletionItemProvider(
-      { scheme: "*", language: "*" },
+    return vscode.languages.registerCompletionItemProvider(
+      IMEBackground.kProviderSelector,
       {
         provideCompletionItems: (document, position, token, context) => {
+          if (this.currentProviderPos && this.currentProviderPos.line == position.line && this.currentProviderPos.character == position.character) {
+            this.currentProviderPos = undefined;
+            return [];
+          }
           this.currentProviderPos = position;
           let wordRangePosition = document.getWordRangeAtPosition(position);
-          if (!wordRangePosition) return [];
+          if (!wordRangePosition) { // Punctuation/Special Key.
+            // let text = getLastChar(document, position);
+            // this.handleSurroundingText(text);
+            return [];
+          };
           let text = document.getText(wordRangePosition);
           let completionListPromise = this.#addCompletionListener();
-
+          // vscode.commands.executeCommand("editor.action.triggerSuggest")
           this.handleSurroundingText(text);
           return completionListPromise;
         },
@@ -339,5 +392,29 @@ export class IMEBackground extends EventTarget {
       },
       ...IMEBackground.kTriggerCharacters
     );
+  }
+
+  #registerPuncCompletionProvider() {
+    return vscode.languages.registerCompletionItemProvider(
+      IMEBackground.kProviderSelector,
+      {
+        provideCompletionItems: (document, position, token, context) => {
+          let character = context.triggerCharacter;
+          
+          if (context.triggerKind == 1 && character) {
+            if (character == ' ') {
+              let text = getLastChar(document, position);
+              this.handleSurroundingText(text);
+            } else {
+              
+            }
+            return [];
+          }
+          return [];
+        }
+      },
+      ...IMEBackground.kPuncCharacters,
+      ' '
+    )
   }
 }

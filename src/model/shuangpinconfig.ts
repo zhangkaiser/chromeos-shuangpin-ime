@@ -42,7 +42,6 @@ export class ShuangpinConfig extends PinyinConfig implements IShuangpinConfigSta
     return states;
   }
 
-
   setStates(states: Partial<IShuangpinState>): void {
     Object.keys(states).forEach((stateId) => {
       switch(stateId) {

@@ -21,7 +21,11 @@
     "commands": [
       {
         "command": "vscode-ime.toggle",
-        "title": "Toggle Google Pinyin"
+        "title": "Toggle IME"
+      },
+      {
+        "command": "vscode-ime.commit",
+        "title": "Commit candidate"
       }
     ],
     "keybindings": [

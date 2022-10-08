@@ -13,3 +13,4 @@ libGooglePinyin/test*
 src/model/model.old.ts
 vscode
 !vscode/.vscode/*
+!src/vscode
