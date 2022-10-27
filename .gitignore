@@ -13,3 +13,6 @@ libGooglePinyin/test*
 src/model/model.old.ts
 
 vscode
+build
+.vscode
+dictbuilder
