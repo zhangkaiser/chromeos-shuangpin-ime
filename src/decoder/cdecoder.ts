@@ -21,6 +21,9 @@ export default class Decoder extends EventTarget implements IDecoder {
   initPromise: Promise<any>;
   inited = false;
 
+  initPromise: Promise<any>;
+  inited = false;
+
   constructor(public inputTool: any, 
     solution?: string[] | string,
     enableUserDict?: boolean
