@@ -418,7 +418,7 @@ legacyModuleProp('read', 'read_');
 legacyModuleProp('readAsync', 'readAsync');
 legacyModuleProp('readBinary', 'readBinary');
 legacyModuleProp('setWindowTitle', 'setWindowTitle');
-var IDBFS = 'IDBFS is no longer included by default; build with -lidbfs.js';
+
 var PROXYFS = 'PROXYFS is no longer included by default; build with -lproxyfs.js';
 var WORKERFS = 'WORKERFS is no longer included by default; build with -lworkerfs.js';
 var NODEFS = 'NODEFS is no longer included by default; build with -lnodefs.js';
@@ -1292,7 +1292,7 @@ function updateGlobalBufferAndViews(buf) {
 var TOTAL_STACK = 5242880;
 if (Module['TOTAL_STACK']) assert(TOTAL_STACK === Module['TOTAL_STACK'], 'the stack size can no longer be determined at runtime')
 
-var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 16777216;legacyModuleProp('INITIAL_MEMORY', 'INITIAL_MEMORY');
+var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 33554432;legacyModuleProp('INITIAL_MEMORY', 'INITIAL_MEMORY');
 
 assert(INITIAL_MEMORY >= TOTAL_STACK, 'INITIAL_MEMORY should be larger than TOTAL_STACK, was ' + INITIAL_MEMORY + '! (TOTAL_STACK=' + TOTAL_STACK + ')');
 
@@ -3067,6 +3067,290 @@ var ASM_CONSTS = {
       if (dep) addRunDependency(dep);
     }
   
+  var IDBFS = {dbs:{},indexedDB:() => {
+        if (typeof indexedDB != 'undefined') return indexedDB;
+        var ret = null;
+        if (typeof window == 'object') ret = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+        assert(ret, 'IDBFS used, but indexedDB not supported');
+        return ret;
+      },DB_VERSION:21,DB_STORE_NAME:"FILE_DATA",mount:function(mount) {
+        // reuse all of the core MEMFS functionality
+        return MEMFS.mount.apply(null, arguments);
+      },syncfs:(mount, populate, callback) => {
+        IDBFS.getLocalSet(mount, (err, local) => {
+          if (err) return callback(err);
+  
+          IDBFS.getRemoteSet(mount, (err, remote) => {
+            if (err) return callback(err);
+  
+            var src = populate ? remote : local;
+            var dst = populate ? local : remote;
+  
+            IDBFS.reconcile(src, dst, callback);
+          });
+        });
+      },quit:() => {
+        Object.values(IDBFS.dbs).forEach((value) => value.close());
+        IDBFS.dbs = {};
+      },getDB:(name, callback) => {
+        // check the cache first
+        var db = IDBFS.dbs[name];
+        if (db) {
+          return callback(null, db);
+        }
+  
+        var req;
+        try {
+          req = IDBFS.indexedDB().open(name, IDBFS.DB_VERSION);
+        } catch (e) {
+          return callback(e);
+        }
+        if (!req) {
+          return callback("Unable to connect to IndexedDB");
+        }
+        req.onupgradeneeded = (e) => {
+          var db = /** @type {IDBDatabase} */ (e.target.result);
+          var transaction = e.target.transaction;
+  
+          var fileStore;
+  
+          if (db.objectStoreNames.contains(IDBFS.DB_STORE_NAME)) {
+            fileStore = transaction.objectStore(IDBFS.DB_STORE_NAME);
+          } else {
+            fileStore = db.createObjectStore(IDBFS.DB_STORE_NAME);
+          }
+  
+          if (!fileStore.indexNames.contains('timestamp')) {
+            fileStore.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+        };
+        req.onsuccess = () => {
+          db = /** @type {IDBDatabase} */ (req.result);
+  
+          // add to the cache
+          IDBFS.dbs[name] = db;
+          callback(null, db);
+        };
+        req.onerror = (e) => {
+          callback(this.error);
+          e.preventDefault();
+        };
+      },getLocalSet:(mount, callback) => {
+        var entries = {};
+  
+        function isRealDir(p) {
+          return p !== '.' && p !== '..';
+        };
+        function toAbsolute(root) {
+          return (p) => {
+            return PATH.join2(root, p);
+          }
+        };
+  
+        var check = FS.readdir(mount.mountpoint).filter(isRealDir).map(toAbsolute(mount.mountpoint));
+  
+        while (check.length) {
+          var path = check.pop();
+          var stat;
+  
+          try {
+            stat = FS.stat(path);
+          } catch (e) {
+            return callback(e);
+          }
+  
+          if (FS.isDir(stat.mode)) {
+            check.push.apply(check, FS.readdir(path).filter(isRealDir).map(toAbsolute(path)));
+          }
+  
+          entries[path] = { 'timestamp': stat.mtime };
+        }
+  
+        return callback(null, { type: 'local', entries: entries });
+      },getRemoteSet:(mount, callback) => {
+        var entries = {};
+  
+        IDBFS.getDB(mount.mountpoint, (err, db) => {
+          if (err) return callback(err);
+  
+          try {
+            var transaction = db.transaction([IDBFS.DB_STORE_NAME], 'readonly');
+            transaction.onerror = (e) => {
+              callback(this.error);
+              e.preventDefault();
+            };
+  
+            var store = transaction.objectStore(IDBFS.DB_STORE_NAME);
+            var index = store.index('timestamp');
+  
+            index.openKeyCursor().onsuccess = (event) => {
+              var cursor = event.target.result;
+  
+              if (!cursor) {
+                return callback(null, { type: 'remote', db: db, entries: entries });
+              }
+  
+              entries[cursor.primaryKey] = { 'timestamp': cursor.key };
+  
+              cursor.continue();
+            };
+          } catch (e) {
+            return callback(e);
+          }
+        });
+      },loadLocalEntry:(path, callback) => {
+        var stat, node;
+  
+        try {
+          var lookup = FS.lookupPath(path);
+          node = lookup.node;
+          stat = FS.stat(path);
+        } catch (e) {
+          return callback(e);
+        }
+  
+        if (FS.isDir(stat.mode)) {
+          return callback(null, { 'timestamp': stat.mtime, 'mode': stat.mode });
+        } else if (FS.isFile(stat.mode)) {
+          // Performance consideration: storing a normal JavaScript array to a IndexedDB is much slower than storing a typed array.
+          // Therefore always convert the file contents to a typed array first before writing the data to IndexedDB.
+          node.contents = MEMFS.getFileDataAsTypedArray(node);
+          return callback(null, { 'timestamp': stat.mtime, 'mode': stat.mode, 'contents': node.contents });
+        } else {
+          return callback(new Error('node type not supported'));
+        }
+      },storeLocalEntry:(path, entry, callback) => {
+        try {
+          if (FS.isDir(entry['mode'])) {
+            FS.mkdirTree(path, entry['mode']);
+          } else if (FS.isFile(entry['mode'])) {
+            FS.writeFile(path, entry['contents'], { canOwn: true });
+          } else {
+            return callback(new Error('node type not supported'));
+          }
+  
+          FS.chmod(path, entry['mode']);
+          FS.utime(path, entry['timestamp'], entry['timestamp']);
+        } catch (e) {
+          return callback(e);
+        }
+  
+        callback(null);
+      },removeLocalEntry:(path, callback) => {
+        try {
+          var stat = FS.stat(path);
+  
+          if (FS.isDir(stat.mode)) {
+            FS.rmdir(path);
+          } else if (FS.isFile(stat.mode)) {
+            FS.unlink(path);
+          }
+        } catch (e) {
+          return callback(e);
+        }
+  
+        callback(null);
+      },loadRemoteEntry:(store, path, callback) => {
+        var req = store.get(path);
+        req.onsuccess = (event) => { callback(null, event.target.result); };
+        req.onerror = (e) => {
+          callback(this.error);
+          e.preventDefault();
+        };
+      },storeRemoteEntry:(store, path, entry, callback) => {
+        try {
+          var req = store.put(entry, path);
+        } catch (e) {
+          callback(e);
+          return;
+        }
+        req.onsuccess = () => { callback(null); };
+        req.onerror = (e) => {
+          callback(this.error);
+          e.preventDefault();
+        };
+      },removeRemoteEntry:(store, path, callback) => {
+        var req = store.delete(path);
+        req.onsuccess = () => { callback(null); };
+        req.onerror = (e) => {
+          callback(this.error);
+          e.preventDefault();
+        };
+      },reconcile:(src, dst, callback) => {
+        var total = 0;
+  
+        var create = [];
+        Object.keys(src.entries).forEach(function (key) {
+          var e = src.entries[key];
+          var e2 = dst.entries[key];
+          if (!e2 || e['timestamp'].getTime() != e2['timestamp'].getTime()) {
+            create.push(key);
+            total++;
+          }
+        });
+  
+        var remove = [];
+        Object.keys(dst.entries).forEach(function (key) {
+          if (!src.entries[key]) {
+            remove.push(key);
+            total++;
+          }
+        });
+  
+        if (!total) {
+          return callback(null);
+        }
+  
+        var errored = false;
+        var db = src.type === 'remote' ? src.db : dst.db;
+        var transaction = db.transaction([IDBFS.DB_STORE_NAME], 'readwrite');
+        var store = transaction.objectStore(IDBFS.DB_STORE_NAME);
+  
+        function done(err) {
+          if (err && !errored) {
+            errored = true;
+            return callback(err);
+          }
+        };
+  
+        transaction.onerror = (e) => {
+          done(this.error);
+          e.preventDefault();
+        };
+  
+        transaction.oncomplete = (e) => {
+          if (!errored) {
+            callback(null);
+          }
+        };
+  
+        // sort paths in ascending order so directory entries are created
+        // before the files inside them
+        create.sort().forEach((path) => {
+          if (dst.type === 'local') {
+            IDBFS.loadRemoteEntry(store, path, (err, entry) => {
+              if (err) return done(err);
+              IDBFS.storeLocalEntry(path, entry, done);
+            });
+          } else {
+            IDBFS.loadLocalEntry(path, (err, entry) => {
+              if (err) return done(err);
+              IDBFS.storeRemoteEntry(store, path, entry, done);
+            });
+          }
+        });
+  
+        // sort paths in descending order so files are deleted before their
+        // parent directories
+        remove.sort().reverse().forEach((path) => {
+          if (dst.type === 'local') {
+            IDBFS.removeLocalEntry(path, done);
+          } else {
+            IDBFS.removeRemoteEntry(store, path, done);
+          }
+        });
+      }};
+  
   var ERRNO_MESSAGES = {0:"Success",1:"Arg list too long",2:"Permission denied",3:"Address already in use",4:"Address not available",5:"Address family not supported by protocol family",6:"No more processes",7:"Socket already connected",8:"Bad file number",9:"Trying to read unreadable message",10:"Mount device busy",11:"Operation canceled",12:"No children",13:"Connection aborted",14:"Connection refused",15:"Connection reset by peer",16:"File locking deadlock error",17:"Destination address required",18:"Math arg out of domain of func",19:"Quota exceeded",20:"File exists",21:"Bad address",22:"File too large",23:"Host is unreachable",24:"Identifier removed",25:"Illegal byte sequence",26:"Connection already in progress",27:"Interrupted system call",28:"Invalid argument",29:"I/O error",30:"Socket is already connected",31:"Is a directory",32:"Too many symbolic links",33:"Too many open files",34:"Too many links",35:"Message too long",36:"Multihop attempted",37:"File or path name too long",38:"Network interface is not configured",39:"Connection reset by network",40:"Network is unreachable",41:"Too many open files in system",42:"No buffer space available",43:"No such device",44:"No such file or directory",45:"Exec format error",46:"No record locks available",47:"The link has been severed",48:"Not enough core",49:"No message of desired type",50:"Protocol not available",51:"No space left on device",52:"Function not implemented",53:"Socket is not connected",54:"Not a directory",55:"Directory not empty",56:"State not recoverable",57:"Socket operation on non-socket",59:"Not a typewriter",60:"No such device or address",61:"Value too large for defined data type",62:"Previous owner died",63:"Not super-user",64:"Broken pipe",65:"Protocol error",66:"Unknown protocol",67:"Protocol wrong type for socket",68:"Math result not representable",69:"Read only file system",70:"Illegal seek",71:"No such process",72:"Stale file handle",73:"Connection timed out",74:"Text file busy",75:"Cross-device link",100:"Device not a stream",101:"Bad font file fmt",102:"Invalid slot",103:"Invalid request code",104:"No anode",105:"Block device required",106:"Channel number out of range",107:"Level 3 halted",108:"Level 3 reset",109:"Link number out of range",110:"Protocol driver not attached",111:"No CSI structure available",112:"Level 2 halted",113:"Invalid exchange",114:"Invalid request descriptor",115:"Exchange full",116:"No data (for no delay io)",117:"Timer expired",118:"Out of streams resources",119:"Machine is not on the network",120:"Package not installed",121:"The object is remote",122:"Advertise error",123:"Srmount error",124:"Communication error on send",125:"Cross mount point (not really error)",126:"Given log. name not unique",127:"f.d. invalid for this operation",128:"Remote address changed",129:"Can   access a needed shared lib",130:"Accessing a corrupted shared lib",131:".lib section in a.out corrupted",132:"Attempting to link in too many libs",133:"Attempting to exec a shared library",135:"Streams pipe error",136:"Too many users",137:"Socket type not supported",138:"Not supported",139:"Protocol family not supported",140:"Can't send after socket shutdown",141:"Too many references",142:"Host is down",148:"No medium (in tape drive)",156:"Level 2 not synchronized"};
   
   var ERRNO_CODES = {};
@@ -4171,6 +4455,7 @@ var ASM_CONSTS = {
   
         FS.filesystems = {
           'MEMFS': MEMFS,
+          'IDBFS': IDBFS,
         };
       },init:(input, output, error) => {
         assert(!FS.init.initialized, 'FS.init was previously called. If you want to initialize later with custom parameters, remove any earlier calls (note that one is automatically added to the generated code)');
@@ -6090,6 +6375,89 @@ var ASM_CONSTS = {
       });
     }
 
+  function validateThis(this_, classType, humanName) {
+      if (!(this_ instanceof Object)) {
+        throwBindingError(humanName + ' with invalid "this": ' + this_);
+      }
+      if (!(this_ instanceof classType.registeredClass.constructor)) {
+        throwBindingError(humanName + ' incompatible with "this" of type ' + this_.constructor.name);
+      }
+      if (!this_.$$.ptr) {
+        throwBindingError('cannot call emscripten binding method ' + humanName + ' on deleted object');
+      }
+  
+      // todo: kill this
+      return upcastPointer(this_.$$.ptr,
+                           this_.$$.ptrType.registeredClass,
+                           classType.registeredClass);
+    }
+  function __embind_register_class_property(classType,
+                                              fieldName,
+                                              getterReturnType,
+                                              getterSignature,
+                                              getter,
+                                              getterContext,
+                                              setterArgumentType,
+                                              setterSignature,
+                                              setter,
+                                              setterContext) {
+      fieldName = readLatin1String(fieldName);
+      getter = embind__requireFunction(getterSignature, getter);
+  
+      whenDependentTypesAreResolved([], [classType], function(classType) {
+        classType = classType[0];
+        var humanName = classType.name + '.' + fieldName;
+        var desc = {
+          get: function() {
+            throwUnboundTypeError('Cannot access ' + humanName + ' due to unbound types', [getterReturnType, setterArgumentType]);
+          },
+          enumerable: true,
+          configurable: true
+        };
+        if (setter) {
+          desc.set = () => {
+            throwUnboundTypeError('Cannot access ' + humanName + ' due to unbound types', [getterReturnType, setterArgumentType]);
+          };
+        } else {
+          desc.set = (v) => {
+            throwBindingError(humanName + ' is a read-only property');
+          };
+        }
+  
+        Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
+  
+        whenDependentTypesAreResolved(
+          [],
+          (setter ? [getterReturnType, setterArgumentType] : [getterReturnType]),
+      function(types) {
+          var getterReturnType = types[0];
+          var desc = {
+            get: function() {
+              var ptr = validateThis(this, classType, humanName + ' getter');
+              return getterReturnType['fromWireType'](getter(getterContext, ptr));
+            },
+            enumerable: true
+          };
+  
+          if (setter) {
+            setter = embind__requireFunction(setterSignature, setter);
+            var setterArgumentType = types[1];
+            desc.set = function(v) {
+              var ptr = validateThis(this, classType, humanName + ' setter');
+              var destructors = [];
+              setter(setterContext, ptr, setterArgumentType['toWireType'](destructors, v));
+              runDestructors(destructors);
+            };
+          }
+  
+          Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
+          return [];
+        });
+  
+        return [];
+      });
+    }
+
   var emval_free_list = [];
   
   var emval_handle_array = [{},{value:undefined},{value:null},{value:true},{value:false}];
@@ -6535,6 +6903,15 @@ var ASM_CONSTS = {
       abort('native code called abort()');
     }
 
+  function _emscripten_check_blocking_allowed() {
+      if (ENVIRONMENT_IS_NODE) return;
+  
+      if (ENVIRONMENT_IS_WORKER) return; // Blocking in a worker/pthread is fine.
+  
+      warnOnce('Blocking on the main thread is very dangerous, see https://emscripten.org/docs/porting/pthreads.html#blocking-on-the-main-browser-thread');
+  
+    }
+
   var _emscripten_get_now;if (ENVIRONMENT_IS_NODE) {
     _emscripten_get_now = () => {
       var t = process['hrtime']();
@@ -6610,11 +6987,80 @@ var ASM_CONSTS = {
       throw 'unwind';
     }
 
+  var ENV = {};
+  
+  function getExecutableName() {
+      return thisProgram || './this.program';
+    }
+  function getEnvStrings() {
+      if (!getEnvStrings.strings) {
+        // Default values.
+        // Browser language detection #8751
+        var lang = ((typeof navigator == 'object' && navigator.languages && navigator.languages[0]) || 'C').replace('-', '_') + '.UTF-8';
+        var env = {
+          'USER': 'web_user',
+          'LOGNAME': 'web_user',
+          'PATH': '/',
+          'PWD': '/',
+          'HOME': '/home/web_user',
+          'LANG': lang,
+          '_': getExecutableName()
+        };
+        // Apply the user-provided values, if any.
+        for (var x in ENV) {
+          // x is a key in ENV; if ENV[x] is undefined, that means it was
+          // explicitly set to be so. We allow user code to do that to
+          // force variables with default values to remain unset.
+          if (ENV[x] === undefined) delete env[x];
+          else env[x] = ENV[x];
+        }
+        var strings = [];
+        for (var x in env) {
+          strings.push(x + '=' + env[x]);
+        }
+        getEnvStrings.strings = strings;
+      }
+      return getEnvStrings.strings;
+    }
+  
+  function _environ_get(__environ, environ_buf) {
+    if (ENVIRONMENT_IS_PTHREAD)
+      return _emscripten_proxy_to_main_thread_js(7, 1, __environ, environ_buf);
+    
+      var bufSize = 0;
+      getEnvStrings().forEach(function(string, i) {
+        var ptr = environ_buf + bufSize;
+        HEAPU32[(((__environ)+(i*4))>>2)] = ptr;
+        writeAsciiToMemory(string, ptr);
+        bufSize += string.length + 1;
+      });
+      return 0;
+    
+  }
+  
+
+  
+  function _environ_sizes_get(penviron_count, penviron_buf_size) {
+    if (ENVIRONMENT_IS_PTHREAD)
+      return _emscripten_proxy_to_main_thread_js(8, 1, penviron_count, penviron_buf_size);
+    
+      var strings = getEnvStrings();
+      HEAPU32[((penviron_count)>>2)] = strings.length;
+      var bufSize = 0;
+      strings.forEach(function(string) {
+        bufSize += string.length + 1;
+      });
+      HEAPU32[((penviron_buf_size)>>2)] = bufSize;
+      return 0;
+    
+  }
+  
+
 
   
   function _fd_close(fd) {
     if (ENVIRONMENT_IS_PTHREAD)
-      return _emscripten_proxy_to_main_thread_js(7, 1, fd);
+      return _emscripten_proxy_to_main_thread_js(9, 1, fd);
     
   try {
   
@@ -6646,7 +7092,7 @@ var ASM_CONSTS = {
   
   function _fd_read(fd, iov, iovcnt, pnum) {
     if (ENVIRONMENT_IS_PTHREAD)
-      return _emscripten_proxy_to_main_thread_js(8, 1, fd, iov, iovcnt, pnum);
+      return _emscripten_proxy_to_main_thread_js(10, 1, fd, iov, iovcnt, pnum);
     
   try {
   
@@ -6665,7 +7111,7 @@ var ASM_CONSTS = {
   
   function _fd_seek(fd, offset_low, offset_high, whence, newOffset) {
     if (ENVIRONMENT_IS_PTHREAD)
-      return _emscripten_proxy_to_main_thread_js(9, 1, fd, offset_low, offset_high, whence, newOffset);
+      return _emscripten_proxy_to_main_thread_js(11, 1, fd, offset_low, offset_high, whence, newOffset);
     
   try {
   
@@ -6699,7 +7145,7 @@ var ASM_CONSTS = {
   
   function _fd_write(fd, iov, iovcnt, pnum) {
     if (ENVIRONMENT_IS_PTHREAD)
-      return _emscripten_proxy_to_main_thread_js(10, 1, fd, iov, iovcnt, pnum);
+      return _emscripten_proxy_to_main_thread_js(12, 1, fd, iov, iovcnt, pnum);
     
   try {
   
@@ -6717,6 +7163,339 @@ var ASM_CONSTS = {
 
   function _setTempRet0(val) {
       setTempRet0(val);
+    }
+
+  function __isLeapYear(year) {
+        return year%4 === 0 && (year%100 !== 0 || year%400 === 0);
+    }
+  
+  function __arraySum(array, index) {
+      var sum = 0;
+      for (var i = 0; i <= index; sum += array[i++]) {
+        // no-op
+      }
+      return sum;
+    }
+  
+  var __MONTH_DAYS_LEAP = [31,29,31,30,31,30,31,31,30,31,30,31];
+  
+  var __MONTH_DAYS_REGULAR = [31,28,31,30,31,30,31,31,30,31,30,31];
+  function __addDays(date, days) {
+      var newDate = new Date(date.getTime());
+      while (days > 0) {
+        var leap = __isLeapYear(newDate.getFullYear());
+        var currentMonth = newDate.getMonth();
+        var daysInCurrentMonth = (leap ? __MONTH_DAYS_LEAP : __MONTH_DAYS_REGULAR)[currentMonth];
+  
+        if (days > daysInCurrentMonth-newDate.getDate()) {
+          // we spill over to next month
+          days -= (daysInCurrentMonth-newDate.getDate()+1);
+          newDate.setDate(1);
+          if (currentMonth < 11) {
+            newDate.setMonth(currentMonth+1)
+          } else {
+            newDate.setMonth(0);
+            newDate.setFullYear(newDate.getFullYear()+1);
+          }
+        } else {
+          // we stay in current month
+          newDate.setDate(newDate.getDate()+days);
+          return newDate;
+        }
+      }
+  
+      return newDate;
+    }
+  function _strftime(s, maxsize, format, tm) {
+      // size_t strftime(char *restrict s, size_t maxsize, const char *restrict format, const struct tm *restrict timeptr);
+      // http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html
+  
+      var tm_zone = HEAP32[(((tm)+(40))>>2)];
+  
+      var date = {
+        tm_sec: HEAP32[((tm)>>2)],
+        tm_min: HEAP32[(((tm)+(4))>>2)],
+        tm_hour: HEAP32[(((tm)+(8))>>2)],
+        tm_mday: HEAP32[(((tm)+(12))>>2)],
+        tm_mon: HEAP32[(((tm)+(16))>>2)],
+        tm_year: HEAP32[(((tm)+(20))>>2)],
+        tm_wday: HEAP32[(((tm)+(24))>>2)],
+        tm_yday: HEAP32[(((tm)+(28))>>2)],
+        tm_isdst: HEAP32[(((tm)+(32))>>2)],
+        tm_gmtoff: HEAP32[(((tm)+(36))>>2)],
+        tm_zone: tm_zone ? UTF8ToString(tm_zone) : ''
+      };
+  
+      var pattern = UTF8ToString(format);
+  
+      // expand format
+      var EXPANSION_RULES_1 = {
+        '%c': '%a %b %d %H:%M:%S %Y',     // Replaced by the locale's appropriate date and time representation - e.g., Mon Aug  3 14:02:01 2013
+        '%D': '%m/%d/%y',                 // Equivalent to %m / %d / %y
+        '%F': '%Y-%m-%d',                 // Equivalent to %Y - %m - %d
+        '%h': '%b',                       // Equivalent to %b
+        '%r': '%I:%M:%S %p',              // Replaced by the time in a.m. and p.m. notation
+        '%R': '%H:%M',                    // Replaced by the time in 24-hour notation
+        '%T': '%H:%M:%S',                 // Replaced by the time
+        '%x': '%m/%d/%y',                 // Replaced by the locale's appropriate date representation
+        '%X': '%H:%M:%S',                 // Replaced by the locale's appropriate time representation
+        // Modified Conversion Specifiers
+        '%Ec': '%c',                      // Replaced by the locale's alternative appropriate date and time representation.
+        '%EC': '%C',                      // Replaced by the name of the base year (period) in the locale's alternative representation.
+        '%Ex': '%m/%d/%y',                // Replaced by the locale's alternative date representation.
+        '%EX': '%H:%M:%S',                // Replaced by the locale's alternative time representation.
+        '%Ey': '%y',                      // Replaced by the offset from %EC (year only) in the locale's alternative representation.
+        '%EY': '%Y',                      // Replaced by the full alternative year representation.
+        '%Od': '%d',                      // Replaced by the day of the month, using the locale's alternative numeric symbols, filled as needed with leading zeros if there is any alternative symbol for zero; otherwise, with leading <space> characters.
+        '%Oe': '%e',                      // Replaced by the day of the month, using the locale's alternative numeric symbols, filled as needed with leading <space> characters.
+        '%OH': '%H',                      // Replaced by the hour (24-hour clock) using the locale's alternative numeric symbols.
+        '%OI': '%I',                      // Replaced by the hour (12-hour clock) using the locale's alternative numeric symbols.
+        '%Om': '%m',                      // Replaced by the month using the locale's alternative numeric symbols.
+        '%OM': '%M',                      // Replaced by the minutes using the locale's alternative numeric symbols.
+        '%OS': '%S',                      // Replaced by the seconds using the locale's alternative numeric symbols.
+        '%Ou': '%u',                      // Replaced by the weekday as a number in the locale's alternative representation (Monday=1).
+        '%OU': '%U',                      // Replaced by the week number of the year (Sunday as the first day of the week, rules corresponding to %U ) using the locale's alternative numeric symbols.
+        '%OV': '%V',                      // Replaced by the week number of the year (Monday as the first day of the week, rules corresponding to %V ) using the locale's alternative numeric symbols.
+        '%Ow': '%w',                      // Replaced by the number of the weekday (Sunday=0) using the locale's alternative numeric symbols.
+        '%OW': '%W',                      // Replaced by the week number of the year (Monday as the first day of the week) using the locale's alternative numeric symbols.
+        '%Oy': '%y',                      // Replaced by the year (offset from %C ) using the locale's alternative numeric symbols.
+      };
+      for (var rule in EXPANSION_RULES_1) {
+        pattern = pattern.replace(new RegExp(rule, 'g'), EXPANSION_RULES_1[rule]);
+      }
+  
+      var WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  
+      function leadingSomething(value, digits, character) {
+        var str = typeof value == 'number' ? value.toString() : (value || '');
+        while (str.length < digits) {
+          str = character[0]+str;
+        }
+        return str;
+      }
+  
+      function leadingNulls(value, digits) {
+        return leadingSomething(value, digits, '0');
+      }
+  
+      function compareByDay(date1, date2) {
+        function sgn(value) {
+          return value < 0 ? -1 : (value > 0 ? 1 : 0);
+        }
+  
+        var compare;
+        if ((compare = sgn(date1.getFullYear()-date2.getFullYear())) === 0) {
+          if ((compare = sgn(date1.getMonth()-date2.getMonth())) === 0) {
+            compare = sgn(date1.getDate()-date2.getDate());
+          }
+        }
+        return compare;
+      }
+  
+      function getFirstWeekStartDate(janFourth) {
+          switch (janFourth.getDay()) {
+            case 0: // Sunday
+              return new Date(janFourth.getFullYear()-1, 11, 29);
+            case 1: // Monday
+              return janFourth;
+            case 2: // Tuesday
+              return new Date(janFourth.getFullYear(), 0, 3);
+            case 3: // Wednesday
+              return new Date(janFourth.getFullYear(), 0, 2);
+            case 4: // Thursday
+              return new Date(janFourth.getFullYear(), 0, 1);
+            case 5: // Friday
+              return new Date(janFourth.getFullYear()-1, 11, 31);
+            case 6: // Saturday
+              return new Date(janFourth.getFullYear()-1, 11, 30);
+          }
+      }
+  
+      function getWeekBasedYear(date) {
+          var thisDate = __addDays(new Date(date.tm_year+1900, 0, 1), date.tm_yday);
+  
+          var janFourthThisYear = new Date(thisDate.getFullYear(), 0, 4);
+          var janFourthNextYear = new Date(thisDate.getFullYear()+1, 0, 4);
+  
+          var firstWeekStartThisYear = getFirstWeekStartDate(janFourthThisYear);
+          var firstWeekStartNextYear = getFirstWeekStartDate(janFourthNextYear);
+  
+          if (compareByDay(firstWeekStartThisYear, thisDate) <= 0) {
+            // this date is after the start of the first week of this year
+            if (compareByDay(firstWeekStartNextYear, thisDate) <= 0) {
+              return thisDate.getFullYear()+1;
+            } else {
+              return thisDate.getFullYear();
+            }
+          } else {
+            return thisDate.getFullYear()-1;
+          }
+      }
+  
+      var EXPANSION_RULES_2 = {
+        '%a': function(date) {
+          return WEEKDAYS[date.tm_wday].substring(0,3);
+        },
+        '%A': function(date) {
+          return WEEKDAYS[date.tm_wday];
+        },
+        '%b': function(date) {
+          return MONTHS[date.tm_mon].substring(0,3);
+        },
+        '%B': function(date) {
+          return MONTHS[date.tm_mon];
+        },
+        '%C': function(date) {
+          var year = date.tm_year+1900;
+          return leadingNulls((year/100)|0,2);
+        },
+        '%d': function(date) {
+          return leadingNulls(date.tm_mday, 2);
+        },
+        '%e': function(date) {
+          return leadingSomething(date.tm_mday, 2, ' ');
+        },
+        '%g': function(date) {
+          // %g, %G, and %V give values according to the ISO 8601:2000 standard week-based year.
+          // In this system, weeks begin on a Monday and week 1 of the year is the week that includes
+          // January 4th, which is also the week that includes the first Thursday of the year, and
+          // is also the first week that contains at least four days in the year.
+          // If the first Monday of January is the 2nd, 3rd, or 4th, the preceding days are part of
+          // the last week of the preceding year; thus, for Saturday 2nd January 1999,
+          // %G is replaced by 1998 and %V is replaced by 53. If December 29th, 30th,
+          // or 31st is a Monday, it and any following days are part of week 1 of the following year.
+          // Thus, for Tuesday 30th December 1997, %G is replaced by 1998 and %V is replaced by 01.
+  
+          return getWeekBasedYear(date).toString().substring(2);
+        },
+        '%G': function(date) {
+          return getWeekBasedYear(date);
+        },
+        '%H': function(date) {
+          return leadingNulls(date.tm_hour, 2);
+        },
+        '%I': function(date) {
+          var twelveHour = date.tm_hour;
+          if (twelveHour == 0) twelveHour = 12;
+          else if (twelveHour > 12) twelveHour -= 12;
+          return leadingNulls(twelveHour, 2);
+        },
+        '%j': function(date) {
+          // Day of the year (001-366)
+          return leadingNulls(date.tm_mday+__arraySum(__isLeapYear(date.tm_year+1900) ? __MONTH_DAYS_LEAP : __MONTH_DAYS_REGULAR, date.tm_mon-1), 3);
+        },
+        '%m': function(date) {
+          return leadingNulls(date.tm_mon+1, 2);
+        },
+        '%M': function(date) {
+          return leadingNulls(date.tm_min, 2);
+        },
+        '%n': function() {
+          return '\n';
+        },
+        '%p': function(date) {
+          if (date.tm_hour >= 0 && date.tm_hour < 12) {
+            return 'AM';
+          } else {
+            return 'PM';
+          }
+        },
+        '%S': function(date) {
+          return leadingNulls(date.tm_sec, 2);
+        },
+        '%t': function() {
+          return '\t';
+        },
+        '%u': function(date) {
+          return date.tm_wday || 7;
+        },
+        '%U': function(date) {
+          var days = date.tm_yday + 7 - date.tm_wday;
+          return leadingNulls(Math.floor(days / 7), 2);
+        },
+        '%V': function(date) {
+          // Replaced by the week number of the year (Monday as the first day of the week)
+          // as a decimal number [01,53]. If the week containing 1 January has four
+          // or more days in the new year, then it is considered week 1.
+          // Otherwise, it is the last week of the previous year, and the next week is week 1.
+          // Both January 4th and the first Thursday of January are always in week 1. [ tm_year, tm_wday, tm_yday]
+          var val = Math.floor((date.tm_yday + 7 - (date.tm_wday + 6) % 7 ) / 7);
+          // If 1 Jan is just 1-3 days past Monday, the previous week
+          // is also in this year.
+          if ((date.tm_wday + 371 - date.tm_yday - 2) % 7 <= 2) {
+            val++;
+          }
+          if (!val) {
+            val = 52;
+            // If 31 December of prev year a Thursday, or Friday of a
+            // leap year, then the prev year has 53 weeks.
+            var dec31 = (date.tm_wday + 7 - date.tm_yday - 1) % 7;
+            if (dec31 == 4 || (dec31 == 5 && __isLeapYear(date.tm_year%400-1))) {
+              val++;
+            }
+          } else if (val == 53) {
+            // If 1 January is not a Thursday, and not a Wednesday of a
+            // leap year, then this year has only 52 weeks.
+            var jan1 = (date.tm_wday + 371 - date.tm_yday) % 7;
+            if (jan1 != 4 && (jan1 != 3 || !__isLeapYear(date.tm_year)))
+              val = 1;
+          }
+          return leadingNulls(val, 2);
+        },
+        '%w': function(date) {
+          return date.tm_wday;
+        },
+        '%W': function(date) {
+          var days = date.tm_yday + 7 - ((date.tm_wday + 6) % 7);
+          return leadingNulls(Math.floor(days / 7), 2);
+        },
+        '%y': function(date) {
+          // Replaced by the last two digits of the year as a decimal number [00,99]. [ tm_year]
+          return (date.tm_year+1900).toString().substring(2);
+        },
+        '%Y': function(date) {
+          // Replaced by the year as a decimal number (for example, 1997). [ tm_year]
+          return date.tm_year+1900;
+        },
+        '%z': function(date) {
+          // Replaced by the offset from UTC in the ISO 8601:2000 standard format ( +hhmm or -hhmm ).
+          // For example, "-0430" means 4 hours 30 minutes behind UTC (west of Greenwich).
+          var off = date.tm_gmtoff;
+          var ahead = off >= 0;
+          off = Math.abs(off) / 60;
+          // convert from minutes into hhmm format (which means 60 minutes = 100 units)
+          off = (off / 60)*100 + (off % 60);
+          return (ahead ? '+' : '-') + String("0000" + off).slice(-4);
+        },
+        '%Z': function(date) {
+          return date.tm_zone;
+        },
+        '%%': function() {
+          return '%';
+        }
+      };
+  
+      // Replace %% with a pair of NULLs (which cannot occur in a C string), then
+      // re-inject them after processing.
+      pattern = pattern.replace(/%%/g, '\0\0')
+      for (var rule in EXPANSION_RULES_2) {
+        if (pattern.includes(rule)) {
+          pattern = pattern.replace(new RegExp(rule, 'g'), EXPANSION_RULES_2[rule](date));
+        }
+      }
+      pattern = pattern.replace(/\0\0/g, '%')
+  
+      var bytes = intArrayFromString(pattern, false);
+      if (bytes.length > maxsize) {
+        return 0;
+      }
+  
+      writeArrayToMemory(bytes, s);
+      return bytes.length-1;
+    }
+  function _strftime_l(s, maxsize, format, tm) {
+      return _strftime(s, maxsize, format, tm); // no locale support yet
     }
 
 PThread.init();;
@@ -6901,7 +7680,7 @@ init_emval();;
 
  // proxiedFunctionTable specifies the list of functions that can be called either synchronously or asynchronously from other threads in postMessage()d or internally queued events. This way a pthread in a Worker can synchronously access e.g. the DOM on the main thread.
 
-var proxiedFunctionTable = [null,exitOnMainThread,___syscall_fcntl64,___syscall_ftruncate64,___syscall_ioctl,___syscall_openat,___syscall_unlinkat,_fd_close,_fd_read,_fd_seek,_fd_write];
+var proxiedFunctionTable = [null,exitOnMainThread,___syscall_fcntl64,___syscall_ftruncate64,___syscall_ioctl,___syscall_openat,___syscall_unlinkat,_environ_get,_environ_sizes_get,_fd_close,_fd_read,_fd_seek,_fd_write];
 
 var ASSERTIONS = true;
 
@@ -7023,6 +7802,7 @@ var asmLibraryArg = {
   "_embind_register_class": __embind_register_class,
   "_embind_register_class_constructor": __embind_register_class_constructor,
   "_embind_register_class_function": __embind_register_class_function,
+  "_embind_register_class_property": __embind_register_class_property,
   "_embind_register_emval": __embind_register_emval,
   "_embind_register_float": __embind_register_float,
   "_embind_register_integer": __embind_register_integer,
@@ -7035,18 +7815,22 @@ var asmLibraryArg = {
   "_emscripten_notify_task_queue": __emscripten_notify_task_queue,
   "_emscripten_set_offscreencanvas_size": __emscripten_set_offscreencanvas_size,
   "abort": _abort,
+  "emscripten_check_blocking_allowed": _emscripten_check_blocking_allowed,
   "emscripten_get_now": _emscripten_get_now,
   "emscripten_memcpy_big": _emscripten_memcpy_big,
   "emscripten_receive_on_main_thread_js": _emscripten_receive_on_main_thread_js,
   "emscripten_resize_heap": _emscripten_resize_heap,
   "emscripten_unwind_to_js_event_loop": _emscripten_unwind_to_js_event_loop,
+  "environ_get": _environ_get,
+  "environ_sizes_get": _environ_sizes_get,
   "exit": _exit,
   "fd_close": _fd_close,
   "fd_read": _fd_read,
   "fd_seek": _fd_seek,
   "fd_write": _fd_write,
   "memory": wasmMemory,
-  "setTempRet0": _setTempRet0
+  "setTempRet0": _setTempRet0,
+  "strftime_l": _strftime_l
 };
 var asm = createWasm();
 /** @type {function(...*):?} */
@@ -7146,7 +7930,19 @@ var ___cxa_is_pointer_type = Module["___cxa_is_pointer_type"] = createExportWrap
 /** @type {function(...*):?} */
 var dynCall_jiji = Module["dynCall_jiji"] = createExportWrapper("dynCall_jiji");
 
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 1074920;
+/** @type {function(...*):?} */
+var dynCall_viijii = Module["dynCall_viijii"] = createExportWrapper("dynCall_viijii");
+
+/** @type {function(...*):?} */
+var dynCall_iiiiij = Module["dynCall_iiiiij"] = createExportWrapper("dynCall_iiiiij");
+
+/** @type {function(...*):?} */
+var dynCall_iiiiijj = Module["dynCall_iiiiijj"] = createExportWrapper("dynCall_iiiiijj");
+
+/** @type {function(...*):?} */
+var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = createExportWrapper("dynCall_iiiiiijj");
+
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 7088164;
 
 
 
@@ -7389,6 +8185,7 @@ unexportedRuntimeFunction('spawnThread', false);
 unexportedRuntimeFunction('exitOnMainThread', false);
 unexportedRuntimeFunction('invokeEntryPoint', false);
 unexportedRuntimeFunction('executeNotifiedProxyingQueue', false);
+unexportedRuntimeFunction('IDBFS', false);
 unexportedRuntimeFunction('InternalError', false);
 unexportedRuntimeFunction('BindingError', false);
 unexportedRuntimeFunction('UnboundTypeError', false);
@@ -7649,18 +8446,20 @@ function procExit(code) {
   quit_(code, new ExitStatus(code));
 }
 
-
 export function startRun() {
-  if (Module['preInit']) {
-    if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
-    while (Module['preInit'].length > 0) {
-      Module['preInit'].pop()();
-    } 
+if (Module['preInit']) {
+  if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
+  while (Module['preInit'].length > 0) {
+    Module['preInit'].pop()();
   }
+}
 
-  run();
+run();
 }
 
 export default Module;
+
+
+
 
 

@@ -11,9 +11,8 @@
     "ime-build": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && npm run build && node ./tools/build.js",
     "node:wasm": "cd libGooglePinyin && node --experimental-wasm-threads --experimental-wasm-bulk-memory",
     "debug:googlepinyin": "cd libGooglePinyin && emcc -sDYNAMIC_EXECUTION=0 --pre-js ./learn/dict.js -sNODERAWFS -lnodefs.js -lembind libGooglePinyin.a decoder.cpp -o debug.js && npm run node:wasm -- debug.js",
-    "decoder": "cd libGooglePinyin && emcc -sINITIAL_MEMORY=33554432 -sDYNAMIC_EXECUTION=0 -lembind --embed-file dict --pre-js ./pre/filesystem.js -lidbfs.js libGooglePinyin.a decoder.cpp",
+    "decoder": "cd libGooglePinyin && emcc -pthread -lidbfs.js -sINITIAL_MEMORY=33554432 -sDYNAMIC_EXECUTION=0 -lembind --embed-file dict libGooglePinyin.a decoder.cpp -o decoder.js",
     "decoder:preload": "cd libGooglePinyin && emcc -pthread -sINITIAL_MEMORY=33554432 -sDYNAMIC_EXECUTION=0 -lembind --preload-file dict --pre-js ./pre/filesystem.js -lidbfs.js libGooglePinyin.a decoder.cpp",
-    "prebuild:googlepinyin": "npm run decoder:preload -- -o decoder.js",
     "vscode": "webpack --config webpack.vscode.js",
     "test:googlepinyin": "npm run decoder -- -o test.html && cd libGooglePinyin && localhost"
   },

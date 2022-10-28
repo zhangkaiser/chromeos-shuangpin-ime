@@ -14,7 +14,6 @@ function runWasm() {
 
 export default class Decoder extends EventTarget implements IDecoder {
   
-  static EVENT_INITED = new CustomEvent(DecoderEventType.INITED);
   #decoder?: IWASMDecoder;
   #dataloader: DataLoader;
   #tokenDecoder: TokenDecoder;
@@ -35,7 +34,6 @@ export default class Decoder extends EventTarget implements IDecoder {
     
     this.initPromise.then(() => {
       this.#decoder = new Module['Decoder']();
-      this.dispatchEvent(Decoder.EVENT_INITED);
       this.inited = true;
     })
   }
@@ -50,7 +48,7 @@ export default class Decoder extends EventTarget implements IDecoder {
     }
   }
   
-  /** @todo selectedCandID argument is not used. */
+
   decode(sourceWord: string, selectedCandID: number) {
     if (!this.decoder) return null;
     let { shuangpinStatus } = this.#dataloader;
@@ -93,6 +91,7 @@ export default class Decoder extends EventTarget implements IDecoder {
   clear() {
     this.#tokenDecoder.clear();
     this.decoder?.clear();
+    Module['refreshFS']();
   }
 
   reset() {
