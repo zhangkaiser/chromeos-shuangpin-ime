@@ -6,10 +6,8 @@ import { IIMEState, IInitedState } from "src/model/state";
 import { enableDebug } from "src/utils/debug";
 import { loadDict } from "src/utils/transform";
 
-// enableDebug();
-
 /**
- * The background class implements the script for the background page of chrome
+ * The UI background class implements the script for the background page of chrome
  * os extension for os input tools.
  */
 export default class Background {

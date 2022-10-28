@@ -1225,21 +1225,28 @@
         preRun: [],
         postRun: [],
         onRuntimeInitialized() {
-          let decoder = new this.Decoder();
-          let pinyinCandNum = decoder.search("pin'yi");
-          console.log('search', pinyinCandNum);
-          let hanziList = [];
-          for (let i = 0; i < pinyinCandNum; i++) {
-            hanziList[i] = decoder.getCandidate(i);
-          }
-          console.log('search(\'pinyi\')', hanziList);
+          window.decoder = new this.Decoder();
 
-          pinyinCandNum = decoder.search("pinyin");
-          hanziList = [];
-          for (let i = 0; i < pinyinCandNum; i++) {
-            hanziList[i] = decoder.getCandidate(i);
-          }
-          console.log('search(\'pinyin\'):', pinyinCandNum);
+          console.log("pinduoduo", decoder.decode("pinduoduo", -1));
+          // console.log("pinduoduo", decoder.decode("pinduoduo", 3));
+          // console.log("pinduoduo", decoder.decode("pinduoduo", -1));
+          // console.log("pinduoduo", decoder.decode("pinduoduo", 0));
+          decoder.clear();
+
+          // let pinyinCandNum = decoder.search("pin'yi");
+          // console.log('search', pinyinCandNum);
+          // let hanziList = [];
+          // for (let i = 0; i < pinyinCandNum; i++) {
+          //   hanziList[i] = decoder.getCandidate(i);
+          // }
+          // console.log('search(\'pinyi\')', hanziList);
+
+          // pinyinCandNum = decoder.search("pinyin");
+          // hanziList = [];
+          // for (let i = 0; i < pinyinCandNum; i++) {
+          //   hanziList[i] = decoder.getCandidate(i);
+          // }
+          // console.log('search(\'pinyin\'):', pinyinCandNum);
 
 
           // ?addLetter
@@ -1251,30 +1258,30 @@
           // }
           // console.log('addLetter', hanziList);
 
-          currentHanzi = hanziList[2];
-          pinyinCandNum = decoder.choose(2);
-          hanziList = [];
-          for(let i = 0; i < pinyinCandNum; i++) {
-            hanziList[i] = decoder.getCandidate(i);
-          }
-          console.log('choose:', 'currentHanzi->', currentHanzi, hanziList);
-          let fixedLen = decoder.getFixedLen();
-          console.log('fixedLen:', 1, fixedLen);
-          let spsStr = decoder.getSpsStr();
-          let decodedLen = decoder.decodedLen;
-          console.log('getSpsStr:', 'pinyin', spsStr, ';;;decodedLen->', 6, decodedLen);
-          let splStartPos = decoder.getSplStartPos();
-          let splStart = decoder.splStart;
-          console.log('getSplStartPos:', splStartPos, ';;;splStart->', splStart);
+          // currentHanzi = hanziList[2];
+          // pinyinCandNum = decoder.choose(2);
+          // hanziList = [];
+          // for(let i = 0; i < pinyinCandNum; i++) {
+          //   hanziList[i] = decoder.getCandidate(i);
+          // }
+          // console.log('choose:', 'currentHanzi->', currentHanzi, hanziList);
+          // let fixedLen = decoder.getFixedLen();
+          // console.log('fixedLen:', 1, fixedLen);
+          // let spsStr = decoder.getSpsStr();
+          // let decodedLen = decoder.decodedLen;
+          // console.log('getSpsStr:', 'pinyin', spsStr, ';;;decodedLen->', 6, decodedLen);
+          // let splStartPos = decoder.getSplStartPos();
+          // let splStart = decoder.splStart;
+          // console.log('getSplStartPos:', splStartPos, ';;;splStart->', splStart);
 
 
 
-          pinyinCandNum = decoder.cancelLastChoice();
-          hanziList = [];
-          for(let i = 0; i < pinyinCandNum; i++) {
-            hanziList[i] = decoder.getCandidate(i);
-          }
-          console.log("cancelLastChoice", hanziList);
+          // pinyinCandNum = decoder.cancelLastChoice();
+          // hanziList = [];
+          // for(let i = 0; i < pinyinCandNum; i++) {
+          //   hanziList[i] = decoder.getCandidate(i);
+          // }
+          // console.log("cancelLastChoice", hanziList);
 
           
         },

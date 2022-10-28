@@ -14,12 +14,10 @@ function runWasm() {
 
 export default class Decoder extends EventTarget implements IDecoder {
   
+  static EVENT_INITED = new CustomEvent(DecoderEventType.INITED);
   #decoder?: IWASMDecoder;
   #dataloader: DataLoader;
   #tokenDecoder: TokenDecoder;
-
-  initPromise: Promise<any>;
-  inited = false;
 
   initPromise: Promise<any>;
   inited = false;
@@ -37,6 +35,7 @@ export default class Decoder extends EventTarget implements IDecoder {
     
     this.initPromise.then(() => {
       this.#decoder = new Module['Decoder']();
+      this.dispatchEvent(Decoder.EVENT_INITED);
       this.inited = true;
     })
   }
@@ -94,6 +93,10 @@ export default class Decoder extends EventTarget implements IDecoder {
   clear() {
     this.#tokenDecoder.clear();
     this.decoder?.clear();
+  }
+
+  reset() {
+    this.#decoder = new Module['Decoder']();
   }
   
   

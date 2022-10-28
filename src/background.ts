@@ -1,6 +1,6 @@
 // import IMEBackground from "src/backgrounds/ime";
 import DecoderBackground from "src/backgrounds/decoder";
-import Background from "src/backgrounds/background";
+import Background from "src/backgrounds/ime";
 
 // Tree-shaking support.
 // For ESM need add 'sideEffects: false ' attribute to 'package.json' file.

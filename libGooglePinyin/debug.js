@@ -20,77 +20,80 @@ var Module = typeof Module != 'undefined' ? Module : {};
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
 
-if (process.env.DEBUG) {
-  var Module = {
-    onRuntimeInitialized() {
+var Module = {
+  onRuntimeInitialized() {
 
-      let decoder = new this.Decoder();
-      let tokens = "chuang|shuang|zhuang|zhang|zhong|chuan|zheng|chuai|huang|niang|qiong|qiang|sheng|chong|liang|cheng|chang|shuan|shuai|shang|xiong|jiang|kuang|zhuai|guang|zhuan|xiang|jiong|gong|hang|ling|lang|teng|ping|guai|long|geng|tang|feng|pang|quan|wang|ruan|peng|fang|pian|piao|gang|fiao|tuan|luan|tong|ting|kang|tiao|tian|huai|sang|juan|leng|seng|jing|qiao|shai|jiao|jian|shan|shao|shei|shen|huan|guan|lian|shou|hong|shua|heng|shui|keng|shun|shuo|song|liao|suan|qian|qing|chao|cang|zhao|zhan|ceng|zhai|niao|chai|chan|zhei|zeng|chen|kuan|chou|kuai|chua|chui|chun|zhua|zuan|nang|zong|zhuo|zhun|zhui|bang|beng|weng|bian|biao|neng|zhou|bing|nian|zhen|chuo|rong|xian|xiao|mang|duan|xing|dong|ding|reng|xuan|diao|dian|kong|deng|meng|yang|ning|cong|zang|rang|cuan|ming|nong|yuan|miao|yong|ying|dang|mian|nuan|qun|pao|qiu|que|qin|pai|zuo|nen|nie|nin|niu|nou|nue|nun|nuo|qie|pan|nei|pei|pen|pie|pin|pou|qia|yue|wan|wei|wen|xia|xie|xin|xiu|xue|xun|yan|yao|yin|you|wai|yun|zai|zan|zao|zei|zen|zha|zhe|zhi|zhu|zou|zui|zun|shu|rao|ren|rou|rui|run|ruo|sai|san|sao|sen|sha|she|shi|ran|sou|sui|sun|suo|tai|tan|tao|tei|tie|tou|tui|tun|tuo|cun|gen|jiu|dao|dan|jue|jun|gei|dai|kai|kan|kao|cuo|jin|kei|ken|gao|cui|kou|dui|cou|kua|kui|kun|gan|gai|hen|gui|gun|guo|gua|die|dia|hai|han|hao|diu|hei|kuo|den|hou|dei|hua|hui|hun|huo|dou|gou|jia|jie|bai|bin|mai|man|mao|bie|fen|ben|bei|bao|ban|mei|men|chu|fei|mie|min|miu|fan|mou|ang|nai|eng|nan|nao|luo|chi|che|lai|lan|lao|dun|lei|cha|lia|lie|lin|duo|cen|fou|lun|lue|cai|lou|can|cao|liu|du|ei|en|xi|wo|ne|wu|er|zh|ai|an|zu|ao|zi|ba|bi|bo|bu|ca|ce|ch|xu|ze|ci|cu|za|yu|da|yo|yi|ye|de|ya|di|ou|nu|ka|sa|mi|me|ke|ru|nv|ri|re|ku|ra|se|la|qu|le|li|qi|pu|po|lu|pi|pa|lv|ma|ju|fa|wa|fo|tu|fu|ni|na|ga|ti|ge|te|gu|ta|su|mu|ha|si|ji|he|hu|mo|a|o|weixin|yigeren|jiazhitixi|weixindadianhua|weixinshurufa|sougou|baidu|pianyidian|tixiwenti|yinghanzi|ganzhiji|maopaofa|paixufa|zuoyong|shuangpinshurufa|yunzaide|zhiweilai|xi'an|tuhuoguo|jiadizi|gaoxiaoxing|gongjuge|guangshawanjian|guanmendagou|meidameixiao|zuidaxiandudeshixian|xiaoshihou|wodemengxiang|tahenhao|kenenghuiyudaobaocuo|yudao|huiyu|laowupeichang|bufuzhongwang".split("|");
-      for (let token of tokens) {
-        try {
-          let candidates = decoder.decode(token, -1);
-          if (!candidates) {
-            console.error('Get candidates error!', token);
-          } else {
-            console.log('tokens', token, candidates);
-          }
-        } catch (e) {
-          console.error(e);
-          console.error(token);
+    let decoder = new this.Decoder();
+    let tokens = "chuang|shuang|zhuang|zhang|zhong|chuan|zheng|chuai|huang|niang|qiong|qiang|sheng|chong|liang|cheng|chang|shuan|shuai|shang|xiong|jiang|kuang|zhuai|guang|zhuan|xiang|jiong|gong|hang|ling|lang|teng|ping|guai|long|geng|tang|feng|pang|quan|wang|ruan|peng|fang|pian|piao|gang|fiao|tuan|luan|tong|ting|kang|tiao|tian|huai|sang|juan|leng|seng|jing|qiao|shai|jiao|jian|shan|shao|shei|shen|huan|guan|lian|shou|hong|shua|heng|shui|keng|shun|shuo|song|liao|suan|qian|qing|chao|cang|zhao|zhan|ceng|zhai|niao|chai|chan|zhei|zeng|chen|kuan|chou|kuai|chua|chui|chun|zhua|zuan|nang|zong|zhuo|zhun|zhui|bang|beng|weng|bian|biao|neng|zhou|bing|nian|zhen|chuo|rong|xian|xiao|mang|duan|xing|dong|ding|reng|xuan|diao|dian|kong|deng|meng|yang|ning|cong|zang|rang|cuan|ming|nong|yuan|miao|yong|ying|dang|mian|nuan|qun|pao|qiu|que|qin|pai|zuo|nen|nie|nin|niu|nou|nue|nun|nuo|qie|pan|nei|pei|pen|pie|pin|pou|qia|yue|wan|wei|wen|xia|xie|xin|xiu|xue|xun|yan|yao|yin|you|wai|yun|zai|zan|zao|zei|zen|zha|zhe|zhi|zhu|zou|zui|zun|shu|rao|ren|rou|rui|run|ruo|sai|san|sao|sen|sha|she|shi|ran|sou|sui|sun|suo|tai|tan|tao|tei|tie|tou|tui|tun|tuo|cun|gen|jiu|dao|dan|jue|jun|gei|dai|kai|kan|kao|cuo|jin|kei|ken|gao|cui|kou|dui|cou|kua|kui|kun|gan|gai|hen|gui|gun|guo|gua|die|dia|hai|han|hao|diu|hei|kuo|den|hou|dei|hua|hui|hun|huo|dou|gou|jia|jie|bai|bin|mai|man|mao|bie|fen|ben|bei|bao|ban|mei|men|chu|fei|mie|min|miu|fan|mou|ang|nai|eng|nan|nao|luo|chi|che|lai|lan|lao|dun|lei|cha|lia|lie|lin|duo|cen|fou|lun|lue|cai|lou|can|cao|liu|du|ei|en|xi|wo|ne|wu|er|zh|ai|an|zu|ao|zi|ba|bi|bo|bu|ca|ce|ch|xu|ze|ci|cu|za|yu|da|yo|yi|ye|de|ya|di|ou|nu|ka|sa|mi|me|ke|ru|nv|ri|re|ku|ra|se|la|qu|le|li|qi|pu|po|lu|pi|pa|lv|ma|ju|fa|wa|fo|tu|fu|ni|na|ga|ti|ge|te|gu|ta|su|mu|ha|si|ji|he|hu|mo|a|o|weixin|yigeren|jiazhitixi|weixindadianhua|weixinshurufa|sougou|baidu|pianyidian|tixiwenti|yinghanzi|ganzhiji|maopaofa|paixufa|zuoyong|shuangpinshurufa|yunzaide|zhiweilai|xi'an|tuhuoguo|jiadizi|gaoxiaoxing|gongjuge|guangshawanjian|guanmendagou|meidameixiao|zuidaxiandudeshixian|xiaoshihou|wodemengxiang|tahenhao|kenenghuiyudaobaocuo|yudao|huiyu|laowupeichang|bufuzhongwang".split("|");
+    for (let token of tokens) {
+      try {
+        let candidates = decoder.decode(token, -1);
+        if (!candidates) {
+          console.error('Get candidates error!', token);
+        } else {
+          console.log('tokens', token, candidates);
         }
+      } catch (e) {
+        console.error(e);
+        console.error(token);
       }
-
-      let sentences =  [
-        ["杨利伟|乘由|长征二号|火箭|运载的|神舟五号|飞船|首次进入|太空|象征着|中国|太空事业|向前迈进|一大步|起到了里程碑的|作用", 
-        " yang li wei | cheng you | chang zheng er hao | huo jian | yun zai de | shen zhou wu hao | fei chuan | shou ci jin ru | tai kong | xiang zheng zhe | zhong guo | tai kong shi ye | xiang qian mai jin | yi da bu | qi dao liao li cheng bei de | zuo yong "],
-        ["科学发展观|马克思主义|把自己困在笼子里|实践中发现自我|成立于中国|春节联欢晚会|春有百花秋有月|聪明反被聪明误|狗不理包子|走向云原生化|从食物生鲜场景", 
-        "ke xue fa zhan guan|ma ke si zhu yi|ba zi ji kun zai long zi li|shi jian zhong fa xian zi wo|cheng li yu zhong guo|chun jie lian huan wan hui|chun you bai hua qiu you yue|cong ming fan bei cong ming wu|gou bu li bao zi|zou xiang yun yuan sheng hua|cong shi wu sheng xian chang jing"]
-      ]
-
-
-      for (let sentence of sentences) {
-        let segments = sentence[0].split("|");
-        let pinyinSegments = sentence[1].split("|").map((segment) => segment.trim().split(" "));
-        segments = segments.map((segment, index) => {
-          // let pinyins = pinyin(segment, {
-          //   style: "normal",
-          //   heteronym: true,
-          //   segment: true
-          // });
-          let pinyins = pinyinSegments[index];
-          let pinyin = pinyins.join("'");
-
-          let candidates = decoder.decode(pinyin, -1);
-
-          let isNotChoice = new RegExp(segment).test(candidates);
-          return segment + ':' + pinyin + ">" + (isNotChoice ? 'Y' : `N(${candidates})\n`);
-        });
-
-        console.log(segments.join(","));
-
-      }
-
-      decoder.clear();
-
-      // pinyinCandNum = decoder.search(token);
-      // let hanziList = [];
-      // for (let i = 0; i < pinyinCandNum; i++) {
-      //   hanziList[i] = decoder.getCandidate(i);
-      // }
-      // pinyinCandNum = decoder.choose(2);
-      // decoder.choose(4);
-
-      // decoder.choose(0);
-      // hanziList = [];
-      // for(let i = 0; i < pinyinCandNum; i++) {
-      //   hanziList[i] = decoder.getCandidate(i);
-      // }
-      // console.log("choose", hanziList);
-      // console.log("choose", decoder.getCandidate(0));
     }
+
+    let sentences =  [
+      ["杨利伟|乘由|长征二号|火箭|运载的|神舟五号|飞船|首次进入|太空|象征着|中国|太空事业|向前迈进|一大步|起到了里程碑的|作用", 
+      " yang li wei | cheng you | chang zheng er hao | huo jian | yun zai de | shen zhou wu hao | fei chuan | shou ci jin ru | tai kong | xiang zheng zhe | zhong guo | tai kong shi ye | xiang qian mai jin | yi da bu | qi dao liao li cheng bei de | zuo yong "],
+      ["科学发展观|马克思主义|把自己困在笼子里|实践中发现自我|成立于中国|春节联欢晚会|春有百花秋有月|聪明反被聪明误|狗不理包子|走向云原生化|从食物生鲜场景", 
+      "ke xue fa zhan guan|ma ke si zhu yi|ba zi ji kun zai long zi li|shi jian zhong fa xian zi wo|cheng li yu zhong guo|chun jie lian huan wan hui|chun you bai hua qiu you yue|cong ming fan bei cong ming wu|gou bu li bao zi|zou xiang yun yuan sheng hua|cong shi wu sheng xian chang jing"]
+    ]
+
+
+    for (let sentence of sentences) {
+      let segments = sentence[0].split("|");
+      let pinyinSegments = sentence[1].split("|").map((segment) => segment.trim().split(" "));
+      segments = segments.map((segment, index) => {
+        // let pinyins = pinyin(segment, {
+        //   style: "normal",
+        //   heteronym: true,
+        //   segment: true
+        // });
+        let pinyins = pinyinSegments[index];
+        let pinyin = pinyins.join("'");
+
+        let candidates = decoder.decode(pinyin, -1);
+
+        let isNotChoice = new RegExp(segment).test(candidates);
+        return segment + ':' + pinyin + ">" + (isNotChoice ? 'Y' : `N(${candidates})\n`);
+      });
+
+      console.log(segments.join(","));
+
+    }
+
+    console.log(decoder.decode("pinduoduo", -1));
+    // decoder.decode("pinduoduo", 3);
+    // decoder.decode("pinduoduo", -1)
+    // console.log(decoder.decode("pinduoduo", 0));
+
+
+    decoder.clear();
+
+    // pinyinCandNum = decoder.search(token);
+    // let hanziList = [];
+    // for (let i = 0; i < pinyinCandNum; i++) {
+    //   hanziList[i] = decoder.getCandidate(i);
+    // }
+    // pinyinCandNum = decoder.choose(2);
+    // decoder.choose(4);
+
+    // decoder.choose(0);
+    // hanziList = [];
+    // for(let i = 0; i < pinyinCandNum; i++) {
+    //   hanziList[i] = decoder.getCandidate(i);
+    // }
+    // console.log("choose", hanziList);
+    // console.log("choose", decoder.getCandidate(0));
   }
 }
-
 
 // Sometimes an existing Module object exists with properties
 // meant to overwrite the default module functionality. Here
@@ -1245,7 +1248,7 @@ function updateGlobalBufferAndViews(buf) {
 var TOTAL_STACK = 5242880;
 if (Module['TOTAL_STACK']) assert(TOTAL_STACK === Module['TOTAL_STACK'], 'the stack size can no longer be determined at runtime')
 
-var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 52428800;legacyModuleProp('INITIAL_MEMORY', 'INITIAL_MEMORY');
+var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 16777216;legacyModuleProp('INITIAL_MEMORY', 'INITIAL_MEMORY');
 
 assert(INITIAL_MEMORY >= TOTAL_STACK, 'INITIAL_MEMORY should be larger than TOTAL_STACK, was ' + INITIAL_MEMORY + '! (TOTAL_STACK=' + TOTAL_STACK + ')');
 
@@ -1255,7 +1258,7 @@ assert(typeof Int32Array != 'undefined' && typeof Float64Array !== 'undefined' &
 
 // If memory is defined in wasm, the user can't provide it.
 assert(!Module['wasmMemory'], 'Use of `wasmMemory` detected.  Use -sIMPORTED_MEMORY to define wasmMemory externally');
-assert(INITIAL_MEMORY == 52428800, 'Detected runtime INITIAL_MEMORY setting.  Use -sIMPORTED_MEMORY to define wasmMemory dynamically');
+assert(INITIAL_MEMORY == 16777216, 'Detected runtime INITIAL_MEMORY setting.  Use -sIMPORTED_MEMORY to define wasmMemory dynamically');
 
 // include: runtime_init_table.js
 // In regular non-RELOCATABLE mode the table is exported
@@ -1625,7 +1628,7 @@ function createWasm() {
     // This assertion doesn't hold when emscripten is run in --post-link
     // mode.
     // TODO(sbc): Read INITIAL_MEMORY out of the wasm file in post-link mode.
-    //assert(wasmMemory.buffer.byteLength === 52428800);
+    //assert(wasmMemory.buffer.byteLength === 16777216);
     updateGlobalBufferAndViews(wasmMemory.buffer);
 
     wasmTable = Module['asm']['__indirect_function_table'];
@@ -2502,13 +2505,6 @@ var ASM_CONSTS = {
         },write:function(stream, buffer, offset, length, position, canOwn) {
           // The data buffer should be a typed array view
           assert(!(buffer instanceof ArrayBuffer));
-          // If the buffer is located in main memory (HEAP), and if
-          // memory can grow, we can't hold on to references of the
-          // memory buffer, as they may get invalidated. That means we
-          // need to do copy its contents.
-          if (buffer.buffer === HEAP8.buffer) {
-            canOwn = false;
-          }
   
           if (!length) return 0;
           var node = stream.node;
@@ -6519,77 +6515,16 @@ var ASM_CONSTS = {
     }
 
   function getHeapMax() {
-      // Stay one Wasm page short of 4GB: while e.g. Chrome is able to allocate
-      // full 4GB Wasm memories, the size will wrap back to 0 bytes in Wasm side
-      // for any code that deals with heap sizes, which would require special
-      // casing all heap size related code to treat 0 specially.
-      return 2147483648;
+      return HEAPU8.length;
     }
   
-  function emscripten_realloc_buffer(size) {
-      try {
-        // round size grow request up to wasm page size (fixed 64KB per spec)
-        wasmMemory.grow((size - buffer.byteLength + 65535) >>> 16); // .grow() takes a delta compared to the previous size
-        updateGlobalBufferAndViews(wasmMemory.buffer);
-        return 1 /*success*/;
-      } catch(e) {
-        err('emscripten_realloc_buffer: Attempted to grow heap from ' + buffer.byteLength  + ' bytes to ' + size + ' bytes, but got error: ' + e);
-      }
-      // implicit 0 return to save code size (caller will cast "undefined" into 0
-      // anyhow)
+  function abortOnCannotGrowMemory(requestedSize) {
+      abort('Cannot enlarge memory arrays to size ' + requestedSize + ' bytes (OOM). Either (1) compile with -sINITIAL_MEMORY=X with X higher than the current value ' + HEAP8.length + ', (2) compile with -sALLOW_MEMORY_GROWTH which allows increasing the size at runtime, or (3) if you want malloc to return NULL (0) instead of this abort, compile with -sABORTING_MALLOC=0');
     }
   function _emscripten_resize_heap(requestedSize) {
       var oldSize = HEAPU8.length;
       requestedSize = requestedSize >>> 0;
-      // With multithreaded builds, races can happen (another thread might increase the size
-      // in between), so return a failure, and let the caller retry.
-      assert(requestedSize > oldSize);
-  
-      // Memory resize rules:
-      // 1.  Always increase heap size to at least the requested size, rounded up
-      //     to next page multiple.
-      // 2a. If MEMORY_GROWTH_LINEAR_STEP == -1, excessively resize the heap
-      //     geometrically: increase the heap size according to
-      //     MEMORY_GROWTH_GEOMETRIC_STEP factor (default +20%), At most
-      //     overreserve by MEMORY_GROWTH_GEOMETRIC_CAP bytes (default 96MB).
-      // 2b. If MEMORY_GROWTH_LINEAR_STEP != -1, excessively resize the heap
-      //     linearly: increase the heap size by at least
-      //     MEMORY_GROWTH_LINEAR_STEP bytes.
-      // 3.  Max size for the heap is capped at 2048MB-WASM_PAGE_SIZE, or by
-      //     MAXIMUM_MEMORY, or by ASAN limit, depending on which is smallest
-      // 4.  If we were unable to allocate as much memory, it may be due to
-      //     over-eager decision to excessively reserve due to (3) above.
-      //     Hence if an allocation fails, cut down on the amount of excess
-      //     growth, in an attempt to succeed to perform a smaller allocation.
-  
-      // A limit is set for how much we can grow. We should not exceed that
-      // (the wasm binary specifies it, so if we tried, we'd fail anyhow).
-      var maxHeapSize = getHeapMax();
-      if (requestedSize > maxHeapSize) {
-        err('Cannot enlarge memory, asked to go up to ' + requestedSize + ' bytes, but the limit is ' + maxHeapSize + ' bytes!');
-        return false;
-      }
-  
-      let alignUp = (x, multiple) => x + (multiple - x % multiple) % multiple;
-  
-      // Loop through potential heap size increases. If we attempt a too eager
-      // reservation that fails, cut down on the attempted size and reserve a
-      // smaller bump instead. (max 3 times, chosen somewhat arbitrarily)
-      for (var cutDown = 1; cutDown <= 4; cutDown *= 2) {
-        var overGrownHeapSize = oldSize * (1 + 0.2 / cutDown); // ensure geometric growth
-        // but limit overreserving (default to capping at +96MB overgrowth at most)
-        overGrownHeapSize = Math.min(overGrownHeapSize, requestedSize + 100663296 );
-  
-        var newSize = Math.min(maxHeapSize, alignUp(Math.max(requestedSize, overGrownHeapSize), 65536));
-  
-        var replacement = emscripten_realloc_buffer(newSize);
-        if (replacement) {
-  
-          return true;
-        }
-      }
-      err('Failed to grow the heap from ' + oldSize + ' bytes to ' + newSize + ' bytes, not enough memory!');
-      return false;
+      abortOnCannotGrowMemory(requestedSize);
     }
 
   var ENV = {};
@@ -7472,6 +7407,7 @@ unexportedRuntimeFunction('ptrToString', false);
 unexportedRuntimeFunction('zeroMemory', false);
 unexportedRuntimeFunction('stringToNewUTF8', false);
 unexportedRuntimeFunction('getHeapMax', false);
+unexportedRuntimeFunction('abortOnCannotGrowMemory', false);
 unexportedRuntimeFunction('emscripten_realloc_buffer', false);
 unexportedRuntimeFunction('ENV', false);
 unexportedRuntimeFunction('ERRNO_CODES', false);
@@ -7874,25 +7810,16 @@ function procExit(code) {
   quit_(code, new ExitStatus(code));
 }
 
-function startRun() {
-  if (Module['preInit']) {
-    if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
-    while (Module['preInit'].length > 0) {
-      Module['preInit'].pop()();
-    }
+if (Module['preInit']) {
+  if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
+  while (Module['preInit'].length > 0) {
+    Module['preInit'].pop()();
   }
-
-  run();
 }
 
+run();
 
 
-if (process.env.DEBUG) {
-  startRun();
-}
 
 
-module.exports = {
-  Module,
-  startRun
-}
+

@@ -14,7 +14,7 @@ using namespace ime_pinyin;
 using namespace emscripten;
 
 #define DICT_PATH "./dict/dict_pinyin.dat"
-#define USER_DICT_PATH "./dict/pinyin_user.dat"
+#define USER_DICT_PATH "./user/dict_pinyin.dat"
 #define CAND_BUFFER_MAX_LEN 40 // Maximum for the sentence char length
 #define SPS_MAX_LEN 120 // Maximum for spelling string.
 #define CANDS_MAX_NUM 50 // Maximum for the candidates.
@@ -40,7 +40,6 @@ class Decoder {
      * @return 
      */
      string decode(string sps_buf, short int cand_id) {
-      
       size_t cand_num;
 
       if (cand_id == -1) {
@@ -72,8 +71,10 @@ class Decoder {
 
     /** Clear the decoder. */
     bool clear() {
+      im_flush_cache();
       return im_cancel_input();
     }
+
     size_t search(string sps_buf) {
       return im_search(sps_buf.c_str(), sps_buf.size());
     }
@@ -86,9 +87,10 @@ class Decoder {
       im_reset_search();
     }
 
+    /** Not support. */
     size_t add_letter(char ch) {
       // char ch = str[0];
-      cout << "ch:" << ch << endl;
+      // cout << "ch:" << ch << endl;
       return im_add_letter(ch);
     }
 
@@ -164,9 +166,6 @@ class Decoder {
 
         return cand_num;
       }
-
-
-
 
 };
 
