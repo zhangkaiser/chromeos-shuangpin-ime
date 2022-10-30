@@ -49,7 +49,7 @@ export default class Predictor {
         this._timeout = undefined;
         this._lastRequest = Fetch.get(url);
         this._lastRequest.promise.then(resolve, reject);
-      }, 300);
+      }, 500);
     })
   }
 
