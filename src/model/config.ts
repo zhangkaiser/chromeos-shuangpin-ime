@@ -71,7 +71,7 @@ export abstract class Config {
   enabelShuangpin = false;
   
   /** The shuangpin solution. */
-  shuangpinSolution = 'pinyinjiajia_o';
+  shuangpinSolution = '';
 
   /** The predict engine. */
   predictEngine: PredictEngine = PredictEngine.BAIDU;
@@ -108,7 +108,6 @@ export abstract class Config {
 
   /** Return the translated target. */
   tranformCommit(text: string) {
-    
     return text;
   }
 

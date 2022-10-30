@@ -10,6 +10,11 @@ import { UserDecoder } from "src/decoder/userdecoder";
 export class IMEOptionalHandler extends EventTarget {
   
   #userDecoder?: UserDecoder;
+  #decoder?: IDecoder;
+
+  setDecoder(decoder: IDecoder) {
+    this.#decoder = decoder;
+  }
 
   handleIMEResponse(imeResponse: IMEResponse) {
 
@@ -36,7 +41,13 @@ export class IMEOptionalHandler extends EventTarget {
   }
 
   addUserCommits(source: string, target: string) {
-    this.#userDecoder?.add(source, target);
+    console.log(source, target);
+    // if (this.#decoder) {
+    //   this.#decoder.decode();
+
+    // }
+
+    // this.#userDecoder?.add(source, target);
   }
 
   enableUserDict(enable: boolean) {

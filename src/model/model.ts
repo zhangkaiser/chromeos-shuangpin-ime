@@ -120,6 +120,9 @@ export class Model extends EventTarget implements IModel {
 
   imeHandler = new IMEOptionalHandler();
 
+  /** English word */
+  wasEnglish = false;
+
   /** The current global configure. */
   get currentConfig() {
     return this.configFactory.getCurrentConfig()!;
@@ -168,27 +171,14 @@ export class Model extends EventTarget implements IModel {
       this._decoder = new IMEDecoder(engineID, {
         extId: this.configFactory.globalState.connectExtId,
         // TODO 
-        annotation: isPinyin(engineID) ? "" : (this.states as any).shuangpinSolution
+        annotation: (this.states as any).shuangpinSolution,
+
       });
+      this.imeHandler.setDecoder(this._decoder);
 
       this._decoder.addEventListener(EventType.IMERESPONSE, this.#onIMEResponse.bind(this));
     } else {
-      if (process.env.WASM) {
-        this._decoder = isJS(engineID)
-          ? undefined
-          : isPinyin(engineID)
-            ? new WASMDecoder(engineID)
-            : new WASMDecoder(engineID, this.currentConfig.shuangpinSolution);
-      }
-      if (process.env.ONLINE) {
-        // TODO
-        this._decoder = new OnlineDecoder(engineID);
-      }
-      if (process.env.ALL) {
-          this._decoder = isPinyin(engineID) 
-            ? new WASMDecoder(engineID)
-            : new WASMDecoder(engineID, this.currentConfig.shuangpinSolution);
-      } 
+      throw new Error("Deprecated other decoder!");
     }
 
     this._predictor = new Predictor();
@@ -311,8 +301,10 @@ export class Model extends EventTarget implements IModel {
       }
     }
     this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
-    if (this.source == '') {
-      this.notifyUpdates(true);
+
+    if (!this.source) {
+      this.clear();
+      this.notifyUpdates();
     } else {
       this.notifyUpdates();
       if (deletedChar == '\'') {
@@ -332,7 +324,7 @@ export class Model extends EventTarget implements IModel {
     if (index == -1) {
       this.segments = [this.rawSource];
       this.notifyUpdates(true);
-      return this.clear();
+      return;
     }
 
     let candidateIndex = index ?? this.highlightIndex;
@@ -340,7 +332,7 @@ export class Model extends EventTarget implements IModel {
     let candidate = this.candidates[candidateIndex];
     if (!candidate) { // commit the current segments.
       this.notifyUpdates(true);
-      return this.clear();
+      return;
     }
     this.selectedCandID  = candidate.candID;
 
@@ -359,7 +351,7 @@ export class Model extends EventTarget implements IModel {
     if (this.commitPos == this.segments.length || commit != undefined) {
       this.imeHandler.addUserCommits(this.tokens.join(''), this.segments.join(''));
       this.notifyUpdates(true);
-      return this.clear();
+      return;
     }
 
     this.highlightIndex = -1;
@@ -379,11 +371,13 @@ export class Model extends EventTarget implements IModel {
     this.cursorPos = 0;
     this.commitPos = 0;
     this.segments = [];
+    this.tokens = [];
     this.highlightIndex = -1;
     this.candidates = [];
     this.status = Status.INIT;
     this._holdSelectStatus = false;
     this.selectedCandID = -1;
+    this.wasEnglish = false;
 
     if (registraion) this.reload();
   }
@@ -472,7 +466,11 @@ export class Model extends EventTarget implements IModel {
     this.candidates = [];
     this.imeHandler.handleIMEResponse(imeResponse);
     let { candidates, tokens } = imeResponse;
+    let oldTokens = this.source.split("'").filter((item) => !!item);
 
+    if (oldTokens.length > tokens.length) {
+      this.wasEnglish = true;
+    }
     let committedSegments = this.segments.slice(0, this.commitPos);
     let prefixSegments = committedSegments.concat(tokens);
     let suffixSegments = this.segments.slice(this.cursorPos);
@@ -517,7 +515,8 @@ export class Model extends EventTarget implements IModel {
 
     this._predictor.setEngine((this.states as any).predictEngine);
 
-    let rawSource = this.rawSource;
+    let currentSource = this.rawSource;
+    let rawSource = currentSource;
 
     // TODO need to support pinyin.
     if (this.commitPos) {
@@ -528,7 +527,7 @@ export class Model extends EventTarget implements IModel {
     let predict = await this._predictor.decode(this.source, rawSource);
     if (!predict) return;
     if (!this.candidates.length || this.candidates[0].target == predict.target) return;
-    // if (!this.rawSource ||this.commitPos ? rawSource != )
+    if (!this.rawSource || !this.rawSource.endsWith(rawSource)) return ;
 
     let { pageSize } = this.currentConfig;
     let swapped = false;
@@ -555,6 +554,5 @@ export class Model extends EventTarget implements IModel {
 
     this.notifyUpdates();
   }
-
 
 }

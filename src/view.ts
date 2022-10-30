@@ -88,13 +88,18 @@ export class View {
   refresh(vkPort?: chrome.runtime.Port) {
     if (!this._context) return;
 
+    let composing_text = "";
+    let pos = 0;
+    let composeCb = () => this.showCandidates();
+
     let segments = this.model.segments;
+    if (this.model.rawSource.length == 0) return this.hide();
     let segmentsBeforeCursor = segments.slice(0, this.model.cursorPos);
     let segmentsAfterCursor = segments.slice(this.model.cursorPos);
     
     let prefix = segments.slice(
         this.model.commitPos, this.model.cursorPos).join('');
-    let composing_text = segmentsBeforeCursor.join(' ') +
+    composing_text = segmentsBeforeCursor.join(' ') +
         this.model.source.slice(prefix.length);
     if (segmentsAfterCursor.length > 0) {
       composing_text += ' ' + segmentsAfterCursor.join(' ');
@@ -103,7 +108,21 @@ export class View {
         composing_text, this.model.rawSource);
     composing_text = composing_text.slice(-1) == "'" ? composing_text.slice(0, -1) : composing_text;
     // composing_text = composing_text.replace(/'/g, "");
-    let pos = composing_text.length;
+    pos = composing_text.length;
+
+    if (this.model.wasEnglish) {
+      this.model.candidates.unshift(
+        { 
+          target: this.model.rawSource, 
+          candID: -1, 
+          range: this.model.rawSource.length, 
+          annotation: ""
+        }
+      )
+      composing_text = this.model.rawSource;
+      pos = this.model.rawSource.length;
+    }
+
     try {
       // TODO Running in Android application have will be focus issues.
       // But use short(raw source) text is no problem.
@@ -120,19 +139,14 @@ export class View {
         })
         return;
       }
+
       chrome.input.ime.setComposition({
         contextID: this._context.contextID,
         text: composing_text,
         cursor: pos
-      }, () => {
-        this.showCandidates();
-      });
+      }, composeCb);
     } catch(e) {
-      chrome.input.ime.setComposition({
-        contextID: -1,
-        text: composing_text,
-        cursor: pos
-      });
+      this.hide();
     }
   }
 

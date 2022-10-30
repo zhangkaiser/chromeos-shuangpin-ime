@@ -71,7 +71,6 @@ export default class Decoder extends EventTarget implements IDecoder {
       let tokens = tokenPath.tokens;
       targets = this.decoder.decode(tokens.join('\''), -1).split('|');
 
-
     } else {
       // Pinyin decode.
       let pinyin = originalTokenList.join('');

@@ -74,6 +74,7 @@ export class CandidateWindow {
     let windowProps: ICandidateWindowProperties = { 
       visible: true,
       cursorVisible: true, // TODO 
+      windowPosition: "composition",
     }
     let candidatesParams: chrome.input.ime.CandidatesParameters = {
       contextID, candidates: []

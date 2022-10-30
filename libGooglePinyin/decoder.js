@@ -59,6 +59,20 @@ Module['FS_createPath']("/", "dict", true, true);
 
   })();
 
+function initFS() {
+  FS.mkdir("/user");
+  FS.mount(IDBFS, {}, "/user");
+
+  FS.syncfs(true, (err) => err && console.error(err));
+}
+
+Module.preRun.unshift(initFS);
+
+Module['refreshFS'] = () => {
+  FS.syncfs(false, (err) => err && console.error(err));
+}
+
+
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
