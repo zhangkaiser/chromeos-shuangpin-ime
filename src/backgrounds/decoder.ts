@@ -1,7 +1,7 @@
 import WASMDecoder from "src/decoder/cdecoder";
 // import JSDecoder from "src/decoder/decoder";
 import OnlineDecoder from "src/decoder/onlinedecoder";
-import { IMesageDataOfDecode, IMessage } from "src/model/common";
+import type { IMesageDataOfDecode, IMessage, IMessageDataOfUserCommits } from "src/model/common";
 import { Decoders, MessageType } from "src/model/enums";
 
 
@@ -64,10 +64,11 @@ export default class DecoderBackground {
   }
 
   processMessage(msg: IMessage, port: chrome.runtime.Port) {
+    let data;
     switch(msg['type']) {
       case MessageType.DECODE:
         if (!this.#decoder) return port.postMessage(false);
-        let data = <IMesageDataOfDecode>msg.data;
+        data = <IMesageDataOfDecode>msg.data;
         let response = this.#decoder.decode(data.source, data.chooseId);
         if (!response) return port.postMessage([]);
 
@@ -76,6 +77,14 @@ export default class DecoderBackground {
           data: {...response}
         }
         port.postMessage(message);
+        break;
+      case MessageType.ADD_USER_COMMITS:
+        if (!this.#decoder) return port.postMessage(false);
+        data = <IMessageDataOfUserCommits>msg.data;
+        if (this.#decoder.addUserCommits) this.#decoder.addUserCommits(data.source, data.target);
+        break;
+      case MessageType.CLEAR:
+        this.#decoder?.clear();
         break;
       default:
         port.postMessage("Hello world!");

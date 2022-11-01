@@ -23,6 +23,11 @@ export interface IMesageDataOfDecode {
   chooseId: number
 }
 
+export interface IMessageDataOfUserCommits {
+  source: string, // pin'yin
+  target: string // PY
+}
+
 export interface IMessageDataOfInstalled {
 
 }

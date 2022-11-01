@@ -1,16 +1,10 @@
 
-import Module, { startRun } from "../../libGooglePinyin/decoder.js";
+import Module, { initPromise } from "../../libGooglePinyin/decoder.js";
 import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
 import { IMEResponse } from "./response";
 import { TokenDecoder } from "./tokendecoder";
-
-function runWasm() {
-  return new Promise((resolve, reject) => {
-    Module['onRuntimeInitialized'] = resolve;
-    startRun();
-  });
-}
+import { DecoderEventType } from "./consts";
 
 export default class Decoder extends EventTarget implements IDecoder {
   
@@ -18,7 +12,6 @@ export default class Decoder extends EventTarget implements IDecoder {
   #dataloader: DataLoader;
   #tokenDecoder: TokenDecoder;
 
-  initPromise: Promise<any>;
   inited = false;
 
   constructor(public inputTool: any, 
@@ -29,23 +22,22 @@ export default class Decoder extends EventTarget implements IDecoder {
 
     this.#dataloader = new DataLoader(inputTool);
     this.#tokenDecoder = new TokenDecoder(this.#dataloader, solution);
-    this.#tokenDecoder.addEventListener('clear', this.clear.bind(this));
-    this.initPromise = runWasm();
+    this.#tokenDecoder.addEventListener(DecoderEventType.CLEAR, this.clear.bind(this));
     
-    this.initPromise.then(() => {
+    initPromise.then(() => {
       this.#decoder = new Module['Decoder']();
       this.inited = true;
     })
   }
 
   get decoder() {
-    if (this.inited && this.#decoder) {
-      return this.#decoder;
+    if (this.inited) {
+      return  this.#decoder;
     } else if (Reflect.has(Module, 'Decoder')) {
       return this.#decoder = new Module['Decoder'](); 
     } else {
       return null;
-    }
+    } 
   }
   
 
@@ -53,29 +45,19 @@ export default class Decoder extends EventTarget implements IDecoder {
     if (!this.decoder) return null;
     let { shuangpinStatus } = this.#dataloader;
 
-    let tokenPath;
-    if (shuangpinStatus) {
-      tokenPath = this.#tokenDecoder.getShuangpinTokens(sourceWord);
-    } else {
-      tokenPath = this.#tokenDecoder.getBestTokens(sourceWord);
-    }
+    let tokenPath = shuangpinStatus 
+      ? this.#tokenDecoder.getShuangpinTokens(sourceWord)
+      : this.#tokenDecoder.getBestTokens(sourceWord);
 
     if (!tokenPath) return null;
     
     let candidates: Candidate[] = [];
-    let targets: string[] = [];
     let originalTokenList = this.#tokenDecoder.getOriginalTokens(tokenPath);
     
-    if (shuangpinStatus) {
-      // Shuangpin decode.
-      let tokens = tokenPath.tokens;
-      targets = this.decoder.decode(tokens.join('\''), -1).split('|');
+    let pinyinStr = shuangpinStatus ? tokenPath.tokens.join("\'") : originalTokenList.join("'");
 
-    } else {
-      // Pinyin decode.
-      let pinyin = originalTokenList.join('');
-      targets = this.decoder.decode(pinyin, -1).split('|');  
-    }
+    let targets: string[] = this.decoder.decode(pinyinStr, -1).split("|");
+    
     for (let i = 0, l = targets.length; i < l; i++) {
       let target = targets[i];
       if (!target) continue;
@@ -85,6 +67,42 @@ export default class Decoder extends EventTarget implements IDecoder {
     }
 
     return new IMEResponse(originalTokenList, candidates);
+  }
+
+
+  _addUserCommit(pinyinStr: string, target: string) {
+    if (!this.decoder) return;
+    let selectedCandID = -1;
+    let maxLoop = 9;
+    let sliceStartPos = 0;
+
+    for (let i = 0; i < maxLoop; i++) {
+      let candidates = this.decoder?.decode(pinyinStr, selectedCandID);
+      let currentTarget = target.slice(sliceStartPos);
+
+      let candidateList = candidates.split("|");
+      if (candidateList.length === 1 || (i == 0 && candidates.startsWith(target))) return;
+
+      if (candidates.startsWith(target)) {
+        selectedCandID = 0;
+      } else {
+        selectedCandID = candidateList.sort((a: string, b: string) => b.length - a.length)
+        .findIndex((value: string) => currentTarget.startsWith(value));
+        sliceStartPos += candidateList[selectedCandID].length;        
+      }
+
+      // Avoid decoder lemma issue.      
+      if (selectedCandID == 0) {
+        this.decoder.decode(pinyinStr, -1);
+      }
+
+    }
+    
+  }
+
+  addUserCommits(source: string, target: string) {
+    if (/[a-zA-Z]/.test(target)) return ;
+    this._addUserCommit(source, target);
   }
 
   clear() {

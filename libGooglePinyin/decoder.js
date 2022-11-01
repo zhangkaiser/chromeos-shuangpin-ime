@@ -15,6 +15,14 @@
 // can continue to use Module afterwards as well.
 var Module = typeof Module != 'undefined' ? Module : {};
 
+function inited() {
+  return new Promise((resolve) => {
+    Module['onRuntimeInitialized'] = resolve;
+  })
+}
+
+export const initPromise = inited();
+
 // See https://caniuse.com/mdn-javascript_builtins_object_assign
 
 // --pre-jses are emitted after the Module integration code, so that they can
@@ -8460,7 +8468,6 @@ function procExit(code) {
   quit_(code, new ExitStatus(code));
 }
 
-export function startRun() {
 if (Module['preInit']) {
   if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
   while (Module['preInit'].length > 0) {
@@ -8469,7 +8476,6 @@ if (Module['preInit']) {
 }
 
 run();
-}
 
 export default Module;
 

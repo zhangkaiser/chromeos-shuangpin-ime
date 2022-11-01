@@ -55,7 +55,10 @@ export class IMEDecoderProxy extends EventTarget implements IDecoder {
   }
 
   clear() {
-
+    this.#port?.postMessage({
+      type: MessageType.CLEAR,
+      data: {}
+    });
   }
 
   addUserCommits(source: string, target: string) {

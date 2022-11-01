@@ -162,7 +162,7 @@ export class Model extends EventTarget implements IModel {
 
   setEngineID(engineID: string): void {
     this.engineID = engineID;
-    this.imeHandler.enableUserDict(true);
+    // this.imeHandler.enableUserDecoder(true);
   }
 
   reload() {
