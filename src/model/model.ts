@@ -116,12 +116,14 @@ export class Model extends EventTarget implements IModel {
   /** candidate id. */
   selectedCandID = -1;
   
-  stateCache: any = '';  
+  stateCache: any = '';
 
   imeHandler = new IMEOptionalHandler();
 
   /** English word */
   wasEnglish = false;
+
+  _reverted = false;
 
   /** The current global configure. */
   get currentConfig() {
@@ -226,6 +228,7 @@ export class Model extends EventTarget implements IModel {
       this._holdSelectStatus = true;
     }
 
+    this._reverted = false;
     this.fetchCandidates();
   }
 
@@ -310,6 +313,7 @@ export class Model extends EventTarget implements IModel {
       if (deletedChar == '\'') {
         this.decoder?.clear();
       }
+      this._reverted = true;
       this.fetchCandidates();
     }
   }
@@ -365,7 +369,7 @@ export class Model extends EventTarget implements IModel {
       this.dispatchEvent(Model.CLOSING_EVENT);
     }
     if(this._decoder) this._decoder.clear();
-
+    
     this.rawSource = "";
     this.source = "";
     this.cursorPos = 0;
@@ -378,6 +382,7 @@ export class Model extends EventTarget implements IModel {
     this._holdSelectStatus = false;
     this.selectedCandID = -1;
     this.wasEnglish = false;
+    this._reverted = false;
 
     if (registraion) this.reload();
   }
@@ -470,6 +475,9 @@ export class Model extends EventTarget implements IModel {
 
     if (oldTokens.length > tokens.length) {
       this.wasEnglish = true;
+    }
+    if (this._reverted) {
+      this.wasEnglish = false;
     }
     let committedSegments = this.segments.slice(0, this.commitPos);
     let prefixSegments = committedSegments.concat(tokens);
