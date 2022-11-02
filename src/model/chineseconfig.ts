@@ -6,6 +6,17 @@ import { Translator } from "./translator";
 
 export default class ChineseConfig extends Config {
 
+  configStates: Record<string, any> = {
+    ...this.configStates,
+    states: {
+      [StateID.LANG]: true,
+      [StateID.SBC]: true,
+      [StateID.PUNC]: true,
+      [StateID.TRADITIONAL]: true,
+      [StateID.PREDICTOR]: true
+    }
+  };
+
   states: Record<StateID, State>;
 
 	/** The puncatuation sbc map. */
@@ -94,9 +105,9 @@ export default class ChineseConfig extends Config {
 		}
 		
 		let langState = new State( '启用中文输入', true, [Modifier.SHIFT] );
-		let sbcState = new State('启用全角宽度字符', false, ['/', Modifier.CTRL]);
-		let puncState = new State('不启用英文标点符号', true, ['\\.', Modifier.CTRL]);
-    let traditionalState = new State('启用中文繁体.', false, [',', Modifier.CTRL]);
+		let sbcState = new State('启用全角宽度字符', false, [';', Modifier.CTRL]);
+		let puncState = new State('启用英文标点符号', true, ['\\.', Modifier.CTRL]);
+    let traditionalState = new State('启用中文繁体', false, [',', Modifier.CTRL]);
     let predictorState = new State("启用在线预测词", true, [' ', Modifier.SHIFT]);
 
     this.states = {
@@ -157,23 +168,16 @@ export default class ChineseConfig extends Config {
   tranformCommit(text: string) {
     return Translator.transform(text);
   }
-
-  getStates() {
-    let states = super.getStates() as IChineseState;
-    Object.keys(this.states).forEach((stateId) => {
-      states[stateId as StateID] = this.states[stateId as StateID].value;
-    })
-    return states;
-  }
   
   setStates(states: Partial<IChineseState>) {
+    super.setStates(states);
     if (!states) return ;
     Object.keys(states).forEach((state) => {
-      if (!(state in this.states)) return ;
-      this.states[state as StateID].value = (states as any)[state];
+      if (!(state in this.configStates) && state in this.states) {
+        this.states[state as StateID].value = (states as any)[state];
+      }
       this.#stateSwitchedAction(state as StateID);
     });
-    super.setStates(states);
   }
 
   #stateSwitchedAction(state: StateID) {

@@ -16,33 +16,37 @@ const codeRegExp = /[?code=.]zh-(js|wasm)-(shuangpin|pinyin)/i
 const introList = [
   {
     label: '中英文输入切换',
-    value: 'Alt + 空格键'
+    value: 'Shift键'
   },
   {
     label: '字符宽度为全角输入',
-    value: 'Shift + 空格键'
+    value: 'Ctrl + ;'
   },
   {
-    label: '标点符号中英文模式切换',
-    value: 'Ctrl + .'
+    label: '英文标点符号输入切换',
+    value: 'Ctrl + 标点(.)'
   },
   {
-    label: '用“-/=”键 or “,/.”键翻页',
-    value: ['- / =', ', / .']
+    label: '使用繁体字转换输出',
+    value: 'Ctrl + 逗号(,)'
   },
   {
-    label: '查看双拼解决方案',
-    value: {
-      link: "#shuangpin-solution-list"
-    }
-  },
-  {
-    label: "如何自定义双拼解决方案",
-    value: {
-      link: "#how-to-custom-shuangpin"
-    }
+    label: '启用在线解析器',
+    value: 'Shift + 空格'
   }
 ];
+
+const descList = [
+  {
+    desc: "当前版本支持40万+词库(精准度80%左右)+用户选词自学习" 
+  },
+  {
+    desc: "完善了一些输入遗留问题"
+  },
+  {
+    desc: "在线解析引擎解析延迟0.5s"
+  }
+]
 
 const solutionNames: Record<keyof typeof solutions, string> = {
   pinyinjiajia: "拼音加加",
@@ -91,7 +95,7 @@ const baseList = [
 @customElement('option-page')
 class OptionPage extends LitElement {
   
-  compiler = "js";
+  compiler = "wasm";
   decoder = "pinyin";
 
   // Corresponding state key.
@@ -159,19 +163,22 @@ class OptionPage extends LitElement {
   // 
   onClickCheckbox(e: Event) {
     let target = e.target as HTMLInputElement;
-    let {id, value} = target;
-    this.updateState(id, value);
+    let {id, checked} = target;
+    console.log("onClickCheckbox", id, checked)
+;    this.updateState(id, checked);
   }
 
   onChooseEngine(e: Event) {
     let target = e.target as HTMLSelectElement;
     let { value } = target;
+    console.log("onClickCheckbox", value)
     this.updateState('onlineEngine', +value);
   }
 
   onChooseShuangpin(e: Event) {
     let target = e.target as HTMLSelectElement;
     let { value } = target;
+    console.log(value);
     this.updateState('shuangpinSolution', value);
   }
 
@@ -233,13 +240,14 @@ class OptionPage extends LitElement {
         <span class="selection-label">
           <label for="shuangpin-solutions">在线解析器引擎</label>
         </span>
-        <select @change=${this.onChooseEngine} id="online-solutions" class="chos-option-item">
+        <span class="chos-option-item">当前仅支持百度云解析</span>
+        <!--<select @change=${this.onChooseEngine} id="online-solutions" class="chos-option-item">
           ${Object.entries(onlineEngineList).map((item) => {
             return html`
               <option value=${item[0]} ?selected=${Number(item[0]) === this.onlineEngine}>${item[1]}</option>
             `
           })}
-        </select>
+        </select>-->
       </span>
     </div>
   </section>
@@ -249,7 +257,7 @@ class OptionPage extends LitElement {
 
   customShuangpin() {
     return this.showCustomShuangpin ? html`
-<button>aa</button>
+<button>Test</button>
     ` : "";
   }
 
@@ -279,7 +287,7 @@ class OptionPage extends LitElement {
     return html`
 <div>
   <section>
-    <h3>Description</h3>
+    <h3>快捷键</h3>
     ${introList.map((item) => {
       return html`
         <div>
@@ -297,12 +305,31 @@ class OptionPage extends LitElement {
     `
   }
 
+  moreDesc() {
+    return html`
+<div>
+  <section>
+    <h3>更多描述</h3>
+      ${
+      descList.map((item) => html`
+        <div>
+          <span class="controlled-setting-with-label">
+            <label>${item.desc}</label>
+          </span>
+        </div>
+      `)
+    }
+  </section>
+    `
+  }
+
   render() {
     return html`
 <header><h1>设置页面</h1><header>
 ${this.baseSetting()}
 ${this.onlineSetting()}
 ${this.moreIntro()}
+${this.moreDesc()}
 <virtual-keyboard></virtual-keyboard>
     `;
   }

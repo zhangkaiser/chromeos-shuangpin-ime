@@ -7,7 +7,7 @@
     "test": "mocha",
     "build": "export PRODUCTION=1 && webpack",
     "watch": "webpack --mode development --watch",
-    "watch:split": "export MANIFEST=ime,decoder && webpack --watch",
+    "watch:split": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && webpack --watch",
     "ime-build": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && npm run build && node ./tools/build.js",
     "node:wasm": "cd libGooglePinyin && node --experimental-wasm-threads --experimental-wasm-bulk-memory",
     "debug:googlepinyin": "cd libGooglePinyin && emcc -sDYNAMIC_EXECUTION=0 --pre-js ./learn/dict.js -sNODERAWFS -lnodefs.js -lembind libGooglePinyin.a decoder.cpp -o debug.js && npm run node:wasm -- debug.js",

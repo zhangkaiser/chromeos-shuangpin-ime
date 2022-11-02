@@ -18,13 +18,12 @@ export default class Background {
   private _controller = new Controller();
   configFactory = configFactoryInstance;
 
-  #loadedPromise: Promise<IInitedState>; 
+  #loadedPromise?: Promise<any>;
 
   constructor() {
     // Register message listener.
     this.#registerMessage();
     this.#registerConnect();
-    this.#loadedPromise = this.#loadingState();
     this.#init();
 
     this._controller.addEventListener(
@@ -34,9 +33,8 @@ export default class Background {
   }
 
   #updateStateToStorage() {
-    let states = this._controller.model.states;
+    let states = this.configFactory.getCurrentConfig().getStates();
     let globalState = this.configFactory.globalState;
-
     chrome.storage.local.set({
       states,
       globalState
@@ -63,12 +61,12 @@ export default class Background {
     })
 
     chrome.input.ime.onActivate.addListener((engineID) => {
-      this.#loadedPromise.then((res) => {
 
+      this.#loadedPromise = this.#loadingState()
+      this.#loadedPromise?.then((res) => {
         let config = this.configFactory.getConfig(engineID as InputToolCode);
 
         res['states'] && config.setStates(res['states']);
-        
         this._controller.activate(engineID as InputToolCode);
       });
     })
@@ -77,7 +75,8 @@ export default class Background {
       this._controller.deactivate(engineID);
     });
   
-    chrome.input.ime.onFocus.addListener((context) => {
+    chrome.input.ime.onFocus.addListener(async (context) => {
+      await this.#loadedPromise;
       this._controller.register(context);
     });
   

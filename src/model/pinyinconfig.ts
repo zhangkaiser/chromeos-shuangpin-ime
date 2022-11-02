@@ -11,6 +11,12 @@ import { IPinyinConfigState, IPinyinState } from "./state";
  */
 export class PinyinConfig extends ChineseConfig implements IPinyinConfigState {
 
+  configStates: Record<string, any> = {
+    ...this.configStates,
+    enableVertical: true,
+    predictEngine: true
+  };
+
   punctuationReg = /[^a-z0-9 \r]/i;
   editorCharReg = /[a-z\']/;
   pageupCharReg = /[=.]/;
@@ -18,30 +24,6 @@ export class PinyinConfig extends ChineseConfig implements IPinyinConfigState {
 
   [Symbol.toStringTag]() {
     return "PinyinConfig";
-  }
-
-  getStates() {
-    let states = super.getStates() as IPinyinState;
-    states[PinyinStateID.PREDICT_ENGINE] = this[PinyinStateID.PREDICT_ENGINE];
-    states[PinyinStateID.VERTICAL] = this[PinyinStateID.VERTICAL];
-    return states;
-  }
-
-  setStates(states: Partial<IPinyinState>): void {
-    Object.keys(states).forEach((stateId) => {
-      switch(stateId) {
-        case PinyinStateID.PREDICT_ENGINE:
-          let predictEngine = states[stateId];
-          this[stateId] = predictEngine;
-          break;
-        case PinyinStateID.VERTICAL:
-          let vertical = states[stateId];
-          this[stateId] = vertical;
-          break;
-        default:
-      }
-    })
-    super.setStates(states);
   }
 
   revert(segment: string, source: string) {

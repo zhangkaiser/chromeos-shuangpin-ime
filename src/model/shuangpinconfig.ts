@@ -4,6 +4,11 @@ import { IShuangpinConfigState, IShuangpinState, IChineseState } from "./state";
 
 export class ShuangpinConfig extends PinyinConfig implements IShuangpinConfigState {
 
+  configStates: Record<string, any> = {
+    ...this.configStates,
+    shuangpinSolution: true
+  }
+
   initialReg = /^(zh|ch|sh|b|p|m|f|d|t|n|l|k|g|h|j|q|x|r|z|c|s|y|w|a|e|o)/;
 
   editorCharReg = /[a-z;]/;
@@ -18,7 +23,6 @@ export class ShuangpinConfig extends PinyinConfig implements IShuangpinConfigSta
 
   /** @todo */
   revert(segment: string, source: string) {
-
     let matchInitial = segment.match(this.initialReg);
     if (segment.slice(-1) === "'" && matchInitial) {
       return {
@@ -33,28 +37,6 @@ export class ShuangpinConfig extends PinyinConfig implements IShuangpinConfigSta
         source: source.slice(0, -1)
       }
     } 
-  }
-
-  getStates() {
-    let states = super.getStates() as IShuangpinState;
-
-    states[ShuangpinStateID.SOLUTION] = this[ShuangpinStateID.SOLUTION];
-    return states;
-  }
-
-  setStates(states: Partial<IShuangpinState>): void {
-    Object.keys(states).forEach((stateId) => {
-      switch(stateId) {
-        case ShuangpinStateID.SOLUTION:
-          let state = states[stateId];
-          if (state) {
-            this[stateId] = state;
-          }
-          break;
-        default:
-      }
-    });
-    super.setStates(states);
   }
 
   [Symbol.toStringTag]() {

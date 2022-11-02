@@ -14,6 +14,11 @@ export interface IConfig {
  * The input method config.
  */
 export abstract class Config {
+  
+  configStates: Record<string, boolean | Object> = {
+
+  };
+
   /** The input tool states. */
   abstract states: Record<StateID, State>;
 
@@ -122,8 +127,28 @@ export abstract class Config {
   setSolution(text: string) { }
 
   getStates() {
-    return {}
+    let states: any = {};
+    for (let key in this.configStates) {
+      if (typeof this.configStates[key] === "object") {
+        let keyObj = (this as any)[key];
+        let keys = Object.keys(this.configStates[key]);
+        keys.forEach((item) => {
+          states[item] = keyObj[item].value;
+        });
+      } else {
+        states[key] = (this as any)[key];
+      }
+    }
+
+    return states;
   }
 
-  setStates(states: any) {}
+  setStates(states: any) {
+    let keys = Object.keys(states);
+    keys.forEach((key) => {
+      if (typeof this.configStates[key] !== "object") {
+        (this as any)[key] = states[key];
+      }
+    })
+  }
 }

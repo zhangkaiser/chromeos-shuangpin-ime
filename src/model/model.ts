@@ -135,7 +135,7 @@ export class Model extends EventTarget implements IModel {
     return this.currentConfig.getStates();
   }
 
-  setStates(states: any) {
+  setStates(states: Record<string, any>) {
     if (process.env.IME) {
       let observeField = ['shuangpinSolution'];
       observeField = observeField.filter(field => field in states);

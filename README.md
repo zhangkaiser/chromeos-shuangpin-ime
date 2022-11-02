@@ -6,10 +6,10 @@ Chinese shuangpin ime for chrome os/chromium os.
 
 基于google-input-tools输入框架二次开发，添加了google-pinyin（c++ lib）库的支持。
 
+`2022-11-02` 支持新的词库支持(约40万+)和用户提交词自学习支持.
 `2022-08-23` 添加了对虚拟键盘（触摸键盘）的简单支持。
 
 ## 使用说明
-[中文双拼输入法使用说明](https://shuangpin.pinquapp.com)
 
 当前版本暂未上传至谷歌应用商店,即如需要使用新的版本请自行下载 `release发行版`并解压安装 或者 通过克隆源代码自行编译生产。
 
