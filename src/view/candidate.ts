@@ -97,7 +97,7 @@ export class CandidateWindow {
     //   }, true);
 
     // } else 
-    if ((this.config.getStates() as any).vertical) {
+    if ((this.config.getStates() as any).enableVertical) {
       // Show candidates vertically.
       windowProps.vertical = true;
       windowProps.pageSize = this.config.pageSize;
