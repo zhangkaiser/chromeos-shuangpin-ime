@@ -120,6 +120,28 @@ export function xiaohe(): IShuangpinModel {
   }
 }
 
+export function zhinengabc():IShuangpinModel {
+  return { 
+    shengmu: {
+      ...shengmuDefaultMap,
+      ch: "e", sh: "v", zh: "a"
+    },
+    yunmu: {
+      ...yunmuDefaultMap,
+      ei: 'q', ian: 'w', iu: 'r', er: 'r', uang: 't', iang: 't', 
+      ing: 'y', uo: 'o', uan: 'p', ong: 's', iong: 's', ua: 'd',
+      ia: 'd', en: 'f', eng: 'g', ang: 'h', an: 'j', ao: 'k', ai: 'l',
+      iao: 'z', ie: 'x', in: 'c', uai: 'c', ou: 'b', un: 'n', ue: 'm',
+      ui: 'm'
+    },
+    yinjie: {
+       ...yinjieDefaultMap,
+       ai: 'ol', a: 'oa', an: 'oj', ang: 'oh', ao: 'ok', e: 'oe', ei: 'oq',
+       en: 'of', eng: 'og', er: 'or', o: 'oo', ou: 'ob'
+    }
+  }
+}
+
 export let solutions = {
   pinyinjiajia_o,
   pinyinjiajia,
@@ -127,7 +149,8 @@ export let solutions = {
   ziranma,
   zhongwenzhixing_o,
   xiaohe_o,
-  xiaohe
+  xiaohe,
+  zhinengabc,
 }
 
 export function getShuangpinSolution(name: string) {

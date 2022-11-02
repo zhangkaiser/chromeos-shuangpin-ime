@@ -24,6 +24,8 @@ export default class Decoder extends EventTarget implements IDecoder {
     this.#tokenDecoder = new TokenDecoder(this.#dataloader, solution);
     this.#tokenDecoder.addEventListener(DecoderEventType.CLEAR, this.clear.bind(this));
     
+    (globalThis as any).userDiy = this._addUserCommit.bind(this);
+    
     initPromise.then(() => {
       this.#decoder = new Module['Decoder']();
       this.inited = true;

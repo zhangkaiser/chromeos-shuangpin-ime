@@ -123,6 +123,14 @@ export class TokenDecoder extends EventTarget {
     } else if (solution && this._dataLoader.shuangpinStatus) {
       this.updateShuangpinSolution(getShuangpinSolution(solution));
     }
+
+    if (this._dataLoader.shuangpinStatus) {
+      chrome.storage.local.get("customShuangpin", (res) => {
+        if ('customShuangpin' in res) {
+          this.updateShuangpinSolution(res['customShuangpin']);
+        }
+      })
+    }
       
     this.clear();
   }

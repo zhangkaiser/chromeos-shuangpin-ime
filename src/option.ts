@@ -55,7 +55,8 @@ const solutionNames: Record<keyof typeof solutions, string> = {
   ziranma_o: "自然码[o键引导]",
   zhongwenzhixing_o: "中文之星[o键引导]",
   xiaohe_o: "小鹤双拼[o键引导]",
-  xiaohe: "小鹤双拼"
+  xiaohe: "小鹤双拼",
+  zhinengabc: "智能ABC"
 }
 
 const onlineEngineList: Record<PredictEngine, string> = {
