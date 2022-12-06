@@ -1,4 +1,3 @@
-import { GlobalState } from "src/model/globalstate";
 import { BaseEventManager } from "./base";
 import { imeConfig } from "./setglobalconfig";
 
@@ -36,16 +35,10 @@ export class UIRuntimeManager extends BaseRuntimeManager {
     super();
   }
 
-  onInstalled() {
-
-  }
-
-  onConnect() {
-
-  }
-
-  onConnectExternal() {
-
+  onInstalled() { 
+    if (imeConfig.onInstalled) {
+      imeConfig.onInstalled();
+    }
   }
 
   onMessage() {
