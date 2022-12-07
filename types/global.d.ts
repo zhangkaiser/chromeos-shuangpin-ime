@@ -19,5 +19,8 @@ module globalThis {
     runtime: chrome.runtime,
 
     getGlobalState: () => Promise<IGlobalState>,
+    saveGlobalState: (states: IGlobalState) => Promise<boolean>,
+    
+    onInstalled?: () => boolean,
   }
 }

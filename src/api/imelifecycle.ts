@@ -17,6 +17,14 @@ const imeEventList = [
   "onSurroundingTextChanged"
 ]
 
+const imeEventListBySelf = [
+  "onRefresh",
+  "onInitialize",
+  "onIMEReset",
+  "onMenuChange",
+  "onClear"
+]
+
 
 export class IMELifecycle extends BaseEventManager implements Partial<Record<InputIMEApiKeysType, Function>> {
   [key: string]: any;
@@ -41,10 +49,11 @@ export class IMELifecycle extends BaseEventManager implements Partial<Record<Inp
 
   registerListeners() { 
     this.addListeners(imeConfig.ime, imeEventList, this);
+    this.addEventListeners(imeEventListBySelf, this);
   }
 
   onActivate(engineID: string) {
-
+    
   }
 
   onAssistiveWindowButtonClicked(
@@ -86,6 +95,26 @@ export class IMELifecycle extends BaseEventManager implements Partial<Record<Inp
   }
 
   onSurroundingTextChanged(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
+
+  }
+
+  onMenuChange() {
+
+  }
+
+  onRefresh() {
+
+  }
+
+  onInitialize() {
+
+  }
+
+  onIMEReset() {
+
+  }
+
+  onClear() {
 
   }
 

@@ -58,6 +58,17 @@ export class EventListener {
     throw new Error(`${eventName} listener registration fatal.`);
   }
 
+  static registerEventListener(eventName: string, manager: EventTarget) {
+    let listener = (manager as any)[eventName].bind(manager)
+    manager.addEventListener(eventName, listener);
+
+    let dispose = () => {
+      manager.removeEventListener(eventName, listener);
+    }
+
+    return { dispose }
+  }
+
   static getListener<T>(manager: T, eventName: keyof T) {
 
     if (Reflect.has(manager as Object, eventName) && typeof (manager as any)[eventName] === 'function') {
@@ -73,13 +84,25 @@ export class BaseEventManager extends EventTarget {
 
   _events: Record<string, EventManagerType> = {};
 
-  set events(lists: [string, EventManagerType][]) {
-    this._events = Object.fromEntries(lists);
+  set events(lists: ([string, EventManagerType] | undefined)[]) {
+    lists.forEach((item) => {
+      if (!item) return;
+      this._events[item[0]] = item[1];
+    });
   }
 
   addListeners<T extends Object>(namespace: T, eventsList: string[], manager: BaseEventManager) {
     this.events = eventsList.map((eventName) => {
+      if (Reflect.has(manager, eventName)) return undefined;
       let eventManager = EventListener.registerListener(namespace, eventName, manager);
+      return [eventName, eventManager];
+    });
+  }
+
+  addEvenetlisteners(eventsList: string[], manager: BaseEventManager) {
+    this.events = eventsList.map((eventName) => {
+      if (Reflect.has(manager, eventName)) return undefined;
+      let eventManager = EventListener.registerEventListener(eventName, manager);
       return [eventName, eventManager];
     });
   }
