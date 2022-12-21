@@ -6,6 +6,7 @@
   "scripts": {
     "test": "mocha",
     "build": "export PRODUCTION=1 && webpack",
+    "build-new": "webpack -c webpack.new.js",
     "watch": "webpack --mode development --watch",
     "watch:split": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && webpack --watch",
     "ime-build": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && npm run build && node ./tools/build.js",

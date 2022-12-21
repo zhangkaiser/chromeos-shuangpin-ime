@@ -269,14 +269,14 @@ export class Controller extends EventTarget {
 
   /** @todo Surrounding text handler.  */
   handleSurroundingText(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
-    if (process.env.MV3) { 
-      if (!this.model.engineID) {
-        // Current state is reactivate from inactive.
-        this.model.reactivate(engineID)
-        this._lastKeyChar = surroundingInfo.text.slice(-1);
-        // this.model.setEngineID(engineID);
-      } 
-    }
+    // if (process.env.MV3) { 
+    //   if (!this.model.engineID) {
+    //     // Current state is reactivate from inactive.
+    //     this.model.reactivate(engineID)
+    //     this._lastKeyChar = surroundingInfo.text.slice(-1);
+    //     // this.model.setEngineID(engineID);
+    //   } 
+    // }
   }
 
 
@@ -296,10 +296,20 @@ export class Controller extends EventTarget {
 
     let trans = this.currentConfig.preTransform(e.key);
     if (trans && this._context) {
-      chrome.input.ime.commitText({
-        contextID: this._context.contextID,
-        text: trans
-      });
+
+      // chrome.input.ime.commitText({
+      //   contextID: this._context.contextID,
+      //   text: trans
+      // });
+      this._configFactory.postMessage({
+        data: {
+          type: "commitText" as MessageType,
+          value: [{
+            contextID: this._context.contextID,
+            text: trans
+          }]
+        }
+      })
       return true;
     }
 
@@ -517,10 +527,19 @@ export class Controller extends EventTarget {
       let text = this.model.segments.join('');
       text = this.currentConfig.tranformCommit(text);
 
-      chrome.input.ime.commitText({
-        'contextID': this._context.contextID,
-        text
-      });
+      // chrome.input.ime.commitText({
+      //   'contextID': this._context.contextID,
+      //   text
+      // });
+      this._configFactory.postMessage({
+        data: {
+          type: "commitText" as MessageType,
+          value: [{
+            'contextID': this._context.contextID,
+            text
+          }]
+        }
+      })
     }
   }
 

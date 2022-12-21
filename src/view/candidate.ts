@@ -1,6 +1,8 @@
 import type { Config } from "../model/config";
 import type { Candidate } from "../model/candidate";
 
+import { configFactoryInstance } from "src/model/configfactory";
+
 interface ICandidateWindowProperties {
   /** Text taht is shown at the bottom of the candidate window. */
   auxiliaryText?: string,
@@ -41,27 +43,51 @@ export class CandidateWindow {
   constructor(public engineID: string, public config: Config) {}
 
   #setWindow(prop: ICandidateWindowProperties) {
-    chrome.input.ime.setCandidateWindowProperties({
-      engineID: this.engineID,
-      properties: prop
-    });
+    configFactoryInstance.postMessage({
+      data: {
+        type: "setCandidateWindowProperties" as MessageType,
+        value: [{
+          engineID: this.engineID,
+          properties: prop
+        }]
+      }
+    })
   }
 
   #setCandidates(parameters: chrome.input.ime.CandidatesParameters) {
-    chrome.input.ime.setCandidates(parameters);
+    // chrome.input.ime.setCandidates(parameters);
+    configFactoryInstance.postMessage({
+      data: {
+        type: "setCandidates" as MessageType,
+        value: [parameters]
+      }
+    })
+    
   }
 
   #setCursorPosition(parameters: chrome.input.ime.CursorPositionParameters) {
-    chrome.input.ime.setCursorPosition(parameters);
+    // chrome.input.ime.setCursorPosition(parameters);
+    configFactoryInstance.postMessage({
+      data: {
+        type: "setCursorPosition" as MessageType,
+        value: [parameters]
+      }
+    })
   }
 
   #clearComposition(contextID: number) {
     try {
-      chrome.input.ime.clearComposition({contextID});
-    } catch(e) {
-      chrome.input.ime.clearComposition({
-        contextID: -1
+      // chrome.input.ime.clearComposition({contextID});
+      configFactoryInstance.postMessage({
+        data: {
+          type: "clearComposition" as MessageType,
+          value: [{contextID}]
+        }
       })
+    } catch(e) {
+      // chrome.input.ime.clearComposition({
+      //   contextID: -1
+      // })
     }
   }
 

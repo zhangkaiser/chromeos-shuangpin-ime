@@ -60,9 +60,21 @@ export class View {
     }
     
     if (!stateId) { // Add.
-      chrome.input.ime.setMenuItems(menuItemParameters);
+      // chrome.input.ime.setMenuItems(menuItemParameters);
+      this.configFactory.postMessage({
+        data: {
+          type: "setMenuItems" as MessageType,
+          value: [menuItemParameters]
+        }
+      })
     } else {  // Update.
-      chrome.input.ime.updateMenuItems(menuItemParameters as any);
+      // chrome.input.ime.updateMenuItems(menuItemParameters as any);
+      this.configFactory.postMessage({
+        data: {
+          type: "updateMenuItems" as MessageType,
+          value: [menuItemParameters]
+        }
+      })
     }
   }
 
@@ -126,25 +138,39 @@ export class View {
     try {
       // TODO Running in Android application have will be focus issues.
       // But use short(raw source) text is no problem.
-      if (vkPort) {
-        vkPort.postMessage({
-          type: 'refresh',
-          data: {
-            text: composing_text,
-            cursor: pos,
-            candidates: this.model.candidates.map((candidate) => ({
-             target: candidate.target
-            }))
-          }
-        })
-        return;
-      }
+      // if (vkPort) {
+      //   vkPort.postMessage({
+      //     type: 'refresh',
+      //     data: {
+      //       text: composing_text,
+      //       cursor: pos,
+      //       candidates: this.model.candidates.map((candidate) => ({
+      //        target: candidate.target
+      //       }))
+      //     }
+      //   })
+      //   return;
+      // }
 
-      chrome.input.ime.setComposition({
-        contextID: this._context.contextID,
-        text: composing_text,
-        cursor: pos
-      }, composeCb);
+      this.configFactory.postMessage({
+        data: {
+          type: "setComposition" as MessageType,
+          value: [{
+            contextID: this._context.contextID,
+            text: composing_text,
+            cursor: pos
+          }]
+        }
+      });
+
+      composeCb();
+
+
+      // chrome.input.ime.setComposition({
+      //   contextID: this._context.contextID,
+      //   text: composing_text,
+      //   cursor: pos
+      // }, composeCb);
     } catch(e) {
       this.hide();
     }

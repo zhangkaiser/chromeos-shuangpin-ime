@@ -29,7 +29,8 @@ export default class ConfigFactory {
    * Sets the current input tool by the given input tool code.
    */
   setInputTool(inputToolCode: InputToolCode) {
-    this._inputToolCode = inputToolCode;
+    // this._inputToolCode = inputToolCode;
+    this._inputToolCode = "zh-wasm-shuangpin" as InputToolCode;
   }
 
   clearInputTool() {
@@ -75,6 +76,12 @@ export default class ConfigFactory {
           return this._map[inputToolCode] = new PinyinConfig();
       }
     })
+  }
+
+  port?: chrome.runtime.Port;
+
+  postMessage(msg: IMessageProps) {
+    this.port?.postMessage(msg);
   }
 }
 

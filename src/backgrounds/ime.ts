@@ -3,8 +3,6 @@ import { IMessage } from "src/model/common";
 import { configFactoryInstance } from "src/model/configfactory";
 import { EventType, GlobalState, InputToolCode, MessageType, StateID } from "src/model/enums";
 import { IIMEState, IInitedState } from "src/model/state";
-import { enableDebug } from "src/utils/debug";
-import { loadDict } from "src/utils/transform";
 
 /**
  * The UI background class implements the script for the background page of chrome
@@ -24,7 +22,7 @@ export default class Background {
     // Register message listener.
     this.#registerMessage();
     this.#registerConnect();
-    this.#init();
+    // this.#init();
 
     this._controller.addEventListener(
       EventType.UPDATESTATE,
@@ -51,15 +49,65 @@ export default class Background {
     chrome.runtime.onConnectExternal.addListener(this.processConnect.bind(this));
   }
 
+  onActivate(engineID: string) {
+    this._controller.activate(engineID as InputToolCode);
+  }
+
+  onDeactivated(engineID: string) {
+    this._controller.deactivate(engineID);
+  }
+
+  onFocus(context: chrome.input.ime.InputContext) {
+    this._controller.register(context);
+  }
+
+  onBlur(contextID: any) {
+    this._controller.unregister(contextID);
+  }
+
+  onReset(engineID: string) {
+    this._controller.reset(engineID);
+  }
+
+  onKeyEvent(engineID: string, keyEvent: KeyboardEvent, requestId: number) {
+    if (this._controller.handleEvent(engineID as any, keyEvent, requestId)) {
+      this.configFactory.postMessage({
+        data: {
+          type: "keyEventHandled" as any,
+          value: [requestId, true]
+        }
+      })
+    } else {
+      this.configFactory.postMessage({
+        data: {
+          type: "keyEventHandled" as any,
+          value: [requestId, false]
+        }
+      });
+    }
+  }
+
+  onCandidateClicked(engineID: string, candidateID: number, button: /** MouseButton Type */string) {
+    this._controller.processNumberKey({ key: candidateID + 1});
+  }
+
+  onMenuItemActivated(engineID: string, name: string) {
+    this._controller.switchInputToolState(name as any, engineID);
+  }
+
+  onInputContextUpdate(context: chrome.input.ime.InputContext) {
+    
+  }
+
+  onSurroundingTextChanged(engineID: string, surrouningInfo: string) {
+
+  }
+
   /** Initializes the background scripts. */
   #init() {
-    chrome.runtime.onInstalled.addListener((res) => {
-      // if (res.reason === 'install') {
-      //   // The default input tool configure.
-      //   this.#updateStateToStorage();
-      // }
-    })
+    
 
+    
     chrome.input.ime.onActivate.addListener((engineID) => {
 
       this.#loadedPromise = this.#loadingState()
@@ -193,21 +241,33 @@ export default class Background {
     }
   }
 
+  #port?: chrome.runtime.Port;
+
   /** @todo */
-  processConnectMessage(msg: IMessage, port: chrome.runtime.Port) {
-    switch(msg['type']) {
-      case MessageType.CLEAR:
-        return this._controller.model.clear();
-      case MessageType.TOGGLE_LANGUAGE_STATE:
-        let { value } = msg['data'] || true;
-        return this._controller.updateState('lang', value);
-      case MessageType.VISIBILITY:
-        return this._controller.visibility = msg['data'].value;
+  processConnectMessage(msg: IMessageProps, port: chrome.runtime.Port) {
+    
+    let {type, value} = msg.data;
+    if (type in (this as any)) {
+      (this as any)[type](...value);
     }
+
+    // switch(msg['type']) {
+    //   case MessageType.CLEAR:
+    //     return this._controller.model.clear();
+    //   case MessageType.TOGGLE_LANGUAGE_STATE:
+    //     let { value } = msg['data'] || true;
+    //     return this._controller.updateState('lang', value);
+    //   case MessageType.VISIBILITY:
+    //     return this._controller.visibility = msg['data'].value;
+    // }
   }
 
   processConnect(port: chrome.runtime.Port) {
-    this._controller.vkPort = port;
+    // this._controller.vkPort = port;
+    this.#port = port;
+    this.configFactory.port = port;
     port.onMessage.addListener(this.processConnectMessage.bind(this));
   }
 }
+
+new Background();

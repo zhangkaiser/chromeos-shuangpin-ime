@@ -136,13 +136,13 @@ export class Model extends EventTarget implements IModel {
   }
 
   setStates(states: Record<string, any>) {
-    if (process.env.IME) {
-      let observeField = ['shuangpinSolution'];
-      observeField = observeField.filter(field => field in states);
-      if (observeField.length > 0 && this._decoder && this.engineID) {
-        this.reload();
-      }
-    }
+    // if (process.env.IME) {
+    //   let observeField = ['shuangpinSolution'];
+    //   observeField = observeField.filter(field => field in states);
+    //   if (observeField.length > 0 && this._decoder && this.engineID) {
+    //     this.reload();
+    //   }
+    // }
     
     return this.currentConfig.setStates(states);
   }
@@ -169,19 +169,20 @@ export class Model extends EventTarget implements IModel {
     let engineID = this.engineID;
     if (!engineID) return console.error("No engineID");
     
-    if (process.env.IME) {
-      this._decoder = new IMEDecoder(engineID, {
-        extId: this.configFactory.globalState.connectExtId,
-        // TODO 
-        annotation: (this.states as any).shuangpinSolution,
+    this._decoder = new WASMDecoder("zh-wasm-shuangpin", "pinyinjiajia_o");
+    // if (process.env.IME) {
+    //   this._decoder = new IMEDecoder(engineID, {
+    //     extId: this.configFactory.globalState.connectExtId,
+    //     // TODO 
+    //     annotation: (this.states as any).shuangpinSolution,
 
-      });
-      this.imeHandler.setDecoder(this._decoder);
+    //   });
+    //   this.imeHandler.setDecoder(this._decoder);
 
-      this._decoder.addEventListener(EventType.IMERESPONSE, this.#onIMEResponse.bind(this));
-    } else {
-      throw new Error("Deprecated other decoder!");
-    }
+    //   this._decoder.addEventListener(EventType.IMERESPONSE, this.#onIMEResponse.bind(this));
+    // } else {
+    //   throw new Error("Deprecated other decoder!");
+    // }
 
     this._predictor = new Predictor();
   }
@@ -447,12 +448,12 @@ export class Model extends EventTarget implements IModel {
     //   return ;
     // }
     let imeResponse: IIMEResponse | null;
-    if (process.env.IME) {
-      this.decoder.decode(this.source, this.selectedCandID);
-    } else {
+    // if (process.env.IME) {
+    //   this.decoder.decode(this.source, this.selectedCandID);
+    // } else {
       imeResponse = this.decoder.decode(this.source, this.selectedCandID);
       this.handleResponse(imeResponse);
-    }
+    // }
   }
 
   handleResponse(imeResponse: IIMEResponse | null) {
