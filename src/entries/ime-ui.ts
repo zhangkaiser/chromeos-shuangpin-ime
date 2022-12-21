@@ -6,20 +6,12 @@
  * Handling connections between more extensions.
  */
 
-import { Controller } from "src/controller";
-
 import { IMELifecycle } from "src/api/imelifecycle";
 import { IMEEventDispatcher } from "src/api/eventdispatcher";
 import { UIRuntimeManager as Runtime, runtimeEventList } from "src/api/runtime";
 import { imeConfig } from "src/api/setglobalconfig";
+import { DecoderItemManager } from "src/api/decoder";
 
-
-function getEventListener<T>(manager: Record<string, Function>,  eventName: string) {
-  if (eventName in manager) {
-    return manager[eventName].bind(manager);
-  }
-  return null;
-}
 
 class IMEUIManager {
 
@@ -27,51 +19,46 @@ class IMEUIManager {
   imeEventDispatcher: IMEEventDispatcher;
   runtimeManager: Runtime;
 
-  constructor(public globalState: IGlobalState) {
-
+  constructor(public globalState?: IGlobalState) {
+    
     this.runtimeManager = new Runtime();
     this.imeLifecycleManager = new IMELifecycle();
     
-    this.imeEventDispatcher = new IMEEventDispatcher();
-    this.registerEventDispatcher();
+    this.imeEventDispatcher = new IMEEventDispatcher(this.imeLifecycleManager);
+    this.imeLifecycleManager.eventDispatcher = this.imeEventDispatcher;
 
-    this.registerConnection();
   }
 
   async initialize() {
     this.runtimeManager.registerListeners();
-    this.runtimeManager.addEventListener("states", () => {
-
-    });
 
     this.imeLifecycleManager.registerListeners();
-    this.imeEventDispatcher.registerEventDispatcher();
 
-  }
+    this.registerConnection();
 
-  registerRuntimeListener() {
-    
-  }
-
-
-  registerEventDispatcher() {
-    
   }
 
   registerUserInputEvent() {
   }
 
   registerConnection() {
+    if (this.globalState && 'decoders' in this.globalState) {
 
+      this.globalState.decoders.forEach((item) => {
+        let itemManager = new DecoderItemManager(item[0] as string, item[1]);
+        this.imeEventDispatcher.add(itemManager);
+      });
+    }
   }
 }
 
 
 async function main() {
   let globalState = await imeConfig.getGlobalState();
-
+  
   let uiManager = new IMEUIManager(globalState);
   await uiManager.initialize();
+
 }
 
 main();

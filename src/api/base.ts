@@ -93,15 +93,15 @@ export class BaseEventManager extends EventTarget {
 
   addListeners<T extends Object>(namespace: T, eventsList: string[], manager: BaseEventManager) {
     this.events = eventsList.map((eventName) => {
-      if (Reflect.has(manager, eventName)) return undefined;
+      if (!Reflect.has(manager, eventName)) return undefined;
       let eventManager = EventListener.registerListener(namespace, eventName, manager);
       return [eventName, eventManager];
     });
   }
 
-  addEvenetlisteners(eventsList: string[], manager: BaseEventManager) {
+  addEventListeners(eventsList: string[], manager: BaseEventManager) {
     this.events = eventsList.map((eventName) => {
-      if (Reflect.has(manager, eventName)) return undefined;
+      if (!Reflect.has(manager, eventName)) return undefined;
       let eventManager = EventListener.registerEventListener(eventName, manager);
       return [eventName, eventManager];
     });

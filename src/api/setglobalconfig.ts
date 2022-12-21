@@ -1,6 +1,6 @@
 
 import setChromeOSConfig from "src/api/chromeos/config";
-import setVscodeConfig from "src/api/vscode/config";
+import setVscodeConfig from "src/api/code/config";
 import setWebConfig from "src/api/web/config";
 
 // Tree-shaking support.

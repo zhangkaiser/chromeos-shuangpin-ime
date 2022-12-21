@@ -27,6 +27,11 @@ class BaseRuntimeManager extends BaseEventManager {
     this.addListeners(imeConfig.runtime, runtimeEventList, this);
   }
 
+  sendMessage(msg: IMessageProps) {
+    msg.extID 
+      ? imeConfig.runtime.sendMessage(msg.extID, msg.data, msg.cb)
+      : imeConfig.runtime.sendMessage(msg.data, msg.cb);
+  }
 }
 
 
@@ -36,16 +41,21 @@ export class UIRuntimeManager extends BaseRuntimeManager {
   }
 
   onInstalled() { 
+    console.log("onInstalled");
     if (imeConfig.onInstalled) {
       imeConfig.onInstalled();
     }
   }
 
-  onMessage() {
+  onMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
 
   }
 
-  onMessageExternal() {
+  onMessageExternal(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+
+  }
+
+  onConnect() {
 
   }
 
