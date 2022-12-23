@@ -2,12 +2,16 @@ import { EventType } from "src/model/enums";
 import { imeConfig } from "./setglobalconfig";
 
 export class DecoderItemManager {
+
+  static RECONNECT_TIME = 3 * 60 * 1000;
   
   #port?: chrome.runtime.Port;
 
   #main = false;
   #permissions: IDecoderPermission = [];
   #shortcuts: IDecoderShortcuts = [];
+
+  reconnectTimeoutID: number = 0;
 
   get main() {
     return this.#main;
@@ -36,6 +40,7 @@ export class DecoderItemManager {
   }
 
   dispose() {
+    clearTimeout(this.reconnectTimeoutID);
     this.#port?.disconnect();
   }
 
@@ -46,6 +51,13 @@ export class DecoderItemManager {
     this.#port!.onDisconnect.addListener(() => {
       this.#port = undefined;
     });
+
+    // May be keep active for MV3 extension.
+    this.addReconnectTimeout();
+  }
+
+  addReconnectTimeout() {
+    this.reconnectTimeoutID = setTimeout(() => this.connect(), DecoderItemManager.RECONNECT_TIME) as any;
   }
 
   onMessage(msg: IMessageProps, port: chrome.runtime.Port) {
