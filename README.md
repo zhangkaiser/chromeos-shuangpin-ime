@@ -1,7 +1,7 @@
 # 中文双拼输入法
 Chinese shuangpin ime for Chrome OS/Chromium OS/Fyde OS.
 
-chromium os官方从`M108` 开始添加了对Linux(Constini) IME的支持，支持`GTK3`应用程序（包含`基于Electron`的程序）支持运行Chrome OS系统上的IME。详情>> [platform2>vm_tools>cros_im](https://chromium.googlesource.com/chromiumos/platform2/+/f7d8d74636f5a5a6cf9d4e6cf044ff2286f9e1c6/vm_tools/cros_im)
+chromium os官方从`M108` 开始添加了对Linux(Constini) IME的支持，支持`GTK3`应用程序（包含`基于Electron`的程序）运行Chrome OS上的IME。详情>> [platform2>vm_tools>cros_im](https://chromium.googlesource.com/chromiumos/platform2/+/f7d8d74636f5a5a6cf9d4e6cf044ff2286f9e1c6/vm_tools/cros_im)
 
 
 一款Chrome OS／Chromium os／Fyde OS系统应用的中文拼音／双拼输入法(以浏览器插件形式实现)。
