@@ -13,8 +13,7 @@ export class PinyinConfig extends ChineseConfig implements IPinyinConfigState {
 
   configStates: Record<string, any> = {
     ...this.configStates,
-    enableVertical: true,
-    predictEngine: true
+    enableVertical: true
   };
 
   punctuationReg = /[^a-z0-9 \r]/i;

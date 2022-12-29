@@ -67,7 +67,7 @@ export enum StateID {
 
 export enum PinyinStateID {
   VERTICAL = "enableVertical",
-  PREDICT_ENGINE = "predictEngine"
+  PREDICT_ENGINE = "OnlineEngine"
 }
 
 export enum ShuangpinStateID {
@@ -128,7 +128,7 @@ export enum Decoders {
   ONLINE
 }
 
-export enum PredictEngine {
+export enum OnlineEngine {
   BAIDU,
   GOOGLE,
   GOOGLE_CN

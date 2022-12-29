@@ -13,16 +13,13 @@ export class View {
   /** The context. */
   _context?:any;
 
-  /** The current input tool. */
-  _inputToolCode = '';
-
   /** The ui window. */
   window?: CandidateWindow;
 
-  constructor(public model: Model) { }
+  constructor(public model: Model) {}
 
   /** Get the current config from config factory. */
-  get currentConfig() {
+  get config() {
     return this.configFactory.getCurrentConfig();
   }
 
@@ -33,8 +30,7 @@ export class View {
 
   /** Updates the menu items. */
   updateInputTool(hidden: boolean = false) {
-    this._inputToolCode = this.configFactory.getInputTool();
-    this.window = new CandidateWindow(this._inputToolCode, this.currentConfig);
+    this.window = new CandidateWindow(this.model.engineID, this.config);
     if (!hidden) this.updateMenuItems();
   }
 
@@ -42,14 +38,13 @@ export class View {
    * Updates the menu items.
    */
   updateMenuItems(stateId?: StateID) {
-    if (!this._inputToolCode) return ;
+    if (!this.model.engineID) return ;
   
-    let states = this.configFactory.getCurrentConfig().states;
-    let menuItemParameters = { engineID: this._inputToolCode, items: [] };
+    let states = this.config.states;
+    let menuItemParameters = { engineID: this.model.engineID, items: [] };
 
     let menuItems = menuItemParameters.items as chrome.input.ime.MenuItem[];
-    for (let key in states)
-    {
+    for (let key in states) {
       menuItems.push({
         id: key,
         label: states[key as StateID].desc,
@@ -59,23 +54,8 @@ export class View {
       });
     }
     
-    if (!stateId) { // Add.
-      // chrome.input.ime.setMenuItems(menuItemParameters);
-      this.configFactory.postMessage({
-        data: {
-          type: "setMenuItems" as MessageType,
-          value: [menuItemParameters]
-        }
-      })
-    } else {  // Update.
-      // chrome.input.ime.updateMenuItems(menuItemParameters as any);
-      this.configFactory.postMessage({
-        data: {
-          type: "updateMenuItems" as MessageType,
-          value: [menuItemParameters]
-        }
-      })
-    }
+    if (!stateId) imeAPI.setMenuItems(menuItemParameters);
+    else imeAPI.updateMenuItems(menuItemParameters as any);
   }
 
 
@@ -97,7 +77,7 @@ export class View {
    * @todo
    * To refresh the editor.
    */
-  refresh(vkPort?: chrome.runtime.Port) {
+  refresh() {
     if (!this._context) return;
 
     let composing_text = "";
@@ -116,64 +96,32 @@ export class View {
     if (segmentsAfterCursor.length > 0) {
       composing_text += ' ' + segmentsAfterCursor.join(' ');
     }
-    composing_text = this.currentConfig.transformView(
+    composing_text = this.config.transformView(
         composing_text, this.model.rawSource);
     composing_text = composing_text.slice(-1) == "'" ? composing_text.slice(0, -1) : composing_text;
     // composing_text = composing_text.replace(/'/g, "");
     pos = composing_text.length;
 
     if (this.model.wasEnglish) {
-      this.model.candidates.unshift(
-        { 
-          target: this.model.rawSource, 
-          candID: -1, 
-          range: this.model.rawSource.length, 
-          annotation: ""
-        }
-      )
+      this.model.candidates.unshift({ 
+        target: this.model.rawSource, 
+        candID: -1, 
+        range: this.model.rawSource.length, 
+        annotation: ""
+      })
       composing_text = this.model.rawSource;
       pos = this.model.rawSource.length;
     }
 
     try {
-      // TODO Running in Android application have will be focus issues.
-      // But use short(raw source) text is no problem.
-      // if (vkPort) {
-      //   vkPort.postMessage({
-      //     type: 'refresh',
-      //     data: {
-      //       text: composing_text,
-      //       cursor: pos,
-      //       candidates: this.model.candidates.map((candidate) => ({
-      //        target: candidate.target
-      //       }))
-      //     }
-      //   })
-      //   return;
-      // }
-
-      this.configFactory.postMessage({
-        data: {
-          type: "setComposition" as MessageType,
-          value: [{
-            contextID: this._context.contextID,
-            text: composing_text,
-            cursor: pos
-          }]
-        }
+      imeAPI.setComposition({
+        contextID: this._context.contextID,
+        text: composing_text,
+        cursor: pos
       });
 
       composeCb();
-
-
-      // chrome.input.ime.setComposition({
-      //   contextID: this._context.contextID,
-      //   text: composing_text,
-      //   cursor: pos
-      // }, composeCb);
-    } catch(e) {
-      this.hide();
-    }
+    } catch(e) { this.hide(); }
   }
 
   /**
@@ -182,7 +130,7 @@ export class View {
   showCandidates() {
 
     let { pageIndex, highlightIndex } = this.model;
-    let { pageSize } = this.currentConfig;
+    let { pageSize } = this.config;
 
     if (this.window) {
       this.window.setPageNumber(pageIndex);

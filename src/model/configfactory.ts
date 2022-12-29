@@ -3,86 +3,72 @@
  */
 
 import { Config } from "./config";
-import { InputToolCode } from "./enums";
+import { GlobalState, InputToolCode } from "./enums";
 import { PinyinConfig } from "./pinyinconfig";
 import { ShuangpinConfig } from "./shuangpinconfig";
-import { IGlobalState } from "./state";
+import { ILocalStorageOfGlobalState } from "./state";
 
 /**
  * The input mothod config factory.
  */
 export default class ConfigFactory {
-  /** The current input tool code.  */
-  private _inputToolCode: InputToolCode = InputToolCode.WASM_PINYIN;
 
-  /** The map of input tool code to config object. */
-  private _map: Partial<Record<InputToolCode, Config>> = {};
+  private _configs: Record<InputToolCode, Config>;
   constructor() {
-    this.#buildConfig();
+    let shuangpinConfigInstance = new ShuangpinConfig();
+    let pinyinConfigInstance = new PinyinConfig();
+
+    this._configs = {
+      [InputToolCode.JS_PINYIN]: pinyinConfigInstance,
+      [InputToolCode.JS_SHUANGPIN]: shuangpinConfigInstance,
+      [InputToolCode.WASM_PINYIN]: pinyinConfigInstance,
+      [InputToolCode.WASM_SHUANGPIN]: shuangpinConfigInstance
+    }
   }
 
-  /** The ime global state. */
-  globalState: IGlobalState = {
-    connectExtId: "",
+  _globalState: ILocalStorageOfGlobalState = {
+    inputToolCode: InputToolCode.WASM_SHUANGPIN,
   }
+
+  set globalState(value: ILocalStorageOfGlobalState) {
+    if (value && value.inputToolCode) {
+      this._globalState = value;
+    }
+  }
+
+  get globalState() {
+    return this._globalState;
+  }
+
   /**
    * Sets the current input tool by the given input tool code.
    */
   setInputTool(inputToolCode: InputToolCode) {
-    // this._inputToolCode = inputToolCode;
-    this._inputToolCode = "zh-wasm-shuangpin" as InputToolCode;
+    this.globalState.inputToolCode = inputToolCode;
   }
 
   clearInputTool() {
-    this._inputToolCode = InputToolCode.WASM_PINYIN;
+    this.globalState.inputToolCode = InputToolCode.WASM_SHUANGPIN;
   }
 
   getInputTool() {
-    return this._inputToolCode!;
+    return this.globalState.inputToolCode;
   }
 
   /**
    * Gets the config for a given input tool code.
    */
   getConfig(inputToolCode: InputToolCode) {
-    return this._map[inputToolCode]!;
+    return this._configs[inputToolCode]!;
   }
 
   /**
-   * @todo
    * Gets the config for the current input tool.
    */
   getCurrentConfig() {
-    return this.getConfig(this._inputToolCode)!;
+    return this._configs[this.globalState.inputToolCode];
   }
 
-  /** Build configs. */
-  #buildConfig() {
-    [
-      InputToolCode.JS_PINYIN,
-      InputToolCode.JS_SHUANGPIN,
-      InputToolCode.WASM_PINYIN,
-      InputToolCode.WASM_SHUANGPIN
-    ].forEach((inputToolCode) => {
-      switch (inputToolCode) {
-        case InputToolCode.JS_SHUANGPIN:
-        case InputToolCode.WASM_SHUANGPIN:
-  
-          return this._map[inputToolCode] = new ShuangpinConfig();
-  
-        case InputToolCode.WASM_PINYIN:
-        case InputToolCode.JS_PINYIN:
-        default:
-          return this._map[inputToolCode] = new PinyinConfig();
-      }
-    })
-  }
-
-  port?: chrome.runtime.Port;
-
-  postMessage(msg: IMessageProps) {
-    this.port?.postMessage(msg);
-  }
 }
 
 export const configFactoryInstance = new ConfigFactory();

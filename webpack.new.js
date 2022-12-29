@@ -1,13 +1,23 @@
 let path = require("path");
 let webpack = require("webpack");
 
+let CopyWebpackPlugin = require("copy-webpack-plugin");
+
+let mode = "development";
+if (process.env.PRODUCTION) mode = "production";
+
+const copyPatterns = [
+  {from: "./googlepinyin/out/index.wasm", to: "."},
+  {from: "./src/asset", to: "."},
+  {from: "./src/manifests/manifest_decoder.json", to: "./manifest.json"}
+]
+
 module.exports = {
   entry: {
-    background: './src/entries/ime-ui.ts',
-    main: "./src/entries/main.ts",
-    decoder: "./src/backgrounds/ime.ts"
+    background: "./src/chrome-extension.ts",
+    options: "./src/option.ts"
   },
-  mode: "development",
+  mode: mode,
   output: {
     path: path.resolve(process.cwd(), "./out"),
     filename: '[name].js'
@@ -22,6 +32,7 @@ module.exports = {
     extensions: [".ts", "..."],
     alias: {
       src: path.resolve(process.cwd(), "src"),
+      googlepinyin: path.resolve(process.cwd(), "googlepinyin")
     },
     fallback: {
       "path": false,
@@ -36,6 +47,10 @@ module.exports = {
       "process.env.CHROME_OS": true,
       "process.env.WEB": false,
       "process.env.CODE": false
+    }),
+    new CopyWebpackPlugin({
+      patterns: copyPatterns
     })
+
   ]
 }

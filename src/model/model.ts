@@ -3,10 +3,7 @@ import { Candidate } from "./candidate";
 import { configFactoryInstance } from "./configfactory";
 // import JSDecoder from "../decoder/decoder";
 import WASMDecoder from "../decoder/cdecoder";
-import OnlineDecoder from "src/decoder/onlinedecoder";
-import Predictor from "src/decoder/predictor";
 
-import { isJS, isPinyin } from "../utils/regexp";
 import { IMEDecoderProxy as IMEDecoder } from "src/decoder/imedecoderproxy";
 import { IMEOptionalHandler } from "src/model/imehandler";
 
@@ -43,11 +40,6 @@ interface IModel {
   /** Enter the select status. */
   enterSelectInternal(): void;
 
-  /** @deprecated */
-  setFuzzyExpansions?(): void;
-  /** @deprecated */
-  enableUserDict?(): void;
-
   /** 
    * Updates the source text at the current cursor by the given
    * transform result. 
@@ -62,9 +54,6 @@ interface IModel {
 
   /** Fetches candidates from decoder. */
   fetchCandidates(): void;
-
-  /** Set current engine id. */
-  setEngineID(engineID: string): void;
   
 }
 
@@ -76,8 +65,7 @@ export class Model extends EventTarget implements IModel {
   static MODELUPDATE_EVENT = new CustomEvent(EventType.MODELUPDATED);
   static CLOSING_EVENT = new CustomEvent(EventType.CLOSING);
 
-  protected _decoder?: IDecoder | undefined;
-  protected _predictor?: Predictor;
+  protected _decoder?: WASMDecoder;
 
   configFactory = configFactoryInstance;
   /** Current model status. */
@@ -111,7 +99,7 @@ export class Model extends EventTarget implements IModel {
   isFromInactive: boolean = false;
 
   /** engineID */
-  engineID?: string;
+  engineID: string = "zhime";
 
   /** candidate id. */
   selectedCandID = -1;
@@ -126,71 +114,36 @@ export class Model extends EventTarget implements IModel {
   _reverted = false;
 
   /** The current global configure. */
-  get currentConfig() {
+  get config() {
     return this.configFactory.getCurrentConfig()!;
   }
 
   /** The user local storage config. */
   get states() {
-    return this.currentConfig.getStates();
+    return this.config.getStates();
   }
 
   setStates(states: Record<string, any>) {
-    // if (process.env.IME) {
-    //   let observeField = ['shuangpinSolution'];
-    //   observeField = observeField.filter(field => field in states);
-    //   if (observeField.length > 0 && this._decoder && this.engineID) {
-    //     this.reload();
-    //   }
-    // }
-    
-    return this.currentConfig.setStates(states);
-  }
-
-  #onIMEResponse(e: any) {
-    if (!e.detail) return;
-    this.handleResponse(e.detail);
+    return this.config.setStates(states);
   }
 
   /** The current page index. */
   get pageIndex() {
     if (this.highlightIndex < 0 || this.candidates.length == 0) return 0;
     
-    let { pageSize } = this.currentConfig;
+    let { pageSize } = this.config;
     return Math.floor(this.highlightIndex / pageSize);
   }
 
-  setEngineID(engineID: string): void {
-    this.engineID = engineID;
-    // this.imeHandler.enableUserDecoder(true);
-  }
-
-  reload() {
-    let engineID = this.engineID;
-    if (!engineID) return console.error("No engineID");
-    
-    this._decoder = new WASMDecoder("zh-wasm-shuangpin", "pinyinjiajia_o");
-    // if (process.env.IME) {
-    //   this._decoder = new IMEDecoder(engineID, {
-    //     extId: this.configFactory.globalState.connectExtId,
-    //     // TODO 
-    //     annotation: (this.states as any).shuangpinSolution,
-
-    //   });
-    //   this.imeHandler.setDecoder(this._decoder);
-
-    //   this._decoder.addEventListener(EventType.IMERESPONSE, this.#onIMEResponse.bind(this));
-    // } else {
-    //   throw new Error("Deprecated other decoder!");
-    // }
-
-    this._predictor = new Predictor();
-  }
-
   get decoder() {
+    if (!this._decoder) {
+      this._decoder = new WASMDecoder(
+        this.configFactory.globalState.inputToolCode, 
+        this.config.shuangpinSolution
+      );
+    }
     return this._decoder;
   }
-
 
   updateHighlight(newIndex: number) {
     if (this.status != Status.SELECT || newIndex >= this.candidates.length) return ;
@@ -208,13 +161,13 @@ export class Model extends EventTarget implements IModel {
   movePage(step: number): void {
     if (this.status != Status.SELECT) return;
 
-    let { pageSize } = this.currentConfig;
+    let { pageSize } = this.config;
     this.updateHighlight((this.pageIndex + step) * pageSize);
   }
 
   /** @todo */
   updateSource(key: string, text: string) {
-    if (this.source.length + text.length > this.currentConfig.maxInputLen) {
+    if (this.source.length + text.length > this.config.maxInputLen) {
       this.selectCandidate(undefined, '');
     }
 
@@ -290,7 +243,7 @@ export class Model extends EventTarget implements IModel {
       this.commitPos = 0;
     } else if (this.cursorPos > 0) {
       let segment = this.segments[this.cursorPos - 1];
-      let revertConfig = this.currentConfig.revert(segment, this.rawSource);
+      let revertConfig = this.config.revert(segment, this.rawSource);
       deletedChar = revertConfig.deletedChar;
       segment = revertConfig.segment;
       this.rawSource = revertConfig.source;
@@ -361,15 +314,14 @@ export class Model extends EventTarget implements IModel {
 
     this.highlightIndex = -1;
     this.source = this.segments.slice(this.commitPos, this.cursorPos).join('');
-    this._decoder?.clear();
+    this.decoder?.clear();
     this.fetchCandidates();
   }
 
-  clear(registraion: boolean = false) {
-    if (this.status != Status.INIT) {
-      this.dispatchEvent(Model.CLOSING_EVENT);
-    }
-    if(this._decoder) this._decoder.clear();
+  clear() {
+    if (this.status != Status.INIT) this.dispatchEvent(Model.CLOSING_EVENT);
+
+    if(this.decoder) this.decoder.clear();
     
     this.rawSource = "";
     this.source = "";
@@ -384,41 +336,15 @@ export class Model extends EventTarget implements IModel {
     this.selectedCandID = -1;
     this.wasEnglish = false;
     this._reverted = false;
-
-    if (registraion) this.reload();
   }
 
   abort() {
     this.clear();
-
-  }
-
-  /** @deprecated */
-  reactivate(engineID: string) {
-    this.engineID = engineID;
-  }
-
-  /**
-   * @deprecated
-   * Resume state. 
-   */
-  resume() {
-    this.isFromInactive = false;
-    if (this.stateCache) {
-      let cacheNames = Object.keys(this.stateCache);
-      for (let i in cacheNames) {
-        (this as any)[i] = this.stateCache[cacheNames[i]];
-      }
-    }
-    this.stateCache = '';
   }
 
   reset() {
     this.clear();
-    if (this._decoder) {
-      // TODO
-      this._decoder.clear();
-    }
+    if (this.decoder) this.decoder.reset();
   }
 
   notifyUpdates(commit = false) {
@@ -443,24 +369,16 @@ export class Model extends EventTarget implements IModel {
   fetchCandidates() {
     if (!this.decoder || !this.source) return;
     this.status = Status.FETCHING;
-    // if (this.source.length == 1 && this.source === '\'') {
-    //   this.status = Status.SELECT;
-    //   return ;
-    // }
     let imeResponse: IIMEResponse | null;
-    // if (process.env.IME) {
-    //   this.decoder.decode(this.source, this.selectedCandID);
-    // } else {
-      imeResponse = this.decoder.decode(this.source, this.selectedCandID);
-      this.handleResponse(imeResponse);
-    // }
+    imeResponse = this.decoder.decode(this.source, this.selectedCandID);
+    this.handleResponse(imeResponse);
   }
 
   handleResponse(imeResponse: IIMEResponse | null) {
 
     if (!imeResponse) {
       this.status = Status.FETCHED;
-      if (this.currentConfig.autoHighlight || this._holdSelectStatus) {
+      if (this.config.autoHighlight || this._holdSelectStatus) {
         this.enterSelectInternal();
       }
 
@@ -499,66 +417,8 @@ export class Model extends EventTarget implements IModel {
     }
 
     this.status = Status.FETCHED;
-
-    // if (this.candidates.length == 1) {
-    //   // TODO Need to adapt to current decoder.  
-    //   this.selectCandidate(0, "");
-
-    // }
-    if (this.currentConfig.autoHighlight || this._holdSelectStatus) {
+    if (this.config.autoHighlight || this._holdSelectStatus) {
       this.enterSelectInternal();
-    }
-
-    this.predictor();
-
-    this.notifyUpdates();
-  }
-
-  /** 
-   * @todo There was a problem: triggered after commit text due to delay.
-   * Cloud prediction of candidate.
-   */
-  async predictor() {
-    if (!this._predictor) return;
-    if (!('predictor' in this.states) || !(this.states as any)['predictor']) return;
-
-    this._predictor.setEngine((this.states as any).predictEngine);
-
-    let currentSource = this.rawSource;
-    let rawSource = currentSource;
-
-    // TODO need to support pinyin.
-    if (this.commitPos) {
-      let segment = this.segments.slice(0, this.commitPos).join('');
-      rawSource = rawSource.slice(segment.length * 2);
-    }
-
-    let predict = await this._predictor.decode(this.source, rawSource);
-    if (!predict) return;
-    if (!this.candidates.length || this.candidates[0].target == predict.target) return;
-    if (!this.rawSource || !this.rawSource.endsWith(rawSource)) return ;
-
-    let { pageSize } = this.currentConfig;
-    let swapped = false;
-    for (let i = 0; i <= pageSize; i++) {
-      let candidate = this.candidates[i];
-      if (predict.target == candidate.target) {
-        let left = this.candidates[0];
-        this.candidates[0] = candidate;
-        this.candidates[i] = left;
-        swapped = true;
-        break;
-      }
-    }
-
-    if (!swapped) {
-      this.candidates.unshift(
-        new Candidate(
-          predict.target.toString(),
-          Number(predict.range),
-          -1
-        )
-      )
     }
 
     this.notifyUpdates();

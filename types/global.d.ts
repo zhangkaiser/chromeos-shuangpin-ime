@@ -29,23 +29,15 @@ interface IGlobalState {
   }
 }
 
+type IMEMethodInterface = Omit<typeof chrome.input.ime, 
+"onActivate" | "onAssistiveWindowButtonClicked" | "onBlur" |
+"onCandidateClicked" | "onDeactivated" | "onFocus"| "onInputContextUpdate" | 
+"onReset" | "onSurroundingTextChanged" | "onKeyEvent" | "onMenuItemActivated">;
+
+interface IApiController extends IMEMethodInterface {
+  port?: chrome.runtime.Port
+}
+
 module globalThis {
-
-  type ENVNames = "chromeos" | "vscode" | "web";
-
-  declare var IMEConfig: {
-    /** Runtime env name. */
-    envName: ENVNames,
-
-    menuItems: any[],
-    
-    /** Runtime api adapter. */
-    ime: chrome.input.ime,
-    runtime: chrome.runtime,
-
-    getGlobalState: () => Promise<IGlobalState | undefined>,
-    saveGlobalState: (states: IGlobalState) => Promise<boolean>,
-    
-    onInstalled?: () => boolean,
-  }
+  var imeAPI: IApiController;
 }

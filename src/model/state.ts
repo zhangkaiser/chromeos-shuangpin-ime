@@ -1,5 +1,5 @@
 import type { Config } from "./config";
-import { Key, Modifier, PinyinStateID, PredictEngine, ShuangpinStateID, StateID } from "./enums";
+import { InputToolCode, Key, Modifier, PinyinStateID, OnlineEngine, ShuangpinStateID, StateID } from "./enums";
 
 export class State {
   constructor(
@@ -28,13 +28,13 @@ export interface IPinyinState extends IChineseState, IPinyinConfigState {
 export interface IShuangpinState extends IPinyinState, IShuangpinConfigState {
 }
 
-export interface IGlobalState {
-  connectExtId: string
+export interface ILocalStorageOfGlobalState {
+  inputToolCode: InputToolCode
 }
 
 export type IIMEState = IPinyinState | IShuangpinState;
 
-export interface IInitedState {
+export interface ILocalStorageDataModel {
   states?: IIMEState,
-  globalState?: IGlobalState
+  global_state?: ILocalStorageOfGlobalState
 }

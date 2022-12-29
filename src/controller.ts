@@ -1,10 +1,9 @@
 import { configFactoryInstance } from "./model/configfactory";
 import { EventType, InputToolCode, Key, KeyboardLayouts, Modifier, StateID, Status } from "./model/enums";
 import { Model } from "./model/model";
-import { hans2Hant } from "./utils/transform";
 import { View } from "./view";
 
-import type { IGlobalState } from "./model/state";
+import type { ILocalStorageOfGlobalState } from "./model/state";
 
 type ActionType = [
   EventType, 
@@ -28,9 +27,6 @@ export class Controller extends EventTarget {
 
   /** The view. */
   view = new View(this.model);
-
-  /** Keyboard UI Port */
-  vkPort?: chrome.runtime.Port;
 
   /** Virtual keyboard visibility. */
   visibility: boolean = false;
@@ -67,9 +63,8 @@ export class Controller extends EventTarget {
   /**
    * Activates an input tool.
    */
-  activate(inputToolCode: InputToolCode) {
-    this._configFactory.setInputTool(inputToolCode);
-    this.model.setEngineID(inputToolCode);
+  activate(engineID: string) {
+    this.model.engineID = engineID;
     this.view.updateInputTool();
     this._keyActionTable = this.getKeyActionTable();
     this._shortcutTable = this.getShortcutTable();
@@ -91,9 +86,10 @@ export class Controller extends EventTarget {
    * Register a  context.
    */
   register(context: any) {
+    if (!this._keyActionTable) this.activate(this.model.engineID);
     this._context = context;
     this.view.setContext(context);
-    this.model.clear(true);
+    this.model.clear();
   }
 
   /**
@@ -163,28 +159,14 @@ export class Controller extends EventTarget {
     }
   }
 
-  /**
-   * @deprecated
-   * Sets the inital language, sbc and puncutation modes.
-   */
-  setInputToolStates(
-    inputToolCode:InputToolCode, initLang: boolean, initSBC: boolean, initPunc: boolean) {
-    let config = this._configFactory.getConfig(inputToolCode);
-    if (config) {
-      config.states[StateID.LANG].value = initLang;
-      config.states[StateID.SBC].value = initSBC;
-      config.states[StateID.PUNC].value = initPunc;
-    }
-  }
-
-  updateGlobalState(key: keyof IGlobalState, value: any) {
+  updateGlobalState(key: keyof ILocalStorageOfGlobalState, value: any) {
     this._configFactory.globalState[key] = value;
     this.dispatchEvent(Controller.UPDATE_STATE_EVENT);
   }
 
   updateState(key: string, value: any) {
     this.model.setStates({ [key]: value });
-    this.dispatchEvent(Controller.UPDATE_STATE_EVENT)
+    this.dispatchEvent(Controller.UPDATE_STATE_EVENT);
   }
 
   changePuncConfig(value: boolean) {
@@ -296,20 +278,10 @@ export class Controller extends EventTarget {
 
     let trans = this.currentConfig.preTransform(e.key);
     if (trans && this._context) {
-
-      // chrome.input.ime.commitText({
-      //   contextID: this._context.contextID,
-      //   text: trans
-      // });
-      this._configFactory.postMessage({
-        data: {
-          type: "commitText" as MessageType,
-          value: [{
-            contextID: this._context.contextID,
-            text: trans
-          }]
-        }
-      })
+      imeAPI.commitText({
+        contextID: this._context.contextID,
+        text: trans
+      });
       return true;
     }
 
@@ -512,7 +484,7 @@ export class Controller extends EventTarget {
   * @protected
   */
   handleModelUpdatedEvent() {
-    this.view.refresh(this.visibility ? this.vkPort : undefined);
+    this.view.refresh();
   }
 
 
@@ -527,19 +499,10 @@ export class Controller extends EventTarget {
       let text = this.model.segments.join('');
       text = this.currentConfig.tranformCommit(text);
 
-      // chrome.input.ime.commitText({
-      //   'contextID': this._context.contextID,
-      //   text
-      // });
-      this._configFactory.postMessage({
-        data: {
-          type: "commitText" as MessageType,
-          value: [{
-            'contextID': this._context.contextID,
-            text
-          }]
-        }
-      })
+      imeAPI.commitText({
+        'contextID': this._context.contextID,
+        text
+      });
     }
   }
 

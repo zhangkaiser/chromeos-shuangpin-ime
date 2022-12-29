@@ -2,7 +2,7 @@
  * @fileoverview Defines the model configs.
  */
 
-import { KeyboardLayouts, PredictEngine } from "./enums";
+import { InputToolCode, KeyboardLayouts, OnlineEngine } from "./enums";
 import type { State } from "./state";
 import { StateID} from "./enums";
 
@@ -15,9 +15,7 @@ export interface IConfig {
  */
 export abstract class Config {
   
-  configStates: Record<string, boolean | Object> = {
-
-  };
+  configStates: Record<string, boolean | Object> = {};
 
   /** The input tool states. */
   abstract states: Record<StateID, State>;
@@ -79,7 +77,7 @@ export abstract class Config {
   shuangpinSolution = '';
 
   /** The predict engine. */
-  predictEngine: PredictEngine = PredictEngine.BAIDU;
+  OnlineEngine: OnlineEngine = OnlineEngine.BAIDU;
 
   
   /** Use vertical to show candidates. */

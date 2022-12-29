@@ -1,12 +1,9 @@
 import { html, LitElement, TemplateResult } from  "lit";
 import { customElement, property } from "lit/decorators.js";
 
-import { PredictEngine } from "./model/enums";
 import type { IMessage } from "./model/common";
 import { MessageType, StateID } from "./model/enums";
 import { solutions } from "./model/shuangpinSolutions";
-
-import "./components/virtualKeyboard";
 
 import { optionPageStyles } from "./view/pages";
 import { IIMEState } from "./model/state";
@@ -59,13 +56,6 @@ const solutionNames: Record<keyof typeof solutions, string> = {
   zhinengabc: "智能ABC"
 }
 
-const onlineEngineList: Record<PredictEngine, string> = {
-  [PredictEngine.BAIDU]: '百度(不支持中英文混合输入)',
-  [PredictEngine.GOOGLE]: '谷歌全球(不支持中国大陆区域)',
-  [PredictEngine.GOOGLE_CN]: '谷歌中国(支持中国大陆区域中英文混输)'
-}
-
-
 const baseList = [
   {
     id: StateID.SBC,
@@ -102,7 +92,6 @@ class OptionPage extends LitElement {
   // Corresponding state key.
   requireUpdateFields = {
     shuangpinSolution: true,
-    predictEngine: true,
   } 
   
   constructor() {
@@ -223,39 +212,6 @@ class OptionPage extends LitElement {
   `
   }
 
-  onlineSetting() {
-    return html`
-<div>
-  <section>
-    <h3>在线解析</h3>
-    <div>
-      <span class="controlled-setting-with-label">
-        <input @click=${this.onClickCheckbox} type="checkbox" ?checked=${this.onlineStatus}>
-        <span>
-          <label>启用</label>
-        </span>
-      </span>
-    </div>
-    <div ?hidden=${!this.onlineStatus}>
-      <span class="controlled-setting-with-label">
-        <span class="selection-label">
-          <label for="shuangpin-solutions">在线解析器引擎</label>
-        </span>
-        <span class="chos-option-item">当前仅支持百度云解析</span>
-        <!--<select @change=${this.onChooseEngine} id="online-solutions" class="chos-option-item">
-          ${Object.entries(onlineEngineList).map((item) => {
-            return html`
-              <option value=${item[0]} ?selected=${Number(item[0]) === this.onlineEngine}>${item[1]}</option>
-            `
-          })}
-        </select>-->
-      </span>
-    </div>
-  </section>
-</div>
-    `
-  }
-
   customShuangpin() {
     return this.showCustomShuangpin ? html`
 <button>Test</button>
@@ -328,7 +284,6 @@ class OptionPage extends LitElement {
     return html`
 <header><h1>设置页面</h1><header>
 ${this.baseSetting()}
-${this.onlineSetting()}
 ${this.moreIntro()}
 ${this.moreDesc()}
 <virtual-keyboard></virtual-keyboard>

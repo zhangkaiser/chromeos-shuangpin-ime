@@ -43,51 +43,25 @@ export class CandidateWindow {
   constructor(public engineID: string, public config: Config) {}
 
   #setWindow(prop: ICandidateWindowProperties) {
-    configFactoryInstance.postMessage({
-      data: {
-        type: "setCandidateWindowProperties" as MessageType,
-        value: [{
-          engineID: this.engineID,
-          properties: prop
-        }]
-      }
-    })
+    imeAPI.setCandidateWindowProperties({
+      engineID: this.engineID, properties: prop
+    });
   }
 
   #setCandidates(parameters: chrome.input.ime.CandidatesParameters) {
-    // chrome.input.ime.setCandidates(parameters);
-    configFactoryInstance.postMessage({
-      data: {
-        type: "setCandidates" as MessageType,
-        value: [parameters]
-      }
-    })
+    imeAPI.setCandidates(parameters);
     
   }
 
   #setCursorPosition(parameters: chrome.input.ime.CursorPositionParameters) {
-    // chrome.input.ime.setCursorPosition(parameters);
-    configFactoryInstance.postMessage({
-      data: {
-        type: "setCursorPosition" as MessageType,
-        value: [parameters]
-      }
-    })
+    imeAPI.setCursorPosition(parameters);
   }
 
   #clearComposition(contextID: number) {
     try {
-      // chrome.input.ime.clearComposition({contextID});
-      configFactoryInstance.postMessage({
-        data: {
-          type: "clearComposition" as MessageType,
-          value: [{contextID}]
-        }
-      })
+      imeAPI.clearComposition({ contextID });
     } catch(e) {
-      // chrome.input.ime.clearComposition({
-      //   contextID: -1
-      // })
+      imeAPI.clearComposition({ contextID: -1 })
     }
   }
 
