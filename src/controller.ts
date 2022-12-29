@@ -231,7 +231,7 @@ export class Controller extends EventTarget {
     if (states[StateID.LANG] && !states[StateID.LANG].value) {
       return false;
     }
-
+    
     // 
     if (this.#handleKeyInActionTable(keyEvent, this._keyActionTable)) {
       return true;
@@ -270,9 +270,12 @@ export class Controller extends EventTarget {
    * controller should continue processing the event.
    */
   preProcess(e: any) {
-    if (e.type != EventType.KEYDOWN ||
-        this.model.status != Status.INIT ||
-        e.ctrlKey || e.altKey) {
+    if (
+      e.type != EventType.KEYDOWN 
+      || this.model.status != Status.INIT 
+      || e.ctrlKey
+      || e.altKey
+    ) {
       return false;
     }
 
@@ -334,7 +337,10 @@ export class Controller extends EventTarget {
         continue;
       }
 
-      // TODO Shift shortcut bug.
+      if ([e.ctrlKey, e.shiftKey, e.altKey].filter((bool) => bool).length > 1) {
+        continue;
+      }
+
       if (
         modifier == Modifier.SHIFT && !e.shiftKey 
         || modifier == Modifier.CTRL && !e.ctrlKey 
