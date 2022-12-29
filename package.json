@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "mocha",
+    "clone:submodule": "git submodule update --init --recursive",
     "build": "export PRODUCTION=1 && webpack",
     "build-new": "webpack -c webpack.new.js",
     "watch": "webpack --mode development --watch",
