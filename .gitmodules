@@ -1,0 +1,3 @@
+[submodule "libgooglepinyin-wasm"]
+  path = googlepinyin
+  url = https://github.com/zhangkaiser/libgooglepinyin-wasm.git
