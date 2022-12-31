@@ -1,6 +1,5 @@
 
-import Module, { initedPromise, addUserDict } from "googlepinyin";
-import {} from "googlepinyin"
+import Module, { initedPromise, addUserDict, addUserDicts } from "googlepinyin";
 import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
 import { IMEResponse } from "./response";
@@ -26,8 +25,8 @@ export default class Decoder{
     this.#tokenDecoder.addEventListener(DecoderEventType.CLEAR, this.clear.bind(this));
     
     initedPromise.then(() => {
-      this._decoder = new Module['Decoder']();
       this.inited = true;
+      this._decoder = new Module['Decoder']();
     });
   }
 
@@ -87,20 +86,21 @@ export default class Decoder{
         );
       });
     }
-
     return candidates;
+  }
+
+  addUserDicts(list: [string, string][]) {
+    if (this.decoder) addUserDicts(this.decoder, list);
   }
 
   clear() {
     this.#tokenDecoder.clear();
-    this.decoder?.clear();
+    this._decoder?.clear();
   }
 
   reset() {
     this.clear();
-    this.decoder?.delete();
-    this._decoder = undefined;
+    this._decoder?.delete();
+    delete this['_decoder'];
   }
-  
-  
 }

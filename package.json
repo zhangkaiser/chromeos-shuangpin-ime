@@ -6,17 +6,10 @@
   "scripts": {
     "test": "mocha",
     "clone:submodule": "git submodule update --init --recursive",
-    "build": "export PRODUCTION=1 && webpack",
-    "build-new": "webpack -c webpack.new.js",
+    "build": "npm run build:deps && export PRODUCTION=1 && webpack",
+    "build:deps": "npm run clone:submodule && cd googlepinyin && npm run build",
     "watch": "webpack --mode development --watch",
-    "watch:split": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && webpack --watch",
-    "ime-build": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && npm run build && node ./tools/build.js",
-    "node:wasm": "cd libGooglePinyin && node --experimental-wasm-threads --experimental-wasm-bulk-memory",
-    "debug:googlepinyin": "cd libGooglePinyin && emcc -sDYNAMIC_EXECUTION=0 --pre-js ./learn/dict.js -sNODERAWFS -lnodefs.js -lembind libGooglePinyin.a decoder.cpp -o debug.js && npm run node:wasm -- debug.js",
-    "decoder": "cd libGooglePinyin && emcc -pthread -lidbfs.js -sINITIAL_MEMORY=33554432 -sDYNAMIC_EXECUTION=0 -lembind --embed-file dict libGooglePinyin.a decoder.cpp -o decoder.js",
-    "decoder:preload": "cd libGooglePinyin && emcc -pthread -sINITIAL_MEMORY=33554432 -sDYNAMIC_EXECUTION=0 -lembind --preload-file dict --pre-js ./pre/filesystem.js -lidbfs.js libGooglePinyin.a decoder.cpp",
-    "vscode": "webpack --config webpack.vscode.js",
-    "test:googlepinyin": "npm run decoder -- -o test.html && cd libGooglePinyin && localhost"
+    "watch:split": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && webpack --watch"
   },
   "keywords": [
     "shuangpin",

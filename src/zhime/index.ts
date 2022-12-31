@@ -29,7 +29,6 @@ class ApiControllerProxy {
   }
 
   private handleMethod(method: IIMEMethodUnion, args: any[]) {
-    console.log(method, args);
     if (this.port) {
       this.port.postMessage({
         data: {

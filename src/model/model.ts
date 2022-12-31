@@ -307,7 +307,7 @@ export class Model extends EventTarget implements IModel {
     );
     
     if (this.commitPos == this.segments.length || commit != undefined) {
-      this.imeHandler.addUserCommits(this.tokens.join(''), this.segments.join(''));
+      this.decoder?.addUserCommit(this.tokens.join(''), this.segments.join(''));
       this.notifyUpdates(true);
       return;
     }
@@ -387,7 +387,7 @@ export class Model extends EventTarget implements IModel {
       return;
     }
     
-    this.candidates = [];
+    this.candidates = [];   
     this.imeHandler.handleIMEResponse(imeResponse);
     let { candidates, tokens } = imeResponse;
     let oldTokens = this.source.split("'").filter((item) => !!item);
@@ -406,15 +406,7 @@ export class Model extends EventTarget implements IModel {
     this.segments = prefixSegments.concat(suffixSegments);
     this.cursorPos = prefixSegments.length;
 
-    for (let i = 0, l = candidates.length; i < l; i++) {
-      let candidate = candidates[i];
-      this.candidates.push(
-        new Candidate( 
-          candidate.target.toString(),
-          Number(candidate.range)
-        )
-      );
-    }
+    this.handleCandidates(candidates);
 
     this.status = Status.FETCHED;
     if (this.config.autoHighlight || this._holdSelectStatus) {
@@ -423,5 +415,25 @@ export class Model extends EventTarget implements IModel {
 
     this.notifyUpdates();
   }
+
+  handleCandidates(candidates: ICandidate[]) {
+    for (let i = 0, l = candidates.length; i < l; i++) {
+      let candidate = candidates[i];
+      this.candidates.push(
+        new Candidate( 
+          candidate.target.toString(),
+          Number(candidate.range),
+          i
+        )
+      );
+    }
+  }
+
+  // async fetchPredictor(history: string) {
+  //   this.candidates = [];
+  //   let candidates = this.decoder?.getPredicts(history);
+  //   this.handleCandidates(candidates);
+  //   this.notifyUpdates();
+  // }
 
 }
