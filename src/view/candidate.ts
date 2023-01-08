@@ -1,8 +1,6 @@
 import type { Config } from "../model/config";
 import type { Candidate } from "../model/candidate";
 
-import { configFactoryInstance } from "src/model/configfactory";
-
 interface ICandidateWindowProperties {
   /** Text taht is shown at the bottom of the candidate window. */
   auxiliaryText?: string,
@@ -97,10 +95,10 @@ export class CandidateWindow {
     //   }, true);
 
     // } else 
-    if ((this.config.getStates() as any).enableVertical) {
+    if (this.config.states.vertical) {
       // Show candidates vertically.
       windowProps.vertical = true;
-      windowProps.pageSize = this.config.pageSize;
+      windowProps.pageSize = this.config.states.pageSize;
 
       this.getCandidates((candidate, label, id) => {
         candidates.push({
@@ -111,7 +109,7 @@ export class CandidateWindow {
       });
     } else {
       // Default.
-      windowProps.pageSize = this.config.pageSize;
+      windowProps.pageSize = this.config.states.pageSize;
 
       this.getCandidates((candidate, label, id) => {
         candidates.push({
@@ -154,7 +152,7 @@ export class CandidateWindow {
       from = 0;
       to = candsNum;
     } else {
-      let { pageSize } = this.config;
+      let { pageSize } = this.config.states;
       from = this.pageIndex * pageSize;
       to = from + pageSize;
       if (to > candsNum && candsNum < from) {

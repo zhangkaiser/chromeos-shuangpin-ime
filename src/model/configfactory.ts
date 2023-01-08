@@ -6,7 +6,7 @@ import { Config } from "./config";
 import { GlobalState, InputToolCode } from "./enums";
 import { PinyinConfig } from "./pinyinconfig";
 import { ShuangpinConfig } from "./shuangpinconfig";
-import { ILocalStorageOfGlobalState } from "./state";
+import { IIMEState, ILocalStorageOfGlobalState, IMEState } from "./state";
 
 /**
  * The input mothod config factory.
@@ -14,6 +14,8 @@ import { ILocalStorageOfGlobalState } from "./state";
 export default class ConfigFactory {
 
   private _configs: Record<InputToolCode, Config>;
+
+
   constructor() {
     let shuangpinConfigInstance = new ShuangpinConfig();
     let pinyinConfigInstance = new PinyinConfig();
@@ -26,18 +28,8 @@ export default class ConfigFactory {
     }
   }
 
-  _globalState: ILocalStorageOfGlobalState = {
-    inputToolCode: InputToolCode.WASM_SHUANGPIN,
-  }
-
-  set globalState(value: ILocalStorageOfGlobalState) {
-    if (value && value.inputToolCode) {
-      this._globalState = value;
-    }
-  }
-
-  get globalState() {
-    return this._globalState;
+  globalState: ILocalStorageOfGlobalState = {
+    inputToolCode: InputToolCode.WASM_SHUANGPIN
   }
 
   /**
@@ -66,7 +58,7 @@ export default class ConfigFactory {
    * Gets the config for the current input tool.
    */
   getCurrentConfig() {
-    return this._configs[this.globalState.inputToolCode];
+    return this._configs[this.getInputTool()];
   }
 
 }

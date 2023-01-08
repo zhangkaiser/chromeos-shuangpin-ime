@@ -1,23 +1,12 @@
 import { Config } from "./config";
 import { Modifier, StateID } from "./enums";
-import { IChineseState, State } from "./state";
+import { IIMEState, State } from "./state";
 import { Translator } from "./translator";
 
 
 export default class ChineseConfig extends Config {
 
-  configStates: Record<string, any> = {
-    ...this.configStates,
-    states: {
-      [StateID.LANG]: true,
-      [StateID.SBC]: true,
-      [StateID.PUNC]: true,
-      [StateID.TRADITIONAL]: true,
-      [StateID.PREDICTOR]: true
-    }
-  };
-
-  states: Record<StateID, State>;
+  menuStates: Record<StateID, State>;
 
 	/** The puncatuation sbc map. */
   puncMap: Record<string, any> = {
@@ -104,13 +93,13 @@ export default class ChineseConfig extends Config {
 			}
 		}
 		
-		let langState = new State( '启用中文输入', true, [Modifier.SHIFT] );
-		let sbcState = new State('启用全角宽度字符', false, [';', Modifier.CTRL]);
-		let puncState = new State('启用英文标点符号', true, ['\\.', Modifier.CTRL]);
-    let traditionalState = new State('启用中文繁体', false, [',', Modifier.CTRL]);
-    let predictorState = new State("启用在线预测词", true, [' ', Modifier.SHIFT]);
+		let langState = new State('启用中文输入', [Modifier.SHIFT] );
+		let sbcState = new State('启用全角宽度字符', [';', Modifier.CTRL]);
+		let puncState = new State('启用英文标点符号', ['\\.', Modifier.CTRL]);
+    let traditionalState = new State('启用中文繁体', [',', Modifier.CTRL]);
+    let predictorState = new State("启用在线预测词", [' ', Modifier.SHIFT]);
 
-    this.states = {
+    this.menuStates = {
       [StateID.LANG]: langState,
       [StateID.SBC]: sbcState,
       [StateID.PUNC]: puncState,
@@ -128,15 +117,9 @@ export default class ChineseConfig extends Config {
 	 * @param {*} ch 
 	 */
 	preTransform(ch: string) {
-		if (!this.states[StateID.LANG] || 
-			!this.states[StateID.SBC] || 
-			!this.states[StateID.PUNC]) {
-        return ;
-    }
 
-
-		if (this.states[StateID.SBC].value) {
-			if (!this.states[StateID.LANG].value || !/[a-z]/i.test(ch)) {
+		if (this.states.sbc) {
+			if (!this.states.lang || !/[a-z]/i.test(ch)) {
 				let sbc = this.sbcMap[ch];
 				if (sbc) {
 					return sbc;
@@ -144,7 +127,7 @@ export default class ChineseConfig extends Config {
 			}
 		}
 
-    if (this.states[StateID.PUNC].value && this.states[StateID.LANG].value) {
+    if (this.states.punc && this.states.lang) {
       let punc = this.puncMap[ch];
       if (punc) {
         if (Array.isArray(punc)) {
@@ -169,24 +152,14 @@ export default class ChineseConfig extends Config {
     return Translator.transform(text);
   }
   
-  setStates(states: Partial<IChineseState>) {
+  setStates(states: Partial<IIMEState>) {
     super.setStates(states);
     if (!states) return ;
-    Object.keys(states).forEach((state) => {
-      if (!(state in this.configStates) && state in this.states) {
-        this.states[state as StateID].value = (states as any)[state];
-      }
-      this.#stateSwitchedAction(state as StateID);
-    });
-  }
 
-  #stateSwitchedAction(state: StateID) {
-    
-    switch(state) {
-      case StateID.TRADITIONAL:
-        Translator.enableTraditional(this.states[state].value);
-        break;
+    if ("traditional" in states) {
+      Translator.enableTraditional(!!states['traditional']);
     }
+
   }
 
   transformView(text: string, source: string) {

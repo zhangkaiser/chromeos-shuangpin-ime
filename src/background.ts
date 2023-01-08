@@ -10,6 +10,8 @@ import { IIMEState, ILocalStorageDataModel } from "src/model/state";
  */
 export class Background {
 
+  isChrome  = Reflect.has(globalThis, "chrome") && Reflect.has(chrome, "runtime");
+  isChromeIME = this.isChrome && Reflect.has(chrome, "input");
   /**
    * The controller for chrome os extension.
    */
@@ -18,19 +20,21 @@ export class Background {
 
   stateLoadedPromise?: Promise<boolean>;
 
-  registerControllerListener() {
+  registerControllerEventListener() {
     this.controller.addEventListener(
-      EventType.UPDATESTATE, this.updateStateToLocalStorage.bind(this)
+      EventType.UPDATESTATE, 
+      this.updateStateToLocalStorage.bind(this)
     );
   }
 
   updateStateToLocalStorage() {
-    let states = this.configFactory.getCurrentConfig().getStates();
+    let { states } = this.configFactory.getCurrentConfig();
     let global_state = this.configFactory.globalState;
     chrome.storage.local.set({ states, global_state});
   }
 
-  registerChromeConnection() {
+  registerChromeConnectionEvent() {
+    if (!this.isChrome) return;
     // Sets up a listener which talks to the option page.
     chrome.runtime.onMessage.addListener(this.processMessage.bind(this));
     chrome.runtime.onMessageExternal.addListener(this.processExternalMessage.bind(this));
@@ -80,6 +84,8 @@ export class Background {
   }
 
   registerChromeIMEEvent() {
+    if (!this.isChromeIME) return;
+
     const ime = chrome.input.ime;
 
     ime.onActivate.addListener(
@@ -111,9 +117,12 @@ export class Background {
   async loadingStateForChrome() {
     let data: Pick<ILocalStorageDataModel, "states" | "global_state"> = await chrome.storage.local.get(['states', 'global_state']);
 
+    if (!data) {
+      this.updateStateToLocalStorage();
+    }
+
     if (data['global_state']) 
       this.configFactory.globalState = data['global_state'];
-
     let config = this.configFactory.getCurrentConfig();
 
     if (data['states']) config.setStates(data['states']);
@@ -126,22 +135,28 @@ export class Background {
    * Processes incoming requests from option page.
    */
   processMessage(
-    message: IMessage, 
+    msg: {data: {type: string, value: any[]}}, 
     sender: chrome.runtime.MessageSender, 
     sendResponse: (responseData?: any) => void ) {
-
-    message.inputToolCode && this.configFactory.setInputTool(message.inputToolCode);
-    switch (message['type']) {
-      case MessageType.UPDATE_STATE:
-        let data = message.data;
-        this.controller.updateState(data.name, data.value);
+      let {type, value} = msg.data;
+    switch (type) {
+      case "setStates":
+        this.controller.updateState(value[0], value[1]);
         sendResponse(true);
         break;
-      case MessageType.GET_STATES:
-        sendResponse(this.controller.model.states);
+      case "setGlobalStates":
+        this.controller.updateGlobalState(value[0], value[1]);
+        sendResponse(true);
+        break;
+      case "getStates":
+        console.log(this.configFactory);
+        sendResponse({
+          states: this.configFactory.getCurrentConfig().states,
+          globalState: this.configFactory.globalState
+        });
         break;
       default:
-        console.error("No handler", message.type);
+        console.error("No handler", type);
     }
 
     return true;
@@ -164,9 +179,9 @@ export class Background {
           "name": "Chinese"
         })
       case MessageType.GET_STATES:
-        return sendResponse(this.configFactory.getCurrentConfig().getStates());
+        return sendResponse(this.configFactory.getCurrentConfig().states);
       default:
-    }
+    } 
   }
 
   processHostMessage(msg: any, port: chrome.runtime.Port) {

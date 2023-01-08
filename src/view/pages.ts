@@ -17,8 +17,13 @@ export const optionPageStyles = css`
   max-width:640px;
 }
 
+.btn-1 {
+  display: inline;
+  padding: 4px 7px;
+  margin-right: 7px;
+}
+
 input[type='checkbox'] {
-  -webkit-appearance: none;
   background-image: -webkit-linear-gradient(#ededed, #ededed 38%, #dedede);
   border: 1px solid rgba(0, 0, 0, .25);
   border-radius: 2px;

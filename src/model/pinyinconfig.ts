@@ -3,26 +3,17 @@
  */
 
 import ChineseConfig from "./chineseconfig";
-import { PinyinStateID } from "./enums";
-import { IPinyinConfigState, IPinyinState } from "./state";
 
 /**
  * The input method config.
  */
-export class PinyinConfig extends ChineseConfig implements IPinyinConfigState {
+export class PinyinConfig extends ChineseConfig {
 
-  configStates: Record<string, any> = {
-    ...this.configStates,
-    enableVertical: true
-  };
-
-  punctuationReg = /[^a-z0-9 \r]/i;
-  editorCharReg = /[a-z\']/;
-  pageupCharReg = /[=.]/;
-  pagedownCharReg = /[\-,]/;
-
-  [Symbol.toStringTag]() {
-    return "PinyinConfig";
+  constructor() {
+    super();
+    this.states.editorCharReg = ["[a-z']", ""];
+    this.states.pageupCharReg = ["[=.]", ""];
+    this.states.pagedownCharReg = ["[-,]", ""];
   }
 
   revert(segment: string, source: string) {
@@ -39,5 +30,9 @@ export class PinyinConfig extends ChineseConfig implements IPinyinConfigState {
     }
     
     return revertObj;
+  }
+
+  [Symbol.toStringTag]() {
+    return "PinyinConfig";
   }
 }

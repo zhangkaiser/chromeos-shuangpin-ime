@@ -120,10 +120,11 @@ export class Model extends EventTarget implements IModel {
 
   /** The user local storage config. */
   get states() {
-    return this.config.getStates();
+    return this.config.states;
   }
 
   setStates(states: Record<string, any>) {
+    if ('shuangpinSolution' in states) this._decoder = undefined;
     return this.config.setStates(states);
   }
 
@@ -131,7 +132,7 @@ export class Model extends EventTarget implements IModel {
   get pageIndex() {
     if (this.highlightIndex < 0 || this.candidates.length == 0) return 0;
     
-    let { pageSize } = this.config;
+    let { pageSize } = this.states;
     return Math.floor(this.highlightIndex / pageSize);
   }
 
@@ -139,7 +140,7 @@ export class Model extends EventTarget implements IModel {
     if (!this._decoder) {
       this._decoder = new WASMDecoder(
         this.configFactory.globalState.inputToolCode, 
-        this.config.shuangpinSolution
+        this.states.shuangpinSolution
       );
     }
     return this._decoder;
@@ -161,13 +162,13 @@ export class Model extends EventTarget implements IModel {
   movePage(step: number): void {
     if (this.status != Status.SELECT) return;
 
-    let { pageSize } = this.config;
+    let { pageSize } = this.states;
     this.updateHighlight((this.pageIndex + step) * pageSize);
   }
 
   /** @todo */
   updateSource(key: string, text: string) {
-    if (this.source.length + text.length > this.config.maxInputLen) {
+    if (this.source.length + text.length > this.states.maxInputLen) {
       this.selectCandidate(undefined, '');
     }
 
@@ -378,7 +379,7 @@ export class Model extends EventTarget implements IModel {
 
     if (!imeResponse) {
       this.status = Status.FETCHED;
-      if (this.config.autoHighlight || this._holdSelectStatus) {
+      if (this.states.autoHighlight || this._holdSelectStatus) {
         this.enterSelectInternal();
       }
 
@@ -409,7 +410,7 @@ export class Model extends EventTarget implements IModel {
     this.handleCandidates(candidates);
 
     this.status = Status.FETCHED;
-    if (this.config.autoHighlight || this._holdSelectStatus) {
+    if (this.states.autoHighlight || this._holdSelectStatus) {
       this.enterSelectInternal();
     }
 

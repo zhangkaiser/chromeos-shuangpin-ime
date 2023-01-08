@@ -1,24 +1,17 @@
 import { ShuangpinStateID } from "./enums";
 import {PinyinConfig} from "./pinyinconfig";
-import { IShuangpinConfigState, IShuangpinState, IChineseState } from "./state";
 
-export class ShuangpinConfig extends PinyinConfig implements IShuangpinConfigState {
-
-  configStates: Record<string, any> = {
-    ...this.configStates,
-    shuangpinSolution: true
-  }
+export class ShuangpinConfig extends PinyinConfig {
 
   initialReg = /^(zh|ch|sh|b|p|m|f|d|t|n|l|k|g|h|j|q|x|r|z|c|s|y|w|a|e|o)/;
 
-  editorCharReg = /[a-z;]/;
-
   initialCharList = 'iuv'.split('');
-
-  shuangpinSolution = "pinyinjiajia_o";
 
   constructor() {
     super();
+
+    this.states.editorCharReg = ["[a-z;]", "i"];
+    
   }
 
   /** @todo */

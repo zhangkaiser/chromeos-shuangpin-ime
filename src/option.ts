@@ -1,14 +1,22 @@
 import { html, LitElement, TemplateResult } from  "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 
-import type { IMessage } from "./model/common";
-import { MessageType, StateID } from "./model/enums";
+import { InputToolCode, MessageType, StateID } from "./model/enums";
 import { solutions } from "./model/shuangpinSolutions";
 
 import { optionPageStyles } from "./view/pages";
-import { IIMEState } from "./model/state";
+import { IIMEState, IIMEStateKeyUnion, ILocalStorageOfGlobalState } from "./model/state";
 
-const codeRegExp = /[?code=.]zh-(js|wasm)-(shuangpin|pinyin)/i
+const inputToolCodes = [
+  {
+    id: "zh-wasm-shuangpin",
+    name: "双拼输入法"
+  },
+  {
+    id: "zh-wasm-pinyin",
+    name: "拼音输入法"
+  }
+]
 
 const introList = [
   {
@@ -56,112 +64,73 @@ const solutionNames: Record<keyof typeof solutions, string> = {
   zhinengabc: "智能ABC"
 }
 
-const baseList = [
-  {
-    id: StateID.SBC,
-    type: 'checkbox',
-    label: '初始字符宽度为全角'
-  },
-  {
-    id: StateID.PUNC,
-    type: 'checkbox',
-    label: '初始标点符号宽度为全角'
-  },
-  {
-    id: 'enableVertical',
-    type: 'checkbox',
-    label: '纵向显示候选词列表'
-  },
-  {
-    id: 'enableTraditional',
-    type: 'checkbox',
-    label: '启用繁体字'
-  }
-];
+const baseEditList: Partial<Record<IIMEStateKeyUnion, ["checkbox" | "text" | "number", string]>> = {
+  sbc: ['checkbox', '设置字符宽度为全角'],
+  lang: ['checkbox', "英文输出模式"],
+  punc: ['checkbox', "设置字符宽度为半角"],
+  vertical: ['checkbox', "使用纵向显示候选词列表"],
+  traditional: ['checkbox', "启用繁体字"],
+  selectKeys: ['text', "选词按键"],
+  pageSize: ['number', "设置候选词长度"]
+}
 
 
-/**
- * @todo so messy!
- */
 @customElement('option-page')
 class OptionPage extends LitElement {
-  
-  compiler = "wasm";
-  decoder = "pinyin";
 
-  // Corresponding state key.
-  requireUpdateFields = {
-    shuangpinSolution: true,
-  } 
+  @state({
+    hasChanged(value, oldValue) {
+      return true;
+    }
+  }) globalState = {};
+  @state({
+    hasChanged(value, oldValue) {
+      return true;
+    },
+  }) states: Partial<IIMEState> = {};
   
   constructor() {
     super();
-    let codes = window.location.search.match(codeRegExp);
-    if (codes) {
-      this.compiler = codes[1];
-      this.decoder = codes[2];
-    }
 
     // Load states.
+
     chrome.runtime.sendMessage({
-      type: MessageType.GET_STATES,
-      inputToolCode: this.inputCode,
-      data: null,
-      time: Date.now()
-    } as IMessage, (states) => {
-      if (!states) throw Error("Load states error!");
-      this.states = states;
-
-      Object.keys(this.requireUpdateFields).forEach((field) => {
-        if ((this.requireUpdateFields as any)[field]) {
-          (this as any)[field] = states[field];
-        }
-      })
-      this.loaded = true;
-    })
-  }
-
-  states?: IIMEState;
-
-  updateState(name: string, value: any) {
-    chrome.runtime.sendMessage({
-      type: MessageType.UPDATE_STATE,
-      inputToolCode: this.inputCode,
       data: {
-        name,
-        value
-      },
-      time: Date.now()
-    } as IMessage, () => {
-      if (name in this.requireUpdateFields) {
-        return (this as any)[name] = value;
+        type: "getStates",
+        value: ["states", "globalState"]
+      }
+    }, (res) => {
+      if (res['globalState']) {
+        this.globalState = res['globalState'];
+      }
+      if (res['states']) {
+        this.states = res['states'];
       }
     });
   }
 
-  get inputCode() {
-    return `zh-${this.compiler}-${this.decoder}`;
+  updateState(name: string, value: any, isGlobalState = false) {
+    let type = isGlobalState 
+      ? "setGlobalStates"
+      : "setStates"
+    chrome.runtime.sendMessage({
+      data: {
+        type,
+        value: [name, value]
+      }
+    });
   }
-  
-  @property({type: String}) shuangpinSolution = 'pinyinjiajia_o';
-  @property({type: Number}) onlineEngine = 0;
-  @property({type: Boolean}) onlineStatus = true;
-  @property({type: Boolean}) loaded = false;
-  @property() showCustomShuangpin = false;
-
 
   // 
   onClickCheckbox(e: Event) {
     let target = e.target as HTMLInputElement;
     let {id, checked} = target;
-    console.log("onClickCheckbox", id, checked)
-;    this.updateState(id, checked);
+    this.updateState(id, checked);
   }
 
   onChooseEngine(e: Event) {
     let target = e.target as HTMLSelectElement;
     let { value } = target;
-    console.log("onClickCheckbox", value)
     this.updateState('onlineEngine', +value);
   }
 
@@ -170,6 +139,36 @@ class OptionPage extends LitElement {
     let { value } = target;
     console.log(value);
     this.updateState('shuangpinSolution', value);
+  }
+
+  onSelectionChanged(e: Event) {
+    let target = e.target as HTMLSelectElement;
+    console.log(target);
+    let { id, value } = target;
+    let isGlobalState = false;
+    console.log("onSelectionChanged", id, value);
+
+    if (id in this.globalState) {
+      isGlobalState = true;
+      (this.globalState as any)[id] = value;
+    } else {
+      (this.states as any)[id] = value;
+    }
+
+    this.updateState(id, value, isGlobalState);
+  }
+
+  onInputChanged(e: Event) {
+    let target = e.target as HTMLInputElement;
+    let {id, value, checked} = target;
+    if (!id) return;
+    console.log("onInputChanged", id, value, checked);
+    if ((baseEditList as any)[id][0] === "checkbox") {
+      this.updateState(id, checked);
+    } else {
+      if (id === "pageSize") value = (+value) as any;
+      this.updateState(id, value);
+    }
   }
 
   static styles = optionPageStyles;
@@ -182,27 +181,45 @@ class OptionPage extends LitElement {
     <div>
       <span class="controlled-setting-with-label">
         <span class="selection-label">
-          <label for="shuangpin-solutions">双拼解决方案</label>
+          <label for="inputToolCode">切换输入法</label>
         </span>
-        <select @change=${this.onChooseShuangpin} id="shuangpin-solutions" class="chos-option-item">
-          ${Object.keys(solutionNames).map((item) => {
+        <select @change=${this.onSelectionChanged} id="inputToolCode" class="chos-option-item">
+          ${inputToolCodes.map((item) => {
             return html`
-              <option value="${item}" ?selected=${item === this.shuangpinSolution}>${solutionNames[item as keyof typeof solutionNames]}</option>
+              <option value="${item['id']}" ?selected=${item['id'] === (this.globalState as any).inputToolCode}>
+                ${item['name']}
+              </option>
             `
           })}
         </select>
-        <!-- TODO -->
-        <span><a href="#herf">See solution</a></span>
       </span>
     </div>
-    ${this.states && baseList.map((item) => {
+    <div ?hidden=${(this.globalState as any)['inputToolCode'] !== "zh-wasm-shuangpin"}>
+      <span class="controlled-setting-with-label">
+        <span class="selection-label">
+          <label for="shuangpin-solutions">双拼解决方案</label>
+        </span>
+        <select @change=${this.onSelectionChanged} id="shuangpinSolution" class="chos-option-item">
+          ${Object.keys(solutionNames).map((item) => {
+            return html`
+              <option value="${item}" ?selected=${item === this.states.shuangpinSolution}>${solutionNames[item as keyof typeof solutionNames]}</option>
+            `
+          })}
+        </select>
+      </span>
+    </div>
+    ${this.states && Object.entries(baseEditList).map((item) => {
       return html`
         <div>
           <span class="controlled-setting-with-label">
-            <input @click=${this.onClickCheckbox} .type=${item.type} ?checked=${this.states![item.id as keyof IIMEState]} .id=${item.id}>
             <span>
-              <label .for=${item.id}>${item.label}</label>
+              <label .for=${item[0]}>${item[1][1]}</label>
             </span>
+            ${
+              item[1][0] === "checkbox"
+                ? html`<input @click=${this.onInputChanged} type="checkbox" ?checked=${this.states[item[0] as keyof IIMEState]} .id="${item[0]}">`
+                : html`<input @change=${this.onInputChanged} .type=${item[1][0]} .value=${this.states[item[0] as keyof IIMEState]} .id="${item[0]}">`
+            }
           </span>
         </div>
       `;
@@ -211,13 +228,6 @@ class OptionPage extends LitElement {
 </div>
   `
   }
-
-  customShuangpin() {
-    return this.showCustomShuangpin ? html`
-<button>Test</button>
-    ` : "";
-  }
-
 
   handleIntroItem(value: string | string[] | {
     link: string
@@ -231,8 +241,6 @@ class OptionPage extends LitElement {
 <span class="s-tag">${value}</span>
       `);
     } else {
-      // if (value.link) {
-      // }
       return html`
 <a href="${value.link}"></a>
       `;
@@ -286,11 +294,9 @@ class OptionPage extends LitElement {
 ${this.baseSetting()}
 ${this.moreIntro()}
 ${this.moreDesc()}
-<virtual-keyboard></virtual-keyboard>
     `;
   }
 }
-
 
 declare global {
   interface HTMLElementTagNameMap {

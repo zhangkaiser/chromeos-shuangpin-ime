@@ -1,5 +1,5 @@
 
-import Module, { initedPromise, addUserDict, addUserDicts } from "googlepinyin";
+import Module, { initedPromise, addUserDict, addUserDicts, onExit } from "googlepinyin";
 import { Candidate } from "./candidate";
 import { DataLoader } from "./dataloader";
 import { IMEResponse } from "./response";
@@ -31,9 +31,9 @@ export default class Decoder{
   }
 
   get decoder() {
-    if (this.inited && this._decoder) {
+    if (this._decoder) {
       return  this._decoder;
-    } else if (Reflect.has(Module, 'Decoder')) {
+    } else if (this.inited || Reflect.has(Module, 'Decoder')) {
       return this._decoder = new Module['Decoder'](); 
     } else {
       return null;
@@ -71,6 +71,7 @@ export default class Decoder{
 
   addUserCommit(source: string, target: string) {
     if (this.decoder) {
+      
       addUserDict(this.decoder, source, target);
     }
   }
@@ -100,6 +101,7 @@ export default class Decoder{
 
   reset() {
     this.clear();
+    onExit();
     this._decoder?.delete();
     delete this['_decoder'];
   }

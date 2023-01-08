@@ -137,62 +137,19 @@ export class Controller extends EventTarget {
     // this.model.enableUserDict(inputToolCode, enableUserDict);
   }
 
-  /**
-   * Sets the pageup/pagedown characters.
-   */
-   setPageMoveChars(
-    inputToolCode: InputToolCode, pageupChars: string, pagedownChars: string) {
-    let config = this._configFactory.getConfig(inputToolCode);
-    if (config) {
-      if (pageupChars) {
-        config.pageupCharReg = new RegExp('[' + pageupChars + ']');
-      } else {
-        config.pageupCharReg = /xyz/g;
-      }
-
-      if (pagedownChars) {
-        config.pagedownCharReg = new RegExp('[' + pagedownChars + ']');
-      } else {
-        config.pagedownCharReg = /xyz/g;
-      }
-      this._keyActionTable = this.getKeyActionTable();
-    }
-  }
-
   updateGlobalState(key: keyof ILocalStorageOfGlobalState, value: any) {
     this._configFactory.globalState[key] = value;
     this.dispatchEvent(Controller.UPDATE_STATE_EVENT);
   }
 
   updateState(key: string, value: any) {
-    this.model.setStates({ [key]: value });
+    this.currentConfig.setStates({ [key]: value });
     this.dispatchEvent(Controller.UPDATE_STATE_EVENT);
   }
 
   changePuncConfig(value: boolean) {
     this.updateState('punc', value);
   }
-
-  /**
-   * Sets the keyboard layout, select keys and page size.
-   *
-   * @param {string} inputToolCode The input tool code.
-   * @param {string} layout The keyboard layout id.
-   * @param {string} selectKeys The select keys.
-   * @param {number} pageSize The page size.
-   */
-  setPageSettings(
-    inputToolCode: string, layout: KeyboardLayouts, 
-    selectKeys: string, pageSize: number) {
-    let config = this._configFactory.getConfig(inputToolCode as InputToolCode);
-    if (config) {
-      config.layout = layout;
-      config.selectKeys = selectKeys;
-      config.pageSize = pageSize;
-      this._keyActionTable = this.getKeyActionTable();
-    }
-  }
-
 
   /**
    * @todo
@@ -228,7 +185,7 @@ export class Controller extends EventTarget {
 
     // English input state.
     let { states } = this.currentConfig;
-    if (states[StateID.LANG] && !states[StateID.LANG].value) {
+    if (!states.lang) {
       return false;
     }
     
@@ -251,14 +208,6 @@ export class Controller extends EventTarget {
 
   /** @todo Surrounding text handler.  */
   handleSurroundingText(engineID: string, surroundingInfo: chrome.input.ime.SurroundingTextInfo) {
-    // if (process.env.MV3) { 
-    //   if (!this.model.engineID) {
-    //     // Current state is reactivate from inactive.
-    //     this.model.reactivate(engineID)
-    //     this._lastKeyChar = surroundingInfo.text.slice(-1);
-    //     // this.model.setEngineID(engineID);
-    //   } 
-    // }
   }
 
 
@@ -383,14 +332,14 @@ export class Controller extends EventTarget {
   * @return {boolean} Whether the key event is processed.
   */
   processNumberKey(e: any) {
-    let selectKeys = this.currentConfig.selectKeyReg;
+    let selectKeys = this.currentConfig.getSelectKeyReg();
     let isPageNumber = selectKeys.test(e.key);
     if (!isPageNumber) {
       return true;
     }
 
     // Select candidate.
-    let { pageSize } = this.currentConfig;
+    let { pageSize } = this.currentConfig.states;
     let pageOffset = e.key - 1;
     if (pageOffset >= 0 && pageOffset < pageSize) {
       let index = this.model.pageIndex * pageSize + pageOffset;
@@ -546,18 +495,18 @@ export class Controller extends EventTarget {
       [EventType.KEYDOWN, 0, Key.PAGE_UP, null, onStageCondition, 
         this.model.movePage, this.model, 1],
       // Pageup regexp action.
-      [EventType.KEYDOWN, 0, config.pageupCharReg, Status.SELECT, null, 
+      [EventType.KEYDOWN, 0, config.getPageupCharReg(), Status.SELECT, null, 
         this.model.movePage, this.model, 1],
 
       // Pagedown action.
       [EventType.KEYDOWN, 0, Key.PAGE_DOWN, null, onStageCondition, 
         this.model.movePage, this.model, -1],
       // Pagedown regexp action.
-      [EventType.KEYDOWN, 0, config.pagedownCharReg, Status.SELECT, null, 
+      [EventType.KEYDOWN, 0, config.getPagedownCharReg(), Status.SELECT, null, 
         this.model.movePage, this.model, -1],
       
       // Select keys regexp action.
-      [EventType.KEYDOWN, 0, config.selectKeyReg, Status.SELECT, null,
+      [EventType.KEYDOWN, 0, config.getSelectKeyReg(), Status.SELECT, null,
         this.processNumberKey, this, null],
 
       // Default select action for Space key .
@@ -589,14 +538,14 @@ export class Controller extends EventTarget {
       [EventType.KEYDOWN, 0, Key.ESC, null, onStageCondition,
       this.processAbortKey, this, null],
       // Char.
-      [EventType.KEYDOWN, 0, config.editorCharReg, null, null,
+      [EventType.KEYDOWN, 0, config.getEditorCharReg(), null, null,
       this.processCharKey, this, null],
       // Shift + char?
-      [EventType.KEYDOWN, Modifier.SHIFT, config.editorCharReg, null, null,
+      [EventType.KEYDOWN, Modifier.SHIFT, config.getEditorCharReg(), null, null,
         this.processCharKey, this, null],
       
       // Punch key.
-      [EventType.KEYDOWN, 0, config.punctuationReg, null, onStageCondition,
+      [EventType.KEYDOWN, 0, config.getPuncReg(), null, onStageCondition,
       this.processPuncKey, this, null]
     ];
   }
@@ -611,10 +560,10 @@ export class Controller extends EventTarget {
   */
   getShortcutTable() {
     let shortcutTable: ActionType[] = [];
-    let config = this.currentConfig;
+    let {menuStates} = this.currentConfig;
     
-    for (let name in config.states) {
-      let state = config.states[name as StateID];
+    for (let name in menuStates) {
+      let state = menuStates[name as StateID];
       // TODO `shift` shortcut key cannot run.
       if (state.shortcut.length == 1 
         && state.shortcut[0] == Modifier.SHIFT) {

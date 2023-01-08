@@ -5,6 +5,7 @@
 import { configFactoryInstance } from "./model/configfactory";
 import { StateID } from "./model/enums";
 import type { Model } from "./model/model";
+import { IIMEState } from "./model/state";
 import { CandidateWindow } from "./view/candidate";
 
 export class View {
@@ -40,17 +41,15 @@ export class View {
   updateMenuItems(stateId?: StateID) {
     if (!this.model.engineID) return ;
   
-    let states = this.config.states;
+    let { menuStates, states } = this.config;
     let menuItemParameters = { engineID: this.model.engineID, items: [] };
 
     let menuItems = menuItemParameters.items as chrome.input.ime.MenuItem[];
-    for (let key in states) {
+    for (let key in menuStates) {
       menuItems.push({
         id: key,
-        label: states[key as StateID].desc,
-        checked: states[key as StateID].value,
-        enabled: true,
-        visible: true
+        label: menuStates[key as StateID].desc,
+        checked: (states as any)[key]
       });
     }
     
@@ -130,7 +129,7 @@ export class View {
   showCandidates() {
 
     let { pageIndex, highlightIndex } = this.model;
-    let { pageSize } = this.config;
+    let { pageSize } = this.config.states;
 
     if (this.window) {
       this.window.setPageNumber(pageIndex);
