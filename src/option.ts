@@ -43,13 +43,16 @@ const introList = [
 
 const descList = [
   {
+    desc: "设置状态后可能需要重启扩展才能生效。"
+  },
+  {
+    desc: "无法单独使用，需要与zhime ui扩展一起使用。"
+  },
+  {
     desc: "当前版本支持40万+词库(精准度80%左右)+用户选词自学习" 
   },
   {
-    desc: "完善了一些输入遗留问题"
-  },
-  {
-    desc: "在线解析引擎解析延迟0.5s"
+    desc: "现在仍然有一些错误需要修复。"
   }
 ]
 
@@ -70,7 +73,7 @@ const baseEditList: Partial<Record<IIMEStateKeyUnion, ["checkbox" | "text" | "nu
   punc: ['checkbox', "设置字符宽度为半角"],
   vertical: ['checkbox', "使用纵向显示候选词列表"],
   traditional: ['checkbox', "启用繁体字"],
-  selectKeys: ['text', "选词按键"],
+  // selectKeys: ['text', "选词按键"],
   pageSize: ['number', "设置候选词长度"]
 }
 
@@ -137,16 +140,13 @@ class OptionPage extends LitElement {
   onChooseShuangpin(e: Event) {
     let target = e.target as HTMLSelectElement;
     let { value } = target;
-    console.log(value);
     this.updateState('shuangpinSolution', value);
   }
 
   onSelectionChanged(e: Event) {
     let target = e.target as HTMLSelectElement;
-    console.log(target);
     let { id, value } = target;
     let isGlobalState = false;
-    console.log("onSelectionChanged", id, value);
 
     if (id in this.globalState) {
       isGlobalState = true;
@@ -162,12 +162,24 @@ class OptionPage extends LitElement {
     let target = e.target as HTMLInputElement;
     let {id, value, checked} = target;
     if (!id) return;
-    console.log("onInputChanged", id, value, checked);
     if ((baseEditList as any)[id][0] === "checkbox") {
       this.updateState(id, checked);
     } else {
       if (id === "pageSize") value = (+value) as any;
       this.updateState(id, value);
+    }
+  }
+
+  onClickBtns(ev: Event) {
+    let target = ev.target as HTMLButtonElement;
+    if (target.id === "reload") {
+      alert("正在重启扩展");
+      chrome.runtime.reload();
+    }
+    if (target.id === "clean") {
+      chrome.storage.local.clear(() => {
+        alert("配置信息清除成功。")
+      });
     }
   }
 
@@ -178,6 +190,10 @@ class OptionPage extends LitElement {
 <div>
   <section>
     <h3>基础设置</h3>
+    <div class="buttons" @click=${this.onClickBtns}>
+      <button class="btn-1" id="reload">重启扩展</button>
+      <button class="btn-1" id="clean">清空状态缓存</button>
+    </div>
     <div>
       <span class="controlled-setting-with-label">
         <span class="selection-label">

@@ -13,7 +13,7 @@ export const optionPageStyles = css`
 
 :host {
   color: rgb(48, 57, 66);
-  font: 75% 'Segoe UI', Arial, Meiryo, 'MS PGothic', sans-serif;
+  font: 100% 'Segoe UI', Arial, Meiryo, 'MS PGothic', sans-serif;
   max-width:640px;
 }
 

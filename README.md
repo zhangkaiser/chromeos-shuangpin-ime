@@ -1,6 +1,8 @@
 # 中文双拼输入法
 Chinese shuangpin ime for Chrome OS/Chromium OS/Fyde OS.
 
+无法单独使用（需要与`zhime`一起安装配置交互使用。）
+
 chromium os官方从`M108` 开始添加了对Linux(Constini) IME的支持，支持`GTK3`应用程序（包含`基于Electron`的程序）运行Chrome OS上的IME。详情>> [platform2>vm_tools>cros_im](https://chromium.googlesource.com/chromiumos/platform2/+/f7d8d74636f5a5a6cf9d4e6cf044ff2286f9e1c6/vm_tools/cros_im)
 
 
@@ -8,6 +10,7 @@ chromium os官方从`M108` 开始添加了对Linux(Constini) IME的支持，支�
 支持多种常用双拼解析方案（例：小鹤双拼，拼音加加，o键方案等）输入，支持离线／在线拼音解析支持。
 
 基于google-input-tools输入框架二次开发，添加了google-pinyin（c++ lib）库的支持。
+- `2022-01-09` 与`zhime`的交互基本成型，测试版本已发布至[测试下载](https://github.com/zhangkaiser/zhime/releases/tag/0.0.1)。
 - `2022-12-31` 重构将UI与后端分离成两个项目,IME UI交互层迁移至[zhime](https://github.com/zhangkaiser/zhime)。
 - `2022-11-02` 支持新的词库支持(约40万+)和用户提交词自学习支持。
 - `2022-08-23` 添加了对虚拟键盘（触摸键盘）的简单支持。

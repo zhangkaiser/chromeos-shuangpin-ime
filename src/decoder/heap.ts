@@ -171,7 +171,6 @@ export class Heap {
           nodes[0] = nodes.pop()!;
           this.#moveDown(0);
       }
-      // console.log(rootNode);
       return rootNode.getValue();
   }
 

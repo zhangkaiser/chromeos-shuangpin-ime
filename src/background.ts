@@ -149,7 +149,6 @@ export class Background {
         sendResponse(true);
         break;
       case "getStates":
-        console.log(this.configFactory);
         sendResponse({
           states: this.configFactory.getCurrentConfig().states,
           globalState: this.configFactory.globalState
