@@ -557,7 +557,7 @@ export class TokenDecoder extends EventTarget {
     let tokenList = source.split("'");
     let lastToken  = tokenList.pop();
     let separatorList = new Array(tokenList.length).fill(true);
-    if (/^(zh|sh|ch)$/.test(lastToken!)) {
+    if (/^(zh|sh|ch)$/.test(lastToken ?? "")) {
       tokenList.push(lastToken!);
       separatorList.push(false);
     } else if (lastToken && lastToken.length == 1) { // sheng mu parse.
@@ -595,6 +595,8 @@ export class TokenDecoder extends EventTarget {
           if (spellingList.length == 1) {
             tokenList.push(spellingList[0]);
             separatorList.push(true);
+          } else {
+            return null;
           }
         } else {
           tokenList.push(lastToken);

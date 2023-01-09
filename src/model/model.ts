@@ -382,23 +382,17 @@ export class Model extends EventTarget implements IModel {
       if (this.states.autoHighlight || this._holdSelectStatus) {
         this.enterSelectInternal();
       }
-
+      this.wasEnglish = true;
       this.candidates = [];
       this.notifyUpdates();
       return;
     }
+    this.wasEnglish = false;
     
     this.candidates = [];   
     this.imeHandler.handleIMEResponse(imeResponse);
     let { candidates, tokens } = imeResponse;
-    let oldTokens = this.source.split("'").filter((item) => !!item);
 
-    if (oldTokens.length > tokens.length) {
-      this.wasEnglish = true;
-    }
-    if (this._reverted) {
-      this.wasEnglish = false;
-    }
     let committedSegments = this.segments.slice(0, this.commitPos);
     let prefixSegments = committedSegments.concat(tokens);
     let suffixSegments = this.segments.slice(this.cursorPos);
