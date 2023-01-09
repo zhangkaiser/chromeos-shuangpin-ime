@@ -19,8 +19,8 @@ export class PinyinConfig extends ChineseConfig {
   revert(segment: string, source: string) {
 
     let revertObj = {
-      deletedChar: segment,
-      segment: '',
+      deletedChar: segment.slice(-1),
+      segment: segment.slice(0, -1),
       source: source.slice(0, -1)
     }
 

@@ -557,8 +557,10 @@ export class TokenDecoder extends EventTarget {
     let tokenList = source.split("'");
     let lastToken  = tokenList.pop();
     let separatorList = new Array(tokenList.length).fill(true);
-    
-    if (lastToken && lastToken.length == 1) { // sheng mu parse.
+    if (/^(zh|sh|ch)$/.test(lastToken!)) {
+      tokenList.push(lastToken!);
+      separatorList.push(false);
+    } else if (lastToken && lastToken.length == 1) { // sheng mu parse.
       let shengmuIndex = this.#shengmuKey.indexOf(lastToken);
       if(shengmuIndex > -1) { // found in the shengmu list.
         tokenList.push(this.#shengmu[shengmuIndex]);
