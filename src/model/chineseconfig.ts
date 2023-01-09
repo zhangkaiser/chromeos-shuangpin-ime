@@ -97,14 +97,12 @@ export default class ChineseConfig extends Config {
 		let sbcState = new State('启用全角宽度字符', [';', Modifier.CTRL]);
 		let puncState = new State('启用英文标点符号', ['\\.', Modifier.CTRL]);
     let traditionalState = new State('启用中文繁体', [',', Modifier.CTRL]);
-    let predictorState = new State("启用在线预测词", [' ', Modifier.SHIFT]);
 
     this.menuStates = {
       [StateID.LANG]: langState,
       [StateID.SBC]: sbcState,
       [StateID.PUNC]: puncState,
       [StateID.TRADITIONAL]: traditionalState,
-      [StateID.PREDICTOR]: predictorState
     }
 	}
 

@@ -24,20 +24,16 @@ const introList = [
     value: 'Shift键'
   },
   {
-    label: '字符宽度为全角输入',
+    label: '标点符号半／全角转换',
     value: 'Ctrl + ;'
   },
   {
-    label: '英文标点符号输入切换',
+    label: '中文英文标点符号切换',
     value: 'Ctrl + 标点(.)'
   },
   {
-    label: '使用繁体字转换输出',
+    label: '繁体字输出转换',
     value: 'Ctrl + 逗号(,)'
-  },
-  {
-    label: '启用在线解析器',
-    value: 'Shift + 空格'
   }
 ];
 
@@ -69,10 +65,10 @@ const solutionNames: Record<keyof typeof solutions, string> = {
 
 const baseEditList: Partial<Record<IIMEStateKeyUnion, ["checkbox" | "text" | "number", string]>> = {
   sbc: ['checkbox', '设置字符宽度为全角'],
-  lang: ['checkbox', "英文输出模式"],
+  lang: ['checkbox', "中文输出模式"],
   punc: ['checkbox', "设置字符宽度为半角"],
   vertical: ['checkbox', "使用纵向显示候选词列表"],
-  traditional: ['checkbox', "启用繁体字"],
+  traditional: ['checkbox', "启用繁体字输出"],
   // selectKeys: ['text', "选词按键"],
   pageSize: ['number', "设置候选词长度"]
 }
@@ -83,6 +79,7 @@ class OptionPage extends LitElement {
 
   @state({
     hasChanged(value, oldValue) {
+      console.log(value, oldValue);
       return true;
     }
   }) globalState = {};
@@ -150,7 +147,10 @@ class OptionPage extends LitElement {
 
     if (id in this.globalState) {
       isGlobalState = true;
-      (this.globalState as any)[id] = value;
+      this.globalState = {
+        ...this.globalState,
+        [id]: value
+      };
     } else {
       (this.states as any)[id] = value;
     }

@@ -62,7 +62,6 @@ export enum StateID {
   SBC =  'sbc',
   PUNC = 'punc',
   TRADITIONAL = 'traditional',
-  PREDICTOR = 'predictor'
 }
 
 export enum PinyinStateID {
