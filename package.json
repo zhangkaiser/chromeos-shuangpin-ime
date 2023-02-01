@@ -7,7 +7,7 @@
     "test": "mocha",
     "clone:submodule": "git submodule update --init --recursive",
     "build": "npm run build:deps && export PRODUCTION=1 && webpack",
-    "build:deps": "npm run clone:submodule && cd googlepinyin && npm run build",
+    "build:deps": "npm run clone:submodule && cd googlepinyin && npm install && npm run build",
     "watch": "webpack --mode development --watch",
     "watch:split": "export MANIFEST=ime,decoder DECODER_ENGINE=wasm && webpack --watch"
   },
