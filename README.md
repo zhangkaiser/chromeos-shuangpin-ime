@@ -1,5 +1,11 @@
 # 中文双拼输入法
+
+由于已经脱坑chrome os，不再对双拼输入法维护
+
+替代品 -> [fydeRhythm](https://github.com/FydeOS/fydeRhythm)
+
 Chinese shuangpin ime for Chrome OS/Chromium OS/Fyde OS.
+
 
 无法单独使用（需要与`zhime`一起安装配置交互使用。）
 
